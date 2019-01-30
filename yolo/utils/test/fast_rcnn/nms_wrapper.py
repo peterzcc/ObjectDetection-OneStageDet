@@ -4,8 +4,10 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
 # --------------------------------------------------------
-
-from ..nms.gpu_nms import gpu_nms
+try:
+    from ..nms.gpu_nms import gpu_nms
+except ModuleNotFoundError:
+    pass
 from ..nms.cpu_nms import cpu_nms, cpu_soft_nms
 import numpy as np
 
