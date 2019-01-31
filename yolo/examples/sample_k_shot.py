@@ -41,6 +41,8 @@ def main():
         file2numdet = class2file2numdet[class_label]
         sample_file_id = rng.randint(len(file2numdet))
         sample_file_name = list(file2numdet.items())[sample_file_id][0]
+        if sample_file_name in k_shot_samples:
+            continue
         pred_sample_nums = existing_sample_nums.copy()
         for anno in annos[sample_file_name]:
             if anno.class_label in k_shot_classes:
