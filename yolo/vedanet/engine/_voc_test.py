@@ -95,6 +95,8 @@ def VOCTest(hyper_params):
 
     netw, neth = network_size
     reorg_dets = voc_wrapper.reorgDetection(det, netw, neth) #, prefix)
+    if not os.path.isdir(results):
+        os.mkdir(results)
     voc_wrapper.genResults(reorg_dets, results, nms_thresh)
 
 
