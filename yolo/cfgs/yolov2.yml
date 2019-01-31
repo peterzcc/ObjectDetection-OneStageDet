@@ -37,18 +37,17 @@ train:
 test:
     dataset: "test"
     stdout: True
-    gpus: "0"
+    gpus: "2"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "weights/yolov2_60200.dw" #"outputs/Yolov2/baseline/weights/weights_200.pt"
-
+    weights: "outputs/Yolov2/joint/weights/weights_10000.pt" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "results"
+    results: "re_190131_joint"
 
 speed:
     gpus: "7"

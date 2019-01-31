@@ -14,7 +14,7 @@ sys.path.insert(0, '.')
 import brambox.boxes as bbb
 import vedanet as vn
 from utils.envs import initEnv
-from .eval import generate_aps
+from examples.eval import generate_aps
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='OneDet: an one stage framework based on PyTorch')
