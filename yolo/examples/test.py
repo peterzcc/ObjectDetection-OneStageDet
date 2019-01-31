@@ -31,5 +31,4 @@ if __name__ == '__main__':
 
     # init and run eng
     vn.engine.VOCTest(hyper_params)
-    generate_aps()
 

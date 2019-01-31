@@ -1,6 +1,7 @@
 import numpy as np
 from utils.test.datasets.voc_eval import voc_eval
 import os
+import argparse
 
 
 def generate_aps(results_root="results"):
@@ -32,8 +33,8 @@ def generate_aps(results_root="results"):
     print(header+data)
 
 
-
-
-
 if __name__ == '__main__':
-    generate_aps()
+    parser = argparse.ArgumentParser(description='mcnn worldexp.')
+    parser.add_argument('--root', type=str, default="results")
+    args = parser.parse_args()
+    generate_aps(args.root)

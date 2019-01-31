@@ -98,5 +98,6 @@ def VOCTest(hyper_params):
     if not os.path.isdir(results):
         os.mkdir(results)
     voc_wrapper.genResults(reorg_dets, results, nms_thresh)
+    generate_aps(results_root=results)
 
 
