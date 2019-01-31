@@ -3,16 +3,12 @@ from utils.test.datasets.voc_eval import voc_eval
 import os
 
 
-def main():
-    results_dir = "results/comp4_det_test_{}.txt"
+def generate_aps(results_root="results"):
+    results_dir = results_root+"/comp4_det_test_{}.txt"
+    output_path = results_root+"/perf.csv"
     anno_path = "VOCdevkit/VOC2007/Annotations/{}.xml"
-
     # imageset_path = "VOCdevkit/VOC2007/ImageSets/Main/test.txt"
-
     class_names = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
-
-    # i = 0
-    # class_name = class_names[i]
     recs = []
     precs = []
     aps = []
@@ -26,11 +22,18 @@ def main():
         recs.append(rec)
         precs.append(prec)
         aps.append(ap)
+
     mAP = np.array(aps).mean()
-    print(f"mAP:{mAP}")
+    header = ",".join([*class_names, "mean"])+'\n'
+    data = ",".join([f"{ap}"for ap in aps]+ [f"{mAP}"])+'\n'
+    with open(output_path, "w") as f:
+        f.write(header)
+        f.write(data)
+    print(header+data)
+
 
 
 
 
 if __name__ == '__main__':
-    main()
+    generate_aps()

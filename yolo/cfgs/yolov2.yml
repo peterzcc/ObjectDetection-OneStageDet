@@ -36,14 +36,14 @@ train:
 
 test:
     dataset: "test"
-    stdout: False
-    gpus: "2"
+    stdout: True
+    gpus: "0"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/Yolov2/baseline/weights/weights_200.pt" # "weights/Yolov2_60200.dw"
+    weights: "weights/yolov2_60200.dw" #"outputs/Yolov2/baseline/weights/weights_200.pt"
 
     conf_thresh: 0.005
     nms_thresh: 0.45

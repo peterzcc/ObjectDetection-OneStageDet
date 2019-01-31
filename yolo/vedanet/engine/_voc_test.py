@@ -8,6 +8,7 @@ from .. import data as vn_data
 from .. import models
 from . import engine
 from utils.test import voc_wrapper
+from examples.eval import generate_aps
 
 __all__ = ['VOCTest']
 
