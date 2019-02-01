@@ -1,5 +1,5 @@
 output_root: "outputs"
-output_version: "joint"
+output_version: "ft"
 backup_name: "weights"
 log_name: "logs"
 
@@ -8,10 +8,10 @@ labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", 
 data_root_dir: "VOCdevkit/onedet_cache"
 
 train:
-    dataset: "k_shot_joint"
+    dataset: "k_shot_finetune"
     stdout: False
-    gpus: "1"
-    nworkers: 16
+    gpus: "0"
+    nworkers: 1
     pin_mem: True
 
     momentum: 0.9
@@ -19,20 +19,20 @@ train:
 
     clear: False
 
-    warmup_lr: 0.0001
-    lr_steps: [400,700,900,1000, 40000,60000] 
-    lr_rates: [0.0001,0.0005,0.0005,0.001, 0.0001,0.00001] 
-    max_batches: 70200
+    warmup_lr: 0.001
+    lr_steps: []#[400,700,900,1000, 40000,60000] 
+    lr_rates: []#[0.0001,0.0005,0.0005,0.001, 0.0001,0.00001] 
+    max_batches: 10000
     resize_interval: 10
 
-    backup_interval: 200
-    backup_steps: [1000, 60000]
-    backup_rates: [10000, 200]
+    backup_interval: 100
+    backup_steps: []
+    backup_rates: []
 
     input_shape: [608, 608]
-    batch_size: 64
-    mini_batch_size: 16
-    weights: "weights/darknet19_448.conv.23"
+    batch_size: 8
+    mini_batch_size: 8
+    weights: "outputs/Yolov2/joint/weights/weights_50000.pt"
 
 test:
     dataset: "test"
@@ -41,13 +41,13 @@ test:
     nworkers: 4
     pin_mem: True
 
-    input_shape: [544, 544]
+    input_shape: [416, 416]
     batch_size: 16
-    weights: "outputs/Yolov2/joint/weights/weights_40000.pt" #"weights/yolov2_60200.dw" #
+    weights: "outputs/Yolov2/ft/weights/final.dw"
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190131_joint_40000"
+    results: "re_190201_ft_40000"
 
 speed:
     gpus: "7"
