@@ -38,16 +38,16 @@ test:
     dataset: "test"
     stdout: True
     gpus: "2"
-    nworkers: 4
+    nworkers: 16
     pin_mem: True
 
-    input_shape: [544, 544]
+    input_shape: [416, 416]
     batch_size: 16
-    weights: "outputs/Yolov2/joint/weights/weights_40000.pt" #"weights/yolov2_60200.dw" #
+    weights: "outputs/Yolov2/joint/weights/weights_50000.pt" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190131_joint_40000"
+    results: "re_190131_joint_50000"
 
 speed:
     gpus: "7"
