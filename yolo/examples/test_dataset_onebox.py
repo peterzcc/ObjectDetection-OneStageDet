@@ -14,56 +14,65 @@ from vedanet.data._dataloading import Dataset
 from vedanet import data
 from torchvision import transforms as tf
 from vedanet.data import OneboxDataset
+from unittest import TestCase
+import numpy as np
 
 
-class TestOneboxDataset(OneboxDataset):
-    def __init__(self):
-        anno = 'VOCdevkit/onedet_cache/train.pkl'
-        network_size = (608, 608)
-        labels = ['aeroplane',
-                  'bicycle',
-                  'bird',
-                  'boat',
-                  'bottle',
-                  'bus',
-                  'car',
-                  'cat',
-                  'chair',
-                  'cow',
-                  'diningtable',
-                  'dog',
-                  'horse',
-                  'motorbike',
-                  'person',
-                  'pottedplant',
-                  'sheep',
-                  'sofa',
-                  'train',
-                  'tvmonitor']
+def get_dataset():
+    anno = 'VOCdevkit/onedet_cache/train.pkl'
+    network_size = (608, 608)
+    labels = ['aeroplane',
+              'bicycle',
+              'bird',
+              'boat',
+              'bottle',
+              'bus',
+              'car',
+              'cat',
+              'chair',
+              'cow',
+              'diningtable',
+              'dog',
+              'horse',
+              'motorbike',
+              'person',
+              'pottedplant',
+              'sheep',
+              'sofa',
+              'train',
+              'tvmonitor']
 
-        def identify(img_id):
-            # return f'{root}/VOCdevkit/{img_id}.jpg'
-            return f'{img_id}'
+    def identify(img_id):
+        # return f'{root}/VOCdevkit/{img_id}.jpg'
+        return f'{img_id}'
 
-        flip = 0.5
-        jitter = 0.3
-        hue, sat, val = 0.1, 1.5, 1.5
+    flip = 0.5
+    jitter = 0.3
+    hue, sat, val = 0.1, 1.5, 1.5
 
-        rf = data.transform.RandomFlip(flip)
-        rc = data.transform.RandomCropLetterbox(self, jitter)
-        hsv = data.transform.HSVShift(hue, sat, val)
-        it = tf.ToTensor()
+    rf = data.transform.RandomFlip(flip)
+    rc = data.transform.RandomCropLetterbox(input_dim=network_size[0:2], jitter=jitter)
+    hsv = data.transform.HSVShift(hue, sat, val)
+    it = tf.ToTensor()
 
-        img_tf = data.transform.Compose([rc, rf, hsv, it])
-        anno_tf = data.transform.Compose([rc, rf])
-        super(TestOneboxDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
-
-
-def test_dataset():
-    dataset = TestOneboxDataset()
-    pass
+    img_tf = data.transform.Compose([rc, rf, hsv, it])
+    anno_tf = data.transform.Compose([rc, rf])
+    return OneboxDataset('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
 
+class OneBoxTests(TestCase):
+    def setUp(self):
+        self.dataset = get_dataset()
 
-if __name__ == '__main__':
-    test_dataset()
+    def test_total_count(self):
+        self.assertEqual(len(self.dataset), 40058)
+
+    def test_sel_class(self):
+        target_classes = {"person", "cat"}
+        subset = self.dataset.sel_classes(target_classes)
+        for i in range(10,20):
+            this_class = subset.class_label_map[subset[0][1][0].class_id]
+            self.assertTrue(this_class in target_classes)
+
+
+

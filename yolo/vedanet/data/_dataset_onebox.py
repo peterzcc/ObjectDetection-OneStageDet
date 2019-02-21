@@ -31,7 +31,9 @@ class OneboxDataset(Dataset):
         anno_transform (torchvision.transforms.Compose): Transforms to perform on the annotations
         kwargs (dict): Keyword arguments that are passed to the brambox parser
     """
-    def __init__(self, anno_format, anno_filename, input_dimension, class_label_map=None, identify=None, img_transform=None, anno_transform=None, **kwargs):
+    def __init__(self, anno_format, anno_filename,
+                 input_dimension, class_label_map=None, identify=None, img_transform=None, anno_transform=None,
+                 file_boxes=None, **kwargs):
         super().__init__(input_dimension)
         self.img_tf = img_transform
         self.anno_tf = anno_transform
@@ -39,28 +41,45 @@ class OneboxDataset(Dataset):
             self.id = identify
         else:
             self.id = lambda name: os.path.splitext(name)[0] + '.png'
+        self.class_label_map = class_label_map
+        if file_boxes is None:
+            # Get annotations
+            annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
+            # self.keys = list(self.annos)
+            self.boxes = []
+            self.files = []
 
-        # Get annotations
-        self.annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
-        self.keys = list(self.annos)
+            # Add class_ids
+            if class_label_map is None:
+                log.warn(f'No class_label_map given, annotations wont have a class_id values for eg. loss function')
+            for k, anno in annos.items():
+                for a in anno:
+                    if class_label_map is not None:
+                        try:
+                            a.class_id = class_label_map.index(a.class_label)
+                        except ValueError as err:
+                            raise ValueError(f'{a.class_label} is not found in the class_label_map') from err
+                    else:
+                        a.class_id = 0
+                    self.boxes.append([a])
+                    self.files.append(k)
 
-        # Add class_ids
-        if class_label_map is None:
-            log.warn(f'No class_label_map given, annotations wont have a class_id values for eg. loss function')
-        for k, annos in self.annos.items():
-            for a in annos:
-                if class_label_map is not None:
-                    try:
-                        a.class_id = class_label_map.index(a.class_label)
-                    except ValueError as err:
-                        raise ValueError(f'{a.class_label} is not found in the class_label_map') from err
-                else:
-                    a.class_id = 0
+            log.info(f'Dataset loaded: {len(self.boxes)} boxes')
+        else:
+            self.files, self.boxes = file_boxes
 
-        log.info(f'Dataset loaded: {len(self.keys)} images')
+    def sel_classes(self, classes):
+        new_files, new_boxes = [], []
+        for file, this_anno in zip(self.files, self.boxes):
+            if self.class_label_map[this_anno[0].class_id] in classes:
+                new_files.append(file)
+                new_boxes.append(this_anno)
+        return OneboxDataset(None, None, self.input_dim,
+                             self.class_label_map, self.id,
+                             self.img_tf, self.anno_tf, (new_files, new_boxes))
 
     def __len__(self):
-        return len(self.keys)
+        return len(self.boxes) #len(self.keys)
 
     @Dataset.resize_getitem
     def __getitem__(self, index):
@@ -76,8 +95,8 @@ class OneboxDataset(Dataset):
             raise IndexError(f'list index out of range [{index}/{len(self)-1}]')
 
         # Load
-        img = Image.open(self.id(self.keys[index]))
-        anno = copy.deepcopy(self.annos[self.keys[index]])
+        img = Image.open(self.id(self.files[index]))
+        anno = copy.deepcopy(self.boxes[index])
         random.shuffle(anno)
 
         # Transform

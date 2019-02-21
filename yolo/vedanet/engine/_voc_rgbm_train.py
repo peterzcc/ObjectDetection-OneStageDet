@@ -7,32 +7,32 @@ import os
 from .. import data
 from .. import models
 from . import engine
-
+from ..data import OneboxDataset
 __all__ = ['VocRgbmTrainingEngine']
 
-class VocRgbmDataset(data.OneboxDataset):
-    def __init__(self, hyper_params):
-        anno = hyper_params.trainfile
-        root = hyper_params.data_root
-        flip = hyper_params.flip
-        jitter = hyper_params.jitter
-        hue, sat, val = hyper_params.hue, hyper_params.sat ,hyper_params.val
-        network_size = hyper_params.network_size
-        labels = hyper_params.labels
 
-        rf  = data.transform.RandomFlip(flip)
-        rc  = data.transform.RandomCropLetterbox(self, jitter)
-        hsv = data.transform.HSVShift(hue, sat, val)
-        it  = tf.ToTensor()
+def create_dataset(hyper_params):
+    anno = hyper_params.trainfile
+    root = hyper_params.data_root
+    flip = hyper_params.flip
+    jitter = hyper_params.jitter
+    hue, sat, val = hyper_params.hue, hyper_params.sat ,hyper_params.val
+    network_size = hyper_params.network_size
+    labels = hyper_params.labels
 
-        img_tf = data.transform.Compose([rc, rf, hsv, it])
-        anno_tf = data.transform.Compose([rc, rf])
+    rf  = data.transform.RandomFlip(flip)
+    rc  = data.transform.RandomCropLetterbox(input_dim=network_size[0:2], jitter=jitter)
+    hsv = data.transform.HSVShift(hue, sat, val)
+    it  = tf.ToTensor()
 
-        def identify(img_id):
-            #return f'{root}/VOCdevkit/{img_id}.jpg'
-            return f'{img_id}'
+    img_tf = data.transform.Compose([rc, rf, hsv, it])
+    anno_tf = data.transform.Compose([rc, rf])
 
-        super(VocRgbmDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
+    def identify(img_id):
+        #return f'{root}/VOCdevkit/{img_id}.jpg'
+        return f'{img_id}'
+
+    return OneboxDataset('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
 
 class VocRgbmTrainingEngine(engine.Engine):
@@ -67,7 +67,7 @@ class VocRgbmTrainingEngine(engine.Engine):
         optim = torch.optim.SGD(net.parameters(), lr=learning_rate/batch, momentum=momentum, dampening=0, weight_decay=decay*batch)
 
         log.debug('Creating dataloader')
-        dataset = VocRgbmDataset(hyper_params)
+        dataset = create_dataset(hyper_params)
         dataloader = data.DataLoader(
             dataset,
             batch_size = self.mini_batch_size,

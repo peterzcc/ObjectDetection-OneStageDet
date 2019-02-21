@@ -259,8 +259,10 @@ class RandomCropLetterbox(BaseMultiTransform):
         Create 1 RandomCrop object and use it for both image and annotation transforms.
         This object will save data from the image transform and use that on the annotation transform.
     """
-    def __init__(self, dataset, jitter, fill_color=127):
-        super().__init__(dataset=dataset, jitter=jitter, fill_color=fill_color)
+    def __init__(self, input_dim, jitter, fill_color=127):
+        super().__init__(jitter=jitter, fill_color=fill_color)
+        assert len(input_dim) == 2
+        self.input_dim = input_dim
         self.crop_info = None
         self.output_w = None
         self.output_h = None
@@ -278,7 +280,7 @@ class RandomCropLetterbox(BaseMultiTransform):
 
     def _tf_pil(self, img):
         """ Take random crop from image """
-        self.output_w, self.output_h = self.dataset.input_dim
+        self.output_w, self.output_h = self.input_dim
         #print('output shape: %d, %d' % (self.output_w, self.output_h))
         orig_w, orig_h = img.size
         img_np = np.array(img)
