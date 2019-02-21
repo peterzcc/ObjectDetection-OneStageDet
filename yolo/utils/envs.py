@@ -44,10 +44,11 @@ def combineConfig(cur_cfg, train_flag):
     return ret_cfg
 
 
-def initEnv(train_flag, model_name):
+def initEnv(train_flag, model_name, cfg_file=None):
     cfgs_root = 'cfgs'
-    cur_cfg = getConfig(cfgs_root, model_name)
-
+    cur_cfg = getConfig(cfgs_root, model_name, cfg_file=cfg_file)
+    if model_name is None and "model_name" in cur_cfg:
+        model_name = cur_cfg['model_name']
     root_dir = cur_cfg['output_root']
     cur_cfg['model_name'] = model_name
     version = cur_cfg['output_version']
