@@ -70,9 +70,19 @@ class OneBoxTests(TestCase):
     def test_sel_class(self):
         target_classes = {"person", "cat"}
         subset = self.dataset.sel_classes(target_classes)
-        for i in range(10,20):
+        for i in range(10, 20):
             this_class = subset.class_label_map[subset[0][1][0].class_id]
             self.assertTrue(this_class in target_classes)
 
+    def test_rgbd(self):
+        for i in range(40,50):
+            x, y = self.dataset[i]
+            display = False
+            if display:
+                import torch
+                import matplotlib.pyplot as plt
+                plt.imshow(torch.mean(x[0:3], dim=0)*(x[3,...]+0.5)/1.5,cmap="gray")
+                plt.show()
+            self.assertEqual(x.shape[0], 4)
 
 
