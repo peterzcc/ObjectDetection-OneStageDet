@@ -45,12 +45,12 @@ test:
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "weights/yolov2_60200.dw"
+    weights: "outputs/TinyYolov2/test_rgbm/weights/backup.pt"
 
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "results"
+    results: "results_rgbm"
 
 speed:
     gpus: "7"

@@ -107,7 +107,14 @@ class OneboxDataset(Dataset):
         mask = np.zeros((1, *img.shape[1:3]), dtype=np.float32)
         for a in anno:
             x,y,w,h = a.x_top_left, a.y_top_left, a.width, a.height
-            mask[0,y:(y+h), x:(x+w)] = 1.
+            x0 = np.clip(round(x),0,self.input_dim[1])
+            x1 = np.clip(round(x+w),0, self.input_dim[1])
+            y0 = np.clip(round(y),0,self.input_dim[0])
+            y1 = np.clip(round(y+h),0,self.input_dim[0])
+            try:
+                mask[0, y0:y1, x0:x1] = 1.
+            except TypeError:
+                print("x, y, w, h not int error")
         torch_mask = torch.Tensor(mask)
         img_rgbm = torch.cat([img, torch_mask], dim=0)
         return img_rgbm, anno
