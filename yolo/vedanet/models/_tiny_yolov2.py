@@ -28,8 +28,9 @@ class TinyYolov2(YoloABC):
 
         self.loss = None
         self.postprocess = None
+        self.input_channels = input_channels
 
-        self.backbone = backbone.TinyYolov2()
+        self.backbone = backbone.TinyYolov2(input_channels=input_channels)
         self.head = head.TinyYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
 
         if weights_file is not None:

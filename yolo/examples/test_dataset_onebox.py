@@ -16,7 +16,7 @@ from torchvision import transforms as tf
 from vedanet.data import OneboxDataset
 from unittest import TestCase
 import numpy as np
-
+from vedanet.models import TinyYolov2
 
 def get_dataset():
     anno = 'VOCdevkit/onedet_cache/train.pkl'
@@ -60,9 +60,16 @@ def get_dataset():
     return OneboxDataset('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
 
+def get_model():
+    model = TinyYolov2(20, weights_file=None, input_channels=4, train_flag=1, clear=False)
+    # model.cuda()
+    return model
+
+
 class OneBoxTests(TestCase):
     def setUp(self):
         self.dataset = get_dataset()
+        self.net = get_model()
 
     def test_total_count(self):
         self.assertEqual(len(self.dataset), 40058)
@@ -75,7 +82,7 @@ class OneBoxTests(TestCase):
             self.assertTrue(this_class in target_classes)
 
     def test_rgbd(self):
-        for i in range(40,50):
+        for i in range(40,41):
             x, y = self.dataset[i]
             display = False
             if display:
@@ -84,5 +91,12 @@ class OneBoxTests(TestCase):
                 plt.imshow(torch.mean(x[0:3], dim=0)*(x[3,...]+0.5)/1.5,cmap="gray")
                 plt.show()
             self.assertEqual(x.shape[0], 4)
+
+    def test_model(self):
+        for i in range(30,32):
+            x, y = self.dataset[i]
+            # x.cuda()
+            loss = self.net(x.unsqueeze(0), [y])
+            pass
 
 
