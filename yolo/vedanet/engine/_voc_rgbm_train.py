@@ -52,7 +52,8 @@ class VocRgbmTrainingEngine(engine.Engine):
 
         log.debug('Creating network')
         model_name = hyper_params.model_name
-        net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1, clear=hyper_params.clear)
+        net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights,
+                                          input_channels=4, train_flag=1, clear=hyper_params.clear)
         net.seen = 0
         log.info('Net structure\n\n%s\n' % net)
         if self.cuda:
