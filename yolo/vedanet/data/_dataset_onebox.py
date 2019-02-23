@@ -81,6 +81,12 @@ class OneboxDataset(Dataset):
     def __len__(self):
         return len(self.boxes) #len(self.keys)
 
+    def get_anno(self, index):
+        anno = copy.deepcopy(self.boxes[index])
+        if self.anno_tf is not None:
+            anno = self.anno_tf(anno)
+        return anno
+
     @Dataset.resize_getitem
     def __getitem__(self, index):
         """ Get transformed image and annotations based of the index of ``self.keys``

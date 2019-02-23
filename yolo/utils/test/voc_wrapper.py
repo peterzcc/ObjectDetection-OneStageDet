@@ -22,24 +22,6 @@ def genResults(reorg_dets, results_folder, nms_thresh=0.45):
             fd.write('\n'.join(ret))
 
 
-def gen_results_onebox(reorg_dets, results_folder, nms_thresh=0.45):
-    for label, pieces in reorg_dets.items():
-        ret = []
-        dst_fp = '%s/comp4_det_test_%s.txt' % (results_folder, label)
-        for index in pieces.keys():
-            pred = np.array(index, dtype=np.float32)
-            keep = nms(pred, nms_thresh, force_cpu=True)
-            #keep = soft_nms(pred, sigma=0.5, Nt=0.3, method=1)
-            #print k, len(keep), len(pred_dets[k])
-            for ik in keep:
-                #print k, pred_left[ik][-1], ' '.join([str(int(num)) for num in pred_left[ik][:4]])
-                line ='%s %f %s' % (index, pred[ik][-1], ' '.join([str(num) for num in pred[ik][:4]]))
-                ret.append(line)
-
-        with open(dst_fp, 'w') as fd:
-            fd.write('\n'.join(ret))
-
-
 def reorgDetection(dets, netw, neth,file_names=None): #, prefix):
     reorg_dets = {}
     for k, v in dets.items():
@@ -78,21 +60,28 @@ def reorgDetection(dets, netw, neth,file_names=None): #, prefix):
 
     return reorg_dets
 
-def reorg_det_onebox(dets, netw, neth,file_names=None): #, prefix):
+
+
+def reorg_det_onebox(dets, netw, neth,file_names=None, no_transform=True): #, prefix):
     reorg_dets = {}
     for k, v in dets.items():
         #img_fp = '%s/%s.jpg' % (prefix, k)
         img_fp = file_names[k]
         #name = k.split('/')[-1]
         # name = k.split('/')[-1][:-4]
-
-        with Image.open(img_fp) as fd:
-            orig_width, orig_height = fd.size
-        scale = min(float(netw)/orig_width, float(neth)/orig_height)
-        new_width = orig_width * scale
-        new_height = orig_height * scale
-        pad_w = (netw - new_width) / 2.0
-        pad_h = (neth - new_height) / 2.0
+        if no_transform:
+            scale = 1.
+            pad_w = 0.
+            pad_h = 0.
+            orig_width, orig_height = netw, neth
+        else:
+            with Image.open(img_fp) as fd:
+                orig_width, orig_height = fd.size
+            scale = min(float(netw)/orig_width, float(neth)/orig_height)
+            new_width = orig_width * scale
+            new_height = orig_height * scale
+            pad_w = (netw - new_width) / 2.0
+            pad_h = (neth - new_height) / 2.0
 
         for iv in v:
             xmin = iv.x_top_left

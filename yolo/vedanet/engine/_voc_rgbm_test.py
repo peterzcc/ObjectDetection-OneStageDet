@@ -8,7 +8,8 @@ from .. import data as vn_data
 from .. import models
 from . import engine
 from utils.test import voc_wrapper
-from examples.eval import generate_aps
+from examples.eval import generate_aps, generate_aps_onebox
+import pickle
 
 __all__ = ['VocRgbmTest']
 
@@ -84,23 +85,29 @@ def VocRgbmTest(hyper_params):
     anno, det = {}, {}
     num_det = 0
 
-    for idx, (data, box) in enumerate(loader):
-        if (idx + 1) % 20 == 0: 
-            log.info('%d/%d' % (idx + 1, len(loader)))
-        if use_cuda:
-            data = data.cuda()
-        with torch.no_grad():
-            output, loss = net(data, box)
+    compute_results = False
+    if compute_results:
+        for idx, (data, box) in enumerate(loader):
+            if (idx + 1) % 20 == 0:
+                log.info('%d/%d' % (idx + 1, len(loader)))
+            if use_cuda:
+                data = data.cuda()
+            with torch.no_grad():
+                output, loss = net(data, box)
 
-        key_val = len(anno)
-        anno.update({key_val+k: v for k,v in enumerate(box)})
-        det.update({key_val+k: v for k,v in enumerate(output)})
+            key_val = len(anno)
+            anno.update({key_val+k: v for k,v in enumerate(box)})
+            det.update({key_val+k: v for k,v in enumerate(output)})
 
-    netw, neth = network_size
-    reorg_dets = voc_wrapper.reorg_det_onebox(det, netw, neth,file_names=dataset.files) #, prefix)
-    if not os.path.isdir(results):
-        os.mkdir(results)
-    voc_wrapper.genResults(reorg_dets, results, nms_thresh)
-    generate_aps(results_root=results)
+        netw, neth = network_size
+        reorg_dets = voc_wrapper.reorg_det_onebox(det, netw, neth,
+                                                  file_names=dataset.files,
+                                                  no_transform=True) #, prefix)
+        if not os.path.isdir(results):
+            os.mkdir(results)
+        voc_wrapper.genResults(reorg_dets, results, nms_thresh)
+    should_output_ap = True
+    if should_output_ap:
+        generate_aps_onebox(results_root=results,test_dataset=dataset)
 
 
