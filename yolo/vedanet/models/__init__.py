@@ -1,5 +1,6 @@
 from ._yolov3 import *
 from ._yolov2 import *
+from ._metanet import *
 from ._region_mobilenet import *
 from ._region_mobilenetv2 import *
 from ._tiny_yolov2 import *

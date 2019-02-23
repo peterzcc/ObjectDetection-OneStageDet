@@ -9,3 +9,4 @@ from ._shufflenetv2 import *
 from ._squeezenext import *
 from ._xception import *
 from ._light_xception import *
+from ._metanet import *

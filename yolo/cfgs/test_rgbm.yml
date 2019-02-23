@@ -7,7 +7,7 @@ labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", 
 
 data_root_dir: "VOCdevkit/onedet_cache"
 
-model_name: TinyYolov2
+model_name: "MetaNet"
 
 train:
     dataset: "train"
