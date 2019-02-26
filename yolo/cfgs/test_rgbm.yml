@@ -11,7 +11,7 @@ model_name: "MetaNet"
 
 train:
     dataset: "train"
-    stdout: True
+    stdout: False
     gpus: "0"
     nworkers: 16
     pin_mem: True
@@ -39,13 +39,13 @@ train:
 test:
     dataset: "test"
     stdout: True
-    gpus: "0"
+    gpus: "1"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/TinyYolov2/test_rgbm/weights/backup.pt"
+    weights: "outputs/MetaNet/test_rgbm/weights/weights_70200.pt"
 
     conf_thresh: 0.005
     nms_thresh: 0.45
