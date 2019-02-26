@@ -85,7 +85,7 @@ def VocRgbmTest(hyper_params):
     anno, det = {}, {}
     num_det = 0
 
-    compute_results = False
+    compute_results = True
     if compute_results:
         for idx, (data, box) in enumerate(loader):
             if (idx + 1) % 20 == 0:
