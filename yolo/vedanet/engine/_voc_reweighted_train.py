@@ -7,7 +7,7 @@ import os
 from .. import data
 from .. import models
 from . import engine
-__all__ = ['VOCTrainingEngine']
+__all__ = ['VocReweightedTrainingEngine']
 
 
 def create_dataset(hyper_params):
@@ -34,7 +34,7 @@ def create_dataset(hyper_params):
     return data.BramboxDataset('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
 
-class VOCTrainingEngine(engine.Engine):
+class VocReweightedTrainingEngine(engine.Engine):
     """ This is a custom engine for this training cycle """
 
     def __init__(self, hyper_params):
@@ -77,7 +77,7 @@ class VOCTrainingEngine(engine.Engine):
             collate_fn = data.list_collate,
         )
 
-        super(VOCTrainingEngine, self).__init__(net, optim, dataloader)
+        super(VocReweightedTrainingEngine, self).__init__(net, optim, dataloader)
 
         self.nloss = self.network.nloss
 
