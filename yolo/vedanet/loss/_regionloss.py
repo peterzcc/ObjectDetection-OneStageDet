@@ -96,6 +96,7 @@ class RegionLoss(nn.modules.loss._Loss):
             >>> print(f'loss = {loss:.2f}')
             loss = 20.43
         """
+        assert not torch.isnan(output).any()
         # Parameters
         nB = output.size(0)
         nA = self.num_anchors
@@ -127,13 +128,14 @@ class RegionLoss(nn.modules.loss._Loss):
         lin_y = torch.linspace(0, nH-1, nH).to(device).repeat(nW, 1).t().contiguous().view(nH*nW)
         anchor_w = self.anchors[self.anchors_mask, 0].view(nA, 1).to(device) 
         anchor_h = self.anchors[self.anchors_mask, 1].view(nA, 1).to(device)
-
+        assert not torch.isnan(coord).any()
         pred_boxes[:, 0] = (coord[:, :, 0].detach() + lin_x).view(-1)
         pred_boxes[:, 1] = (coord[:, :, 1].detach() + lin_y).view(-1)
         pred_boxes[:, 2] = (coord[:, :, 2].detach().exp() * anchor_w).view(-1)
         pred_boxes[:, 3] = (coord[:, :, 3].detach().exp() * anchor_h).view(-1)
 
         # Get target values
+        assert not torch.isnan(pred_boxes).any()
         coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls = self.build_targets(pred_boxes, target, nH, nW)
         # coord
         coord_mask = coord_mask.expand_as(tcoord)[:,:,:2] # 0 = 1 = 2 = 3, only need first two element
@@ -160,9 +162,15 @@ class RegionLoss(nn.modules.loss._Loss):
         loss_coord_center = 2.0 * 1.0 * self.coord_scale * (coord_mask*bce(coord_center, tcoord_center)).sum()
         loss_coord_wh = 2.0 * 1.5 * self.coord_scale * (coord_mask*smooth_l1(coord_wh, tcoord_wh)).sum()
         self.loss_coord = loss_coord_center + loss_coord_wh
-
+        if torch.isnan(conf).any():
+            raise ValueError()
+        if torch.isnan(tconf).any():
+            raise ValueError()
         loss_conf_pos = 1.0 * self.object_scale * (conf_pos_mask * bce(conf, tconf)).sum()
-        loss_conf_neg = 1.0 * self.noobject_scale * (conf_neg_mask * bce(conf, tconf)).sum() 
+        loss_conf_neg = 1.0 * self.noobject_scale * (conf_neg_mask * bce(conf, tconf)).sum()
+        if torch.isnan(loss_conf_pos).any():
+            raise ValueError()
+        assert not torch.isnan(loss_conf_neg).any()
         self.loss_conf = loss_conf_pos +  loss_conf_neg 
 
         if nC > 1 and cls.numel() > 0:
@@ -181,8 +189,11 @@ class RegionLoss(nn.modules.loss._Loss):
         self.info['coord_xy'] = (coord_mask * mse(coord_center, tcoord_center)).sum().item() / obj_cur
         self.info['coord_wh'] = (coord_mask* mse(coord_wh, tcoord_wh)).sum().item() / obj_cur
         self.printInfo()
-
+        assert not torch.isnan(self.loss_coord).any()
+        assert not torch.isnan(self.loss_conf).any()
+        assert not torch.isnan(self.loss_cls).any()
         self.loss_tot = self.loss_coord + self.loss_conf + self.loss_cls
+
         return self.loss_tot
 
     def build_targets(self, pred_boxes, ground_truth, nH, nW):
@@ -234,6 +245,8 @@ class RegionLoss(nn.modules.loss._Loss):
 
             # Set confidence mask of matching detections to 0
             iou_gt_pred = bbox_ious(gt, cur_pred_boxes)
+            if torch.isnan(iou_gt_pred).any():
+                raise ValueError()
             mask = (iou_gt_pred > self.thresh).sum(0) >= 1
             conf_neg_mask[b][mask.view_as(conf_neg_mask[b])] = 0
             
@@ -273,6 +286,8 @@ class RegionLoss(nn.modules.loss._Loss):
                     tcoord[b][best_n][1][gj*nW+gi] = gt[i, 1] - gj
                     tcoord[b][best_n][2][gj*nW+gi] = math.log(gt[i, 2]/self.anchors[cur_n, 0])
                     tcoord[b][best_n][3][gj*nW+gi] = math.log(gt[i, 3]/self.anchors[cur_n, 1])
+                    if torch.isnan(iou).any():
+                        raise ValueError()
                     tconf[b][best_n][gj*nW+gi] = iou
                     tcls[b][best_n][gj*nW+gi] = anno.class_id
         # loss informaion

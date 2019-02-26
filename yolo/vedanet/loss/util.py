@@ -24,8 +24,16 @@ def bbox_ious(boxes1, boxes2):
 
     areas1 = (b1x2 - b1x1) * (b1y2 - b1y1)
     areas2 = (b2x2 - b2x1) * (b2y2 - b2y1)
+    assert not torch.isnan(areas1).any()
+    assert not torch.isnan(areas2).any()
     unions = (areas1 + areas2.t()) - intersections
-
-    return intersections / unions
+    # eps = torch.Tensor([1e-15]).to(device=unions.device)
+    # if unions.is_cuda and not eps.is_cuda:
+    #     eps = eps.cuda()
+    # unions = torch.min(unions, eps)
+    if torch.isnan(unions).any():
+        raise ValueError()
+    ious = intersections / unions
+    return ious
 
 
