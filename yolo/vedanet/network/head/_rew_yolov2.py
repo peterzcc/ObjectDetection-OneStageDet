@@ -37,11 +37,14 @@ class RewYolov2(nn.Module):
         self.reweighting_layer = None
 
     def get_test_reweighting_layer(self, device):
-        reweighting_layer = torch.arange(0, self.num_classes, dtype=torch.float32, device=device)
+        reweighting_id = torch.arange(0, 1024, dtype=torch.float32, device=device)
         # do modulo:
-        reweighting_layer = reweighting_layer.fmod(self.num_classes)
-        reweighting_layer = reweighting_layer.view(1, self.num_classes, 1, 1, 1)
-        return reweighting_layer
+        reweighting_id = reweighting_id.fmod(self.num_classes)
+        reweighting_id = reweighting_id.view(1, 1, 1024, 1, 1).repeat(1, 20, 1, 1, 1)
+        v_class = torch.arange(0, self.num_classes, dtype=torch.float32, device=device)
+        v_class = v_class.view(1, 20, 1, 1, 1).repeat(1, 1, 1024, 1, 1)
+        rew_layer = (reweighting_id==v_class).float()
+        return rew_layer
 
     def get_reweighted_output(self, pre_ultimate_layer: torch.Tensor, detector, reweighting_layer):
         batch_size = pre_ultimate_layer.shape[0]
