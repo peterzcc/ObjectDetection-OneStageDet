@@ -62,16 +62,19 @@ class RewYolov2(nn.Module):
                                                  dim=3)
         agg_shape = [batch_size,grouped_prediction.shape[1],
                      5 + self.num_classes,*grouped_prediction.shape[4:]]
-        class_probs = softmaxed_grouped_prediction[:, :, :, 5, :, :]
+        class_probs = softmaxed_grouped_prediction[:, :, :, 5:6, :, :]
         max_class_probs, max_ids = torch.max(class_probs, dim=2, keepdim=True)
-        max_class_probs = max_class_probs.repeat(1, 1, self.num_classes, 1, 1)
-        is_valid = (class_probs== max_class_probs).unsqueeze(3).repeat(1, 1, 1, 5, 1, 1)
-        final_prediction_0_5 = (softmaxed_grouped_prediction[:, :, :, 0:5, :, :]*is_valid.float()).sum(dim=2)
-        final_prediction_5 = class_probs
+        # max_class_probs = max_class_probs.repeat(1, 1, self.num_classes, 1, 1)
+        # is_valid = (class_probs== max_class_probs).unsqueeze(3).repeat(1, 1, 1, 5, 1, 1)
+        # final_prediction_0_5 = (softmaxed_grouped_prediction[:, :, :, 0:5, :, :]*is_valid.float()).sum(dim=2)
+
+        gather_ids = max_ids.repeat(1, 1, 1, 5, 1, 1)
+        final_prediction_0_5 = torch.gather(softmaxed_grouped_prediction[:, :, :, 0:5, :, :],
+                                        dim=2, index=gather_ids).squeeze(dim=2)
+        final_prediction_5 = class_probs.squeeze(dim=3)
         final_prediction = torch.cat([final_prediction_0_5,
                                       final_prediction_5],
                                      dim=2)
-        # reshaped_final_prediction = final_prediction.transpose(1, 2).contiguous() #should I transpose?
         reshaped_final_prediction = final_prediction
         reshaped_final_prediction = reshaped_final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
         assert not torch.isnan(reshaped_final_prediction).any()
