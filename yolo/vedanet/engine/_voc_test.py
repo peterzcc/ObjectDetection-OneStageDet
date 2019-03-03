@@ -53,6 +53,7 @@ def VOCTest(hyper_params):
     #prefix = hyper_params.prefix
     results = hyper_params.results
 
+    print(model_name)
     test_args = {'conf_thresh': conf_thresh, 'network_size': network_size, 'labels': labels}
     net = models.__dict__[model_name](hyper_params.classes, weights, train_flag=2, test_args=test_args)
     net.eval()

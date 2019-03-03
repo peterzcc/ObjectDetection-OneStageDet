@@ -8,14 +8,15 @@ import copy
 import logging as log
 from PIL import Image
 import random
+import torch
 
 import brambox.boxes as bbb
 from ._dataloading import Dataset
 
-__all__ = ['BramboxDataset']
+__all__ = ['MetaboxDataset']
 
 
-class BramboxDataset(Dataset):
+class MetaboxDataset(Dataset):
     """ Dataset for any brambox parsable annotation format.
 
     Args:
@@ -41,6 +42,8 @@ class BramboxDataset(Dataset):
         self.annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
         self.keys = list(self.annos)
 
+        self.classid_anno = {i: [] for i in range(len(class_label_map))}
+
         # Add class_ids
         if class_label_map is None:
             log.warn(f'No class_label_map given, annotations wont have a class_id values for eg. loss function')
@@ -53,6 +56,7 @@ class BramboxDataset(Dataset):
                         raise ValueError(f'{a.class_label} is not found in the class_label_map') from err
                 else:
                     a.class_id = 0
+                self.classid_anno[a.class_id].append((k, a))
 
         log.info(f'Dataset loaded: {len(self.keys)} images')
 
@@ -82,4 +86,36 @@ class BramboxDataset(Dataset):
         if self.anno_tf is not None:
             anno = self.anno_tf(anno)
 
-        return img, anno
+        load_img = self.id(self.keys[index])
+        meta_imgs = []
+        for i in self.classid_anno:
+            if len(self.classid_anno[i]) != 0:
+                # get image
+                randidx = random.randint(0, len(self.classid_anno[i]) - 1)
+                class_img_name = self.classid_anno[i][randidx][0]
+                while class_img_name == load_img:
+                    randidx = random.randint(0, len(self.classid_anno[i]) - 1)
+                    class_img_name = self.classid_anno[i][randidx][0]
+                class_img = Image.open(class_img_name)
+                class_img_tf = self.img_tf(class_img)          # [3, w, h]
+
+                # get annotation
+                class_anno = [copy.deepcopy(self.classid_anno[i][randidx][1])]
+                class_anno = self.anno_tf(class_anno)
+                while(len(class_anno) == 0):
+                    class_img_tf = self.img_tf(class_img)
+                    class_anno = [copy.deepcopy(self.classid_anno[i][randidx][1])]
+                    class_anno = self.anno_tf(class_anno)
+                class_anno = class_anno[0]
+
+                # add a mask
+                x0 = int(class_anno.x_top_left)
+                y0 = int(class_anno.y_top_left)
+                x1 = int(class_anno.width + x0)
+                y1 = int(class_anno.height + y0)
+                mask = torch.zeros((1, img.shape[1], img.shape[2]))
+                mask[0, y0:y1, x0:x1] = 1
+                class_img = torch.cat((class_img_tf, mask), dim=0)
+                meta_imgs.append(class_img.unsqueeze(0))
+        meta_imgs = torch.cat(meta_imgs, dim=0)
+        return img, anno, meta_imgs

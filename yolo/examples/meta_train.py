@@ -38,7 +38,7 @@ if __name__ == '__main__':
     hyper_params = vn.hyperparams.HyperParams(config, train_flag=train_flag)
 
     # int eng
-    eng = vn.engine.VOCTrainingEngine(hyper_params)
+    eng = vn.engine.MetaTrainingEngine(hyper_params)
 
     # run eng
     b1 = eng.batch

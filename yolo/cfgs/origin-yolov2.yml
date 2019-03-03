@@ -5,12 +5,12 @@ log_name: "logs"
 
 labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
-data_root_dir: "VOCdevkit/onedet_cache"
+data_root_dir: "../VOCdevkit/onedet_cache"
 
 train:
     dataset: "train"
     stdout: True
-    gpus: "0"
+    gpus: "1"
     nworkers: 16
     pin_mem: True
 
@@ -37,13 +37,13 @@ train:
 test:
     dataset: "test"
     stdout: False
-    gpus: "2"
+    gpus: "1"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/Yolov2/baseline/weights/weights_200.pt" # "weights/Yolov2_60200.dw"
+    weights: "outputs/Yolov2/baseline/weights/weights_20000.pt" # "weights/Yolov2_60200.dw"
 
     conf_thresh: 0.005
     nms_thresh: 0.45

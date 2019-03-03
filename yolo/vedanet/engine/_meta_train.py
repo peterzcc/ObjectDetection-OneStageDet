@@ -2,44 +2,41 @@ import logging as log
 import torch
 from torchvision import transforms as tf
 from statistics import mean
-from PIL import Image, ImageDraw
 import os
-import random
-import numpy as np
-import copy
 
 from .. import data
 from .. import models
 from . import engine
 
-__all__ = ['VOCTrainingEngine']
+__all__ = ['MetaTrainingEngine']
 
-class VOCDataset(data.BramboxDataset):
+
+class VOCDataset(data.MetaboxDataset):
     def __init__(self, hyper_params):
         anno = hyper_params.trainfile
         root = hyper_params.data_root
         flip = hyper_params.flip
         jitter = hyper_params.jitter
-        hue, sat, val = hyper_params.hue, hyper_params.sat ,hyper_params.val
+        hue, sat, val = hyper_params.hue, hyper_params.sat, hyper_params.val
         network_size = hyper_params.network_size
         labels = hyper_params.labels
 
-        rf  = data.transform.RandomFlip(flip)
-        rc  = data.transform.RandomCropLetterbox(self, jitter)
+        rf = data.transform.RandomFlip(flip)
+        rc = data.transform.RandomCropLetterbox(self, jitter)
         hsv = data.transform.HSVShift(hue, sat, val)
-        it  = tf.ToTensor()
+        it = tf.ToTensor()
 
         img_tf = data.transform.Compose([rc, rf, hsv, it])
         anno_tf = data.transform.Compose([rc, rf])
 
         def identify(img_id):
-            #return f'{root}/VOCdevkit/{img_id}.jpg'
+            # return f'{root}/VOCdevkit/{img_id}.jpg'
             return f'{img_id}'
 
         super(VOCDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
 
-class VOCTrainingEngine(engine.Engine):
+class MetaTrainingEngine(engine.Engine):
     """ This is a custom engine for this training cycle """
 
     def __init__(self, hyper_params):
@@ -56,7 +53,8 @@ class VOCTrainingEngine(engine.Engine):
 
         log.debug('Creating network')
         model_name = hyper_params.model_name
-        net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1, clear=hyper_params.clear)
+        net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1,
+                                          clear=hyper_params.clear)
         log.info('Net structure\n\n%s\n' % net)
         if self.cuda:
             net.cuda()
@@ -67,21 +65,22 @@ class VOCTrainingEngine(engine.Engine):
         decay = hyper_params.decay
         batch = hyper_params.batch
         log.info(f'Adjusting learning rate to [{learning_rate}]')
-        optim = torch.optim.SGD(net.parameters(), lr=learning_rate/batch, momentum=momentum, dampening=0, weight_decay=decay*batch)
+        optim = torch.optim.SGD(net.parameters(), lr=learning_rate / batch, momentum=momentum, dampening=0,
+                                weight_decay=decay * batch)
 
         log.debug('Creating dataloader')
         dataset = VOCDataset(hyper_params)
         dataloader = data.DataLoader(
             dataset,
-            batch_size = self.mini_batch_size,
-            shuffle = True,
-            drop_last = True,
-            num_workers = hyper_params.nworkers if self.cuda else 0,
-            pin_memory = hyper_params.pin_mem if self.cuda else False,
-            collate_fn = data.list_collate,
+            batch_size=self.mini_batch_size,
+            shuffle=True,
+            drop_last=True,
+            num_workers=hyper_params.nworkers if self.cuda else 0,
+            pin_memory=hyper_params.pin_mem if self.cuda else False,
+            collate_fn=data.list_collate,
         )
 
-        super(VOCTrainingEngine, self).__init__(net, optim, dataloader)
+        super(MetaTrainingEngine, self).__init__(net, optim, dataloader)
 
         self.nloss = self.network.nloss
 
@@ -102,20 +101,21 @@ class VOCTrainingEngine(engine.Engine):
         rs_rates = hyper_params.rs_rates
         resize = hyper_params.resize
 
-        self.add_rate('learning_rate', lr_steps, [lr/self.batch_size for lr in lr_rates])
+        self.add_rate('learning_rate', lr_steps, [lr / self.batch_size for lr in lr_rates])
         self.add_rate('backup_rate', bp_steps, bp_rates, backup)
         self.add_rate('resize_rate', rs_steps, rs_rates, resize)
 
         self.dataloader.change_input_dim()
 
     def process_batch(self, data):
-        data, target = data
+        data, target, meta_imgs = data
         # to(device)
         if self.cuda:
             data = data.cuda()
-        #data = torch.autograd.Variable(data, requires_grad=True)
+            meta_imgs = meta_imgs.cuda()
+        # data = torch.autograd.Variable(data, requires_grad=True)
 
-        loss = self.network(data, target)
+        loss = self.network((data, meta_imgs), target)
         loss.backward()
 
         for ii in range(self.nloss):
@@ -124,7 +124,7 @@ class VOCTrainingEngine(engine.Engine):
             self.train_loss[ii]['conf'].append(self.network.loss[ii].loss_conf.item() / self.mini_batch_size)
             if self.network.loss[ii].loss_cls is not None:
                 self.train_loss[ii]['cls'].append(self.network.loss[ii].loss_cls.item() / self.mini_batch_size)
-    
+
     def train_batch(self):
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -145,14 +145,17 @@ class VOCTrainingEngine(engine.Engine):
                 all_cls += cls
 
             if self.classes > 1:
-                log.info(f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)} Cls:{round(cls, 2)})')
+                log.info(
+                    f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)} Cls:{round(cls, 2)})')
             else:
                 log.info(f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)})')
 
         if self.classes > 1:
-            log.info(f'{self.batch} # All : Loss:{round(all_tot, 5)} (Coord:{round(all_coord, 2)} Conf:{round(all_conf, 2)} Cls:{round(all_cls, 2)})')
+            log.info(
+                f'{self.batch} # All : Loss:{round(all_tot, 5)} (Coord:{round(all_coord, 2)} Conf:{round(all_conf, 2)} Cls:{round(all_cls, 2)})')
         else:
-            log.info(f'{self.batch} # All : Loss:{round(all_tot, 5)} (Coord:{round(all_coord, 2)} Conf:{round(all_conf, 2)})')
+            log.info(
+                f'{self.batch} # All : Loss:{round(all_tot, 5)} (Coord:{round(all_coord, 2)} Conf:{round(all_conf, 2)})')
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
         if self.batch % self.backup_rate == 0:
             self.network.save_weights(os.path.join(self.backup_dir, f'weights_{self.batch}.pt'))

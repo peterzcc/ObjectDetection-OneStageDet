@@ -9,3 +9,4 @@ It has an engine, capable of orchestrating your training and test cycles, and al
 from ._voc_train import *
 from ._voc_test import *
 from ._speed import *
+from ._meta_train import *

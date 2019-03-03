@@ -1,16 +1,19 @@
 output_root: "outputs"
-output_version: "base_class"
+output_version: "meta_base"
 backup_name: "weights"
 log_name: "logs"
 
-labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+# all labels
+#labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
+# base labels
+labels: ['aeroplane', 'bicycle', 'boat', 'bottle', 'car', 'cat', 'chair', 'diningtable', 'dog', 'horse', 'person', 'pottedplant', 'sheep', 'train', 'tvmonitor']
 data_root_dir: "../VOCdevkit/onedet_cache"
 
 train:
     dataset: "k_shot_base" #"k_shot_joint"
-    stdout: False
-    gpus: "3"
+    stdout: True
+    gpus: "0"
     nworkers: 16
     pin_mem: True
 
@@ -30,8 +33,8 @@ train:
     backup_rates: [1000, 200]
 
     input_shape: [608, 608]
-    batch_size: 64
-    mini_batch_size: 16
+    batch_size: 4
+    mini_batch_size: 1
     weights: "weights/darknet19_448.conv.23"
 
 test:
