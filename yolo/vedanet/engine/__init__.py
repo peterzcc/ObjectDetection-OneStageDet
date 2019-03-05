@@ -10,3 +10,4 @@ from ._voc_train import *
 from ._voc_test import *
 from ._speed import *
 from ._meta_train import *
+from ._meta_test import *

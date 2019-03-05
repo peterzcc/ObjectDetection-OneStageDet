@@ -10,3 +10,5 @@ from . import layer
 from . import backbone
 # head
 from . import head
+# metanet
+from . import metanet

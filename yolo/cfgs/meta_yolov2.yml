@@ -13,7 +13,7 @@ data_root_dir: "../VOCdevkit/onedet_cache"
 train:
     dataset: "k_shot_base" #"k_shot_joint"
     stdout: True
-    gpus: "0"
+    gpus: "1"
     nworkers: 16
     pin_mem: True
 
@@ -38,19 +38,19 @@ train:
     weights: "weights/darknet19_448.conv.23"
 
 test:
-    dataset: "test"
+    dataset: 'k_shot_base_test' # "test"
     stdout: True
-    gpus: "2"
+    gpus: "1"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
-    batch_size: 16
-    weights: "outputs/Yolov2/base_class/weights/weights_25000.pt" #"weights/yolov2_60200.dw" #
+    batch_size: 1
+    weights: "outputs/Yolov2_Meta/meta_base/weights/final.dw" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190218_base_class"
+    results: "re_190305_base_class"
 
 speed:
     gpus: "7"

@@ -68,7 +68,7 @@ class Yolov2_Meta(YoloABC):
                 t2 = time.time()
             return loss
         else:
-            outputs = self._forward(x)
+            outputs = self._forward((x, meta_imgs))
             if self.postprocess is None:
                 return  # speed
             loss = None
