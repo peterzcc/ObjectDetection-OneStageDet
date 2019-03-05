@@ -57,12 +57,13 @@ class RewYolov2(nn.Module):
         grouped_prediction = prediction.view(batch_size, -1, self.num_classes, 6, *prediction.shape[2:])
 
         f_softmax_axis = torch.nn.Softmax(dim=2)
-        softmaxed_grouped_prediction = torch.cat([grouped_prediction[:, :, :, 0:5, :, :],
-                                                  f_softmax_axis(grouped_prediction[:, :, :, 5:6, :, :])],
-                                                 dim=3)
-        agg_shape = [batch_size,grouped_prediction.shape[1],
-                     5 + self.num_classes,*grouped_prediction.shape[4:]]
-        class_probs = softmaxed_grouped_prediction[:, :, :, 5:6, :, :]
+        # softmaxed_grouped_prediction = torch.cat([grouped_prediction[:, :, :, 0:5, :, :],
+        #                                           f_softmax_axis(grouped_prediction[:, :, :, 5:6, :, :])],
+        #                                          dim=3)
+        # agg_shape = [batch_size,grouped_prediction.shape[1],
+        #              5 + self.num_classes,*grouped_prediction.shape[4:]]
+        # class_probs = softmaxed_grouped_prediction[:, :, :, 5:6, :, :]
+        class_probs = grouped_prediction[:, :, :, 5:6, :, :]
         max_class_probs, max_ids = torch.max(class_probs, dim=2, keepdim=True)
         # max_class_probs = max_class_probs.repeat(1, 1, self.num_classes, 1, 1)
         # is_valid = (class_probs== max_class_probs).unsqueeze(3).repeat(1, 1, 1, 5, 1, 1)
