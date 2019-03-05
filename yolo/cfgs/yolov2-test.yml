@@ -2,6 +2,7 @@ output_root: "outputs"
 output_version: "baseline"
 backup_name: "weights"
 log_name: "logs"
+model_name: "Yolov2"
 
 labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
@@ -37,7 +38,7 @@ train:
 test:
     dataset: "test"
     stdout: True
-    gpus: "0"
+    gpus: "1"
     nworkers: 4
     pin_mem: True
 

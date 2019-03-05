@@ -18,7 +18,7 @@ from examples.eval import generate_aps
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='OneDet: an one stage framework based on PyTorch')
-    parser.add_argument('model_name', help='model name', default=None,nargs='?')
+    parser.add_argument('model_name', help='model name', default=None, nargs='?')
     parser.add_argument('--cfg', type=str, default=None)
     args = parser.parse_args()
 
@@ -31,5 +31,5 @@ if __name__ == '__main__':
     hyper_params = vn.hyperparams.HyperParams(config, train_flag=train_flag)
 
     # init and run eng
-    vn.engine.VOCTest(hyper_params)
+    vn.engine.VocReweightedTest(hyper_params)
 
