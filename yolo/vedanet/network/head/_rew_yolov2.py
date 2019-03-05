@@ -54,7 +54,7 @@ class RewYolov2(nn.Module):
         reweighted_preout = tiled_preout * reweight
         reshaped_preout = reweighted_preout.view(-1, *reweighted_preout.shape[2:])      # (batch * num_classes, C, h, w)
         prediction = detector(reshaped_preout)                                          # (batch * num_classes, (5 + 1) * num_anchors, h, w)
-        grouped_prediction = prediction.view(batch_size, self.num_classes, 5, 6, *prediction.shape[2:])
+        grouped_prediction = prediction.view(batch_size, self.num_classes, -1, 6, *prediction.shape[2:])
         grouped_prediction = grouped_prediction.permute(0, 2, 1, 3, 4, 5)               # (batch, num_anchors, num_classes, 6, h, w)
 
         class_score = grouped_prediction[:, :, :, 5:6, :, :]
