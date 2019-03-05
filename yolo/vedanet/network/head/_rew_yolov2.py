@@ -46,38 +46,28 @@ class RewYolov2(nn.Module):
         rew_layer = (reweighting_id==v_class).float()
         return rew_layer
 
-    def get_reweighted_output(self, pre_ultimate_layer: torch.Tensor, detector, reweighting_layer):
+    def get_reweighted_output(self, pre_ultimate_layer: torch.Tensor, detector, reweight):
         batch_size = pre_ultimate_layer.shape[0]
         # (16,1024,19,19)
-        tiled_preout = pre_ultimate_layer.unsqueeze(1).repeat(1, self.num_classes,1,1,1)
+        tiled_preout = pre_ultimate_layer.unsqueeze(1).repeat(1, self.num_classes,1,1,1)    # (batch, num_classes, C, h, w)
 
-        reweighted_preout = tiled_preout * reweighting_layer
-        reshaped_preout = reweighted_preout.view(-1, *reweighted_preout.shape[2:])
-        prediction = detector(reshaped_preout)
-        grouped_prediction = prediction.view(batch_size, -1, self.num_classes, 6, *prediction.shape[2:])
+        reweighted_preout = tiled_preout * reweight
+        reshaped_preout = reweighted_preout.view(-1, *reweighted_preout.shape[2:])      # (batch * num_classes, C, h, w)
+        prediction = detector(reshaped_preout)                                          # (batch * num_classes, (5 + 1) * num_anchors, h, w)
+        grouped_prediction = prediction.view(batch_size, self.num_classes, 5, 6, *prediction.shape[2:])
+        grouped_prediction = grouped_prediction.permute(0, 2, 1, 3, 4, 5)               # (batch, num_anchors, num_classes, 6, h, w)
 
-        f_softmax_axis = torch.nn.Softmax(dim=2)
-        # softmaxed_grouped_prediction = torch.cat([grouped_prediction[:, :, :, 0:5, :, :],
-        #                                           f_softmax_axis(grouped_prediction[:, :, :, 5:6, :, :])],
-        #                                          dim=3)
-        # agg_shape = [batch_size,grouped_prediction.shape[1],
-        #              5 + self.num_classes,*grouped_prediction.shape[4:]]
-        # class_probs = softmaxed_grouped_prediction[:, :, :, 5:6, :, :]
-        class_probs = grouped_prediction[:, :, :, 5:6, :, :]
-        max_class_probs, max_ids = torch.max(class_probs, dim=2, keepdim=True)
-        # max_class_probs = max_class_probs.repeat(1, 1, self.num_classes, 1, 1)
-        # is_valid = (class_probs== max_class_probs).unsqueeze(3).repeat(1, 1, 1, 5, 1, 1)
-        # final_prediction_0_5 = (softmaxed_grouped_prediction[:, :, :, 0:5, :, :]*is_valid.float()).sum(dim=2)
+        class_score = grouped_prediction[:, :, :, 5:6, :, :]
+        max_class_probs, max_ids = torch.max(class_score, dim=2, keepdim=True)
 
         gather_ids = max_ids.repeat(1, 1, 1, 5, 1, 1)
-        final_prediction_0_5 = torch.gather(softmaxed_grouped_prediction[:, :, :, 0:5, :, :],
+        final_prediction_0_5 = torch.gather(grouped_prediction[:, :, :, 0:5, :, :],
                                         dim=2, index=gather_ids).squeeze(dim=2)
-        final_prediction_5 = class_probs.squeeze(dim=3)
+        final_prediction_5 = class_score.squeeze(dim=3)
         final_prediction = torch.cat([final_prediction_0_5,
                                       final_prediction_5],
                                      dim=2)
-        reshaped_final_prediction = final_prediction
-        reshaped_final_prediction = reshaped_final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
+        reshaped_final_prediction = final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
         assert not torch.isnan(reshaped_final_prediction).any()
         return reshaped_final_prediction
 
