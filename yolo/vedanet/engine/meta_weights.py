@@ -1,11 +1,13 @@
 import logging as log
 import torch
 import os
+import pickle
 
 from torchvision import transforms as tf
 from .. import data as vn_data
 import numpy as np
 from ..network import metanet
+
 
 __all__ = ['MetaWeights']
 
@@ -45,6 +47,7 @@ def MetaWeights(hyper_params):
     pin_mem = hyper_params.pin_mem
     classes = hyper_params.classes
     labels = hyper_params.labels
+    results = hyper_params.results
 
     print(model_name)
     net = metanet.Metanet(num_classes=classes, weights_file=weights)
@@ -86,7 +89,18 @@ def MetaWeights(hyper_params):
 
     for i in class_weight:
         class_weight[i] = sum(class_weight[i]) / len(class_weight[i])
+        print('weight for class {} is {}'.format(labels[i], class_weight[i]))
 
+    if not os.path.isdir(results):
+        os.mkdir(results)
+
+    with open(os.path.join(results, 'weights.pkl'), 'wb') as handle:
+        pickle.dump(class_weight, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    ''' to load weights
+    with open('filename.pickle', 'rb') as handle:
+        b = pickle.load(handle)
+    '''
 
 
 

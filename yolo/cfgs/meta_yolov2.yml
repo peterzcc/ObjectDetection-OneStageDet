@@ -63,7 +63,7 @@ weights:
     batch_size: 1
     weights: "outputs/Yolov2_Meta/meta_base/weights/backup.pt" #"weights/yolov2_60200.dw" #
 
-    results: "meta_weights"
+    results: "results/meta_weights"
 
 speed:
     gpus: "7"
