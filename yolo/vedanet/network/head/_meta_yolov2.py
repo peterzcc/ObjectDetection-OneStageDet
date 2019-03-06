@@ -54,6 +54,9 @@ class MetaYolov2(nn.Module):
         # (16,1024,19,19)
         tiled_preout = pre_ultimate_layer.unsqueeze(1).repeat(1, self.num_classes,1,1,1)    # (batch, num_classes, C, h, w)
 
+        # TODO: remove unsqueeze part
+        if len(reweight.shape) <= 2:
+            reweight = reweight.unsqueeze(2).unsqueeze(3)
         reweighted_preout = tiled_preout * reweight
         reshaped_preout = reweighted_preout.view(-1, *reweighted_preout.shape[2:])      # (batch * num_classes, C, h, w)
         prediction = detector(reshaped_preout)                                          # (batch * num_classes, (5 + 1) * num_anchors, h, w)

@@ -84,7 +84,7 @@ def MetaWeights(hyper_params):
             for anno in annos:      # batch
                 for a in anno:
                     class_id = labels.index(a.class_label)
-                    class_weight[class_id].append(reweights[cur_idx].view(-1))
+                    class_weight[class_id].append(reweights[cur_idx])
                     cur_idx += 1
 
     for i in class_weight:
