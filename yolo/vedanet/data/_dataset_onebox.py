@@ -32,7 +32,7 @@ class OneboxDataset(Dataset):
         kwargs (dict): Keyword arguments that are passed to the brambox parser
     """
     def __init__(self, anno_format, anno_filename,
-                 input_dimension, class_label_map=None, identify=None, img_transform=None, anno_transform=None,
+                 input_dimension, class_list=None, identify=None, img_transform=None, anno_transform=None,
                  file_boxes=None, **kwargs):
         super().__init__(input_dimension)
         self.img_tf = img_transform
@@ -41,23 +41,24 @@ class OneboxDataset(Dataset):
             self.id = identify
         else:
             self.id = lambda name: os.path.splitext(name)[0] + '.png'
-        self.class_label_map = class_label_map
+        self.label_class_map = class_list
+        self.class_label_map = {v: i for i,v in enumerate(self.label_class_map)}
         if file_boxes is None:
             # Get annotations
-            annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
+            annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_list, **kwargs)
             # self.keys = list(self.annos)
             self.boxes = []
             self.files = []
 
             # Add class_ids
-            if class_label_map is None:
+            if class_list is None:
                 log.warn(f'No class_label_map given, annotations wont have a class_id values for eg. loss function')
             for k, anno in annos.items():
                 for a in anno:
-                    if class_label_map is not None:
+                    if class_list is not None:
                         try:
-                            a.class_id = class_label_map.index(a.class_label)
-                        except ValueError as err:
+                            a.class_id = self.class_label_map[a.class_label] #class_list.index(a.class_label)
+                        except KeyError as err:
                             raise ValueError(f'{a.class_label} is not found in the class_label_map') from err
                     else:
                         a.class_id = 0
