@@ -4,6 +4,7 @@ import torch
 import time
 import torch.nn as nn
 from .. import loss
+import pickle
 from .yolo_abc import YoloABC
 from ..network import backbone
 from ..network import head
@@ -15,7 +16,7 @@ __all__ = ['Yolov2_Meta']
 class Yolov2_Meta(YoloABC):
     def __init__(self, num_classes=20, weights_file=None, input_channels=3,
                  anchors=[(42.31, 55.41), (102.17, 128.30), (161.79, 259.17), (303.08, 154.90), (359.56, 320.23)],
-                 anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None):
+                 anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None, reweights_file=None):
         """ Network initialisation """
         super().__init__()
 
@@ -34,6 +35,16 @@ class Yolov2_Meta(YoloABC):
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
         self.metanet = metanet.Metanet(num_classes=num_classes)
 
+        if train_flag == 2:
+            if reweights_file is not None:
+                with open(reweights_file, 'rb') as handle:
+                    reweights = pickle.load(handle)
+                    self.reweights = torch.Tensor(len(reweights.keys()), len(reweights[0])).cuda()
+                    for i in range(len(reweights.keys())):
+                        self.reweights[i] = reweights[i]
+            else:
+                print('no reweights input, use all 1 instead')
+
         if weights_file is not None:
             self.load_weights(weights_file, clear)
         else:
@@ -50,9 +61,19 @@ class Yolov2_Meta(YoloABC):
 
         return features
 
+    def _forward_test(self, x, reweights):
+        data = x
+        middle_feats = self.backbone(data)
+        features = self.head(middle_feats, reweights)
+        loss_fn = loss.RegionLoss
+
+        self.compose(data, features, loss_fn)
+
+        return features
+
     def forward(self, x, target=None):
-        x, meta_imgs = x
-        if self.training:
+        if self.train_flag == 1:
+            x, meta_imgs = x
             self.seen += x.size(0)
             t1 = time.time()
             outputs = self._forward((x, meta_imgs))
@@ -68,7 +89,7 @@ class Yolov2_Meta(YoloABC):
                 t2 = time.time()
             return loss
         else:
-            outputs = self._forward((x, meta_imgs))
+            outputs = self._forward_test(x, reweights=self.reweights)
             if self.postprocess is None:
                 return  # speed
             loss = None

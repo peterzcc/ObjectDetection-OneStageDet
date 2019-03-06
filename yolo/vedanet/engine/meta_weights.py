@@ -73,7 +73,7 @@ def MetaWeights(hyper_params):
     class_weight = {i: [] for i in range(classes)}
 
     for idx, (data, annos) in enumerate(loader):
-        if (idx + 1) % 20 == 0:
+        if (idx + 1) % 100 == 0:
             log.info('%d/%d' % (idx + 1, len(loader)))
         if use_cuda:
             data = data.cuda()

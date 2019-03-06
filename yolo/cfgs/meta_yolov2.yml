@@ -49,7 +49,7 @@ test:
     weights: "outputs/Yolov2_Meta/meta_base/weights/final.dw" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
     nms_thresh: 0.45
-
+    reweights: "results/meta_weights/weights.pkl"
     results: "re_190305_base_class"
 
 weights:

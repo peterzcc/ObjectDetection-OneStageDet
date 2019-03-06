@@ -9,32 +9,9 @@ from .. import models
 from . import engine
 from utils.test import voc_wrapper
 from examples.eval import generate_aps
+from ._voc_test import CustomDataset
 
 __all__ = ['MetaTest']
-
-class CustomDataset(vn_data.MetaboxDataset):
-    def __init__(self, hyper_params):
-        anno = hyper_params.testfile
-        root = hyper_params.data_root
-        network_size = hyper_params.network_size
-        labels = hyper_params.labels
-
-
-        lb  = vn_data.transform.Letterbox(network_size)
-        it  = tf.ToTensor()
-        img_tf = vn_data.transform.Compose([lb, it])
-        anno_tf = vn_data.transform.Compose([lb])
-
-        def identify(img_id):
-            return f'{img_id}'
-
-        super(CustomDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
-
-    def __getitem__(self, index):
-        img, anno, meta_imgs = super(CustomDataset, self).__getitem__(index)
-        for a in anno:
-            a.ignore = a.difficult  # Mark difficult annotations as ignore for pr metric
-        return img, anno, meta_imgs
 
 
 def MetaTest(hyper_params):
@@ -55,7 +32,7 @@ def MetaTest(hyper_params):
 
     print(model_name)
     test_args = {'conf_thresh': conf_thresh, 'network_size': network_size, 'labels': labels}
-    net = models.__dict__[model_name](hyper_params.classes, weights, train_flag=2, test_args=test_args)
+    net = models.__dict__[model_name](hyper_params.classes, weights, train_flag=2, test_args=test_args, reweights_file=hyper_params.reweights)
     net.eval()
     log.info('Net structure\n%s' % net)
     #import pdb
@@ -82,14 +59,13 @@ def MetaTest(hyper_params):
     anno, det = {}, {}
     num_det = 0
 
-    for idx, (data, box, meta_imgs) in enumerate(loader):
+    for idx, (data, box) in enumerate(loader):
         if (idx + 1) % 20 == 0:
             log.info('%d/%d' % (idx + 1, len(loader)))
         if use_cuda:
             data = data.cuda()
-            meta_imgs = meta_imgs.cuda()
         with torch.no_grad():
-            output, loss = net((data, meta_imgs), box)
+            output, loss = net(data, box)
 
         key_val = len(anno)
         anno.update({loader.dataset.keys[key_val+k]: v for k,v in enumerate(box)})

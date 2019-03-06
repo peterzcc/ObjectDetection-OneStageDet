@@ -70,6 +70,7 @@ class HyperParams(object):
             self.conf_thresh = cur_cfg['conf_thresh']
             self.nms_thresh = cur_cfg['nms_thresh']
             self.results = cur_cfg['results']
+            self.reweights = cur_cfg['reweights']
 
         elif train_flag == 3:
             cur_cfg = config
