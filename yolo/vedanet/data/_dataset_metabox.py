@@ -43,6 +43,7 @@ class MetaboxDataset(Dataset):
         self.keys = list(self.annos)
 
         self.classid_anno = {i: [] for i in range(len(class_label_map))}
+        self.class_label_map = class_label_map
 
         # Add class_ids
         if class_label_map is None:
@@ -88,7 +89,7 @@ class MetaboxDataset(Dataset):
 
         load_img = self.id(self.keys[index])
         meta_imgs = []
-        for i in self.classid_anno:
+        for i in range(len(self.class_label_map)):
             if len(self.classid_anno[i]) != 0:
                 # get image
                 randidx = random.randint(0, len(self.classid_anno[i]) - 1)

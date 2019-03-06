@@ -37,6 +37,8 @@ def combineConfig(cur_cfg, train_flag):
         key = 'train'
     elif train_flag == 2:
         key = 'test'
+    elif train_flag == 3:
+        key = 'weights'
     else:
         key = 'speed'
     for k, v in cur_cfg[key].items():
@@ -74,6 +76,12 @@ def initEnv(train_flag, model_name):
         setLogging(log_dir, stdout_flag)
 
         gpus = cur_cfg['test']['gpus']
+        os.environ['CUDA_VISIBLE_DEVICES'] = gpus
+    elif train_flag == 3:
+        stdout_flag = cur_cfg['weights']['stdout']
+        setLogging(log_dir, stdout_flag)
+
+        gpus = cur_cfg['weights']['gpus']
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
     else:
         gpus = cur_cfg['speed']['gpus']

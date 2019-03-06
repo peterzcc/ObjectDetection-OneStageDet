@@ -1,208 +1,101 @@
 #
-#   Lightnet dataset and dataloading mechanisms
+#   Lightnet dataset that works with brambox annotations
 #   Copyright EAVISE
 #
 
-import random
+import os
+import copy
 import logging as log
-from functools import wraps
+from PIL import Image
+import random
 import torch
-from torch.utils.data.dataset import Dataset as torchDataset
-from torch.utils.data.sampler import BatchSampler as torchBatchSampler
-from torch.utils.data.dataloader import DataLoader as torchDataLoader
-from torch.utils.data.dataloader import default_collate
+
+import brambox.boxes as bbb
+from ._dataloading import Dataset
+
+__all__ = ['WeightDataset']
 
 
-__all__ = ['MetaDataset', 'MetaDataLoader']
-
-
-class MetaDataset(torchDataset):
-    """ This class is a subclass of the base :class:`torch.utils.data.Dataset`,
-    that enables on the fly resizing of the ``input_dim`` with :class:`lightnet.data.DataLoader`.
+class WeightDataset(Dataset):
+    """ Dataset for any brambox parsable annotation format.
 
     Args:
+        anno_format (brambox.boxes.formats): Annotation format
+        anno_filename (list or str): Annotation filename, list of filenames or expandable sequence
         input_dimension (tuple): (width,height) tuple with default dimensions of the network
+        class_label_map (list): List of class_labels
+        identify (function, optional): Lambda/function to get image based of annotation filename or image id; Default **replace/add .png extension to filename/id**
+        img_transform (torchvision.transforms.Compose): Transforms to perform on the images
+        anno_transform (torchvision.transforms.Compose): Transforms to perform on the annotations
+        kwargs (dict): Keyword arguments that are passed to the brambox parser
     """
-    def __init__(self, input_dimension):
-        super().__init__()
-        self.__input_dim = input_dimension[:2]
-
-    @property
-    def input_dim(self):
-        """ Dimension that can be used by transforms to set the correct image size, etc.
-        This allows transforms to have a single source of truth for the input dimension of the network.
-
-        Return:
-            list: Tuple containing the current width,height
-        """
-        if hasattr(self, '_input_dim'):
-            return self._input_dim
-        return self.__input_dim
-
-    @staticmethod
-    def resize_getitem(getitem_fn):
-        """ Decorator method that needs to be used around the ``__getitem__`` method. |br|
-        This decorator enables the on the fly resizing  of the ``input_dim`` with our :class:`~lightnet.data.DataLoader` class.
-
-        Example:
-            >>> class CustomSet(ln.data.Dataset):
-            ...     def __len__(self):
-            ...         return 10
-            ...     @ln.data.Dataset.resize_getitem
-            ...     def __getitem__(self, index):
-            ...         # Should return (image, anno) but here we return input_dim
-            ...         return self.input_dim
-            >>> data = CustomSet((200,200))
-            >>> data[0]
-            (200, 200)
-            >>> data[(480,320), 0]
-            (480, 320)
-        """
-        @wraps(getitem_fn)
-        def wrapper(self, index):
-            if not isinstance(index, int):
-                self._input_dim = index[0]
-                index = index[1]
-
-            ret_val = getitem_fn(self, index)
-
-            if hasattr(self, '_input_dim'):
-                del self._input_dim
-
-            return ret_val
-
-        return wrapper
-
-
-class MetaDataLoader(torchDataLoader):
-    """ Lightnet dataloader that enables on the fly resizing of the images.
-    See :class:`torch.utils.data.DataLoader` for more information on the arguments.
-
-    Note:
-        This dataloader only works with :class:`lightnet.data.Dataset` based datasets.
-
-    Example:
-        >>> class CustomSet(ln.data.Dataset):
-        ...     def __len__(self):
-        ...         return 4
-        ...     @ln.data.Dataset.resize_getitem
-        ...     def __getitem__(self, index):
-        ...         # Should return (image, anno) but here we return (input_dim,)
-        ...         return (self.input_dim,)
-        >>> dl = ln.data.DataLoader(
-        ...     CustomSet((200,200)),
-        ...     batch_size = 2,
-        ...     collate_fn = ln.data.list_collate   # We want the data to be grouped as a list
-        ... )
-        >>> dl.dataset.input_dim    # Default input_dim
-        (200, 200)
-        >>> for d in dl:
-        ...     d
-        [[(200, 200), (200, 200)]]
-        [[(200, 200), (200, 200)]]
-        >>> dl.change_input_dim(320, random_range=(1, 1))
-        >>> for d in dl:
-        ...     d
-        [[(320, 320), (320, 320)]]
-        [[(320, 320), (320, 320)]]
-        >>> dl.change_input_dim((480, 320), random_range=(1, 1))
-        >>> for d in dl:
-        ...     d
-        [[(480, 320), (480, 320)]]
-        [[(480, 320), (480, 320)]]
-    """
-    def __init__(self, *args, resize_range=(10, 19), **kwargs):
-        super(MetaDataLoader, self).__init__(*args, **kwargs)
-        self.__initialized = False
-        shuffle = False
-        sampler = None
-        batch_sampler = None
-        if len(args) > 5:
-            shuffle = args[2]
-            sampler = args[3]
-            batch_sampler = args[4]
-        elif len(args) > 4:
-            shuffle = args[2]
-            sampler = args[3]
-            if 'batch_sampler' in kwargs:
-                batch_sampler = kwargs['batch_sampler']
-        elif len(args) > 3:
-            shuffle = args[2]
-            if 'sampler' in kwargs:
-                sampler = kwargs['sampler']
-            if 'batch_sampler' in kwargs:
-                batch_sampler = kwargs['batch_sampler']
+    def __init__(self, anno_format, anno_filename, input_dimension, class_label_map=None, identify=None, img_transform=None, anno_transform=None, **kwargs):
+        super().__init__(input_dimension)
+        self.img_tf = img_transform
+        self.anno_tf = anno_transform
+        if callable(identify):
+            self.id = identify
         else:
-            if 'shuffle' in kwargs:
-                shuffle = kwargs['shuffle']
-            if 'sampler' in kwargs:
-                sampler = kwargs['sampler']
-            if 'batch_sampler' in kwargs:
-                batch_sampler = kwargs['batch_sampler']
+            self.id = lambda name: os.path.splitext(name)[0] + '.png'
 
-        # Use custom BatchSampler
-        if batch_sampler is None:
-            if sampler is None:
-                if shuffle:
-                    sampler = torch.utils.data.sampler.RandomSampler(self.dataset)
+        # Get annotations
+        self.annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
+        self.keys = list(self.annos)
+
+        self.classid_anno = {i: [] for i in range(len(class_label_map))}
+        self.class_label_map = class_label_map
+
+        # Add class_ids
+        if class_label_map is None:
+            log.warn(f'No class_label_map given, annotations wont have a class_id values for eg. loss function')
+        for k, annos in self.annos.items():
+            for a in annos:
+                if class_label_map is not None:
+                    try:
+                        a.class_id = class_label_map.index(a.class_label)
+                    except ValueError as err:
+                        raise ValueError(f'{a.class_label} is not found in the class_label_map') from err
                 else:
-                    sampler = torch.utils.data.sampler.SequentialSampler(self.dataset)
-            batch_sampler = BatchSampler(sampler, self.batch_size, self.drop_last, input_dimension=self.dataset.input_dim)
+                    a.class_id = 0
+                self.classid_anno[a.class_id].append((k, a))
 
-        self.sampler = sampler
-        self.batch_sampler = batch_sampler
+        log.info(f'Dataset loaded: {len(self.keys)} images')
 
-        self.__initialized = True
+    def __len__(self):
+        return len(self.keys)
 
-    def change_input_dim(self, multiple=32, random_range=(10, 19), finish=False):
-        """ This function will compute a new size and update it on the next mini_batch.
+    @Dataset.resize_getitem
+    def __getitem__(self, index):
+        """ Get transformed image and annotations based of the index of ``self.keys``
 
         Args:
-            multiple (int or tuple, optional): value (or values) to multiply the randomly generated range by; Default **32**
-            random_range (tuple, optional): This (min, max) tuple sets the range for the randomisation; Default **(10, 19)**
+            index (int): index of the ``self.keys`` list containing all the image identifiers of the dataset.
 
-        Note:
-            The new size is generated as follows: |br|
-            First we compute a random integer inside ``[random_range]``.
-            We then multiply that number with the ``multiple`` argument, which gives our final new input size. |br|
-            If ``multiple`` is an integer we generate a square size. If you give a tuple of **(width, height)**,
-            the size is computed as :math:`rng * multiple[0], rng * multiple[1]`.
+        Returns:
+            tuple: (transformed image, list of transformed brambox boxes)
         """
-        if finish:
-            size = random_range[1]
-        else:
-            size = random.randint(*random_range)
+        if index >= len(self):
+            raise IndexError(f'list index out of range [{index}/{len(self)-1}]')
+        # Load
+        img = Image.open(self.id(self.keys[index]))
+        anno = copy.deepcopy(self.annos[self.keys[index]])
+        random.shuffle(anno)
+        # Transform
+        if self.img_tf is not None:
+            img = self.img_tf(img)
+        if self.anno_tf is not None:
+            anno = self.anno_tf(anno)
 
-        if isinstance(multiple, int):
-            size = (size * multiple, size * multiple)
-        else:
-            size = (size * multiple[0], size * multiple[1])
-
-        #size = (416, 416)
-        self.batch_sampler.new_input_dim = size
-
-
-class BatchSampler(torchBatchSampler):
-    """ This batch sampler will generate mini-batches of (dim, index) tuples from another sampler.
-    It works just like the :class:`torch.utils.data.sampler.BatchSampler`, but it will prepend a dimension,
-    whilst ensuring it stays the same across one mini-batch.
-    """
-    def __init__(self, *args, input_dimension=None, **kwargs):
-        super(BatchSampler, self).__init__(*args, **kwargs)
-        self.input_dim = input_dimension
-        self.new_input_dim = None
-
-    def __iter__(self):
-        self.__set_input_dim()
-        for batch in super(BatchSampler, self).__iter__():
-            yield [(self.input_dim, idx) for idx in batch]
-            self.__set_input_dim()
-
-    def __set_input_dim(self):
-        """ This function randomly changes the the input dimension of the dataset. """
-        if self.new_input_dim is not None:
-            log.info(f'Resizing network {self.new_input_dim[:2]}')
-            self.input_dim = (self.new_input_dim[0], self.new_input_dim[1])
-            self.new_input_dim = None
-            log.info(f'Resizing finished')
-
+        meta_imgs = []
+        for a in anno:
+            # add a mask
+            x0 = int(a.x_top_left)
+            y0 = int(a.y_top_left)
+            x1 = int(a.width + x0)
+            y1 = int(a.height + y0)
+            mask = torch.zeros((1, img.shape[1], img.shape[2]))
+            mask[0, y0:y1, x0:x1] = 1
+            class_img = torch.cat((copy.deepcopy(img), mask), dim=0)
+            meta_imgs.append(class_img.unsqueeze(0))
+        meta_imgs = torch.cat(meta_imgs, dim=0)
+        return meta_imgs, anno

@@ -1,10 +1,34 @@
-from vedanet.models.network import metanet
+import argparse
+import logging as log
+import time
+from pprint import pformat
 
+import sys
+sys.path.insert(0, '.')
 
+import vedanet as vn
+from utils.envs import initEnv
 
-
+#==============this code added==================================================================:
+# import sys
+# sys.path.append("pycharm-debug-py3k.egg")
+# import pydevd
+# pydevd.settrace('143.89.222.167', port=12345, stdoutToServer=True, stderrToServer=True)
+#================================================================================================
 
 if __name__ == '__main__':
-    classes = ['aeroplane', 'bicycle', 'boat', 'bottle', 'car', 'cat', 'chair', 'diningtable', 'dog', 'horse', 'person', 'pottedplant', 'sheep', 'train', 'tvmonitor']
-    net_meta = metanet.Metanet(num_classes=len(classes))
+    parser = argparse.ArgumentParser(description='OneDet: an one stage framework based on PyTorch')
+    parser.add_argument('model_name', help='model name', default=None)
+    args = parser.parse_args()
+
+    train_flag = 3
+    config = initEnv(train_flag=train_flag, model_name=args.model_name)
+
+    log.info('Config\n\n%s\n' % pformat(config))
+
+    # init env
+    hyper_params = vn.hyperparams.HyperParams(config, train_flag=train_flag)
+
+    # init and run eng
+    vn.engine.MetaWeights(hyper_params)
 

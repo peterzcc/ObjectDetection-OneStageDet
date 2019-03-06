@@ -71,6 +71,18 @@ class HyperParams(object):
             self.nms_thresh = cur_cfg['nms_thresh']
             self.results = cur_cfg['results']
 
+        elif train_flag == 3:
+            cur_cfg = config
+
+            dataset = cur_cfg['dataset']
+            self.trainfile = f'{self.data_root}/{dataset}.pkl'
+            self.nworkers = cur_cfg['nworkers']
+            self.pin_mem = cur_cfg['pin_mem']
+            self.network_size = cur_cfg['input_shape']
+            self.batch = cur_cfg['batch_size']
+            self.weights = cur_cfg['weights']
+            self.results = cur_cfg['results']
+
         else:
             cur_cfg = config
 

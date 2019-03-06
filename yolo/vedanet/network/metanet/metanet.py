@@ -8,6 +8,7 @@ import os
 from collections import OrderedDict
 import torch
 import torch.nn as nn
+import logging as log
 
 from .. import layer as vn_layer
 
@@ -26,7 +27,7 @@ class Metanet(nn.Module):
         self.postprocess (fn): Postprocessing function. By default this is :class:`~lightnet.data.GetBoundingBoxes`
 
     """
-    def __init__(self, num_classes=20):
+    def __init__(self, num_classes=20, weights_file=None):
         """ Network initialisation """
         super().__init__()
         self.num_classes = num_classes
@@ -55,10 +56,35 @@ class Metanet(nn.Module):
         ]
         self.layers = nn.ModuleList([nn.Sequential(layer_dict) for layer_dict in layer_list])
 
+        if weights_file is not None:
+            self.load_weights(weights_file)
+
+
     def forward(self, x):
         temp = [x[i] for i in range(x.shape[0])]
         x = torch.cat(temp, 0)
-        print(x.shape)
         feature = self.layers[0](x)
         weights = self.layers[1](feature)
         return weights
+
+
+    def load_weights(self, weights_file):
+        state = torch.load(weights_file, lambda storage, loc: storage)
+        old_state = self.state_dict()
+
+        for key in list(state['weights'].keys()):
+            if 'metanet' in key:
+                new_key = key.replace('metanet.', '')
+                state['weights'][new_key] = state['weights'].pop(key)
+            else:
+                state['weights'].pop(key)
+
+        new_state = state['weights']
+        if new_state.keys() != old_state.keys():
+            log.warn('Modules not matching, performing partial update')
+            new_state = {k: v for k, v in new_state.items() if k in old_state}
+            old_state.update(new_state)
+            new_state = old_state
+        self.load_state_dict(new_state)
+
+        log.info(f'Loaded weights from {weights_file}')
