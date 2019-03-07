@@ -19,11 +19,12 @@ from utils.envs import initEnv, randomSeeding
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='OneDet: an one stage framework based on PyTorch')
-    parser.add_argument('model_name', help='model name', default=None)
+    parser.add_argument('model_name', help='model name', default=None, nargs='?')
+    parser.add_argument('--cfg', type=str, default=None)
     args = parser.parse_args()
 
     train_flag = 1
-    config = initEnv(train_flag=train_flag, model_name=args.model_name)
+    config = initEnv(train_flag=train_flag, model_name=args.model_name, cfg_file=args.cfg)
     #randomSeeding(0)
 
     log.info('Config\n\n%s\n' % pformat(config))
