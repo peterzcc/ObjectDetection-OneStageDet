@@ -8,9 +8,9 @@ labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", 
 data_root_dir: "VOCdevkit/onedet_cache"
 
 train:
-    dataset: "k_shot_finetune"
+    dataset: "k_shot_3_allclass"
     stdout: False
-    gpus: "0"
+    gpus: "3"
     nworkers: 1
     pin_mem: True
 
