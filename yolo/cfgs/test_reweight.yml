@@ -9,9 +9,9 @@ data_root_dir: "VOCdevkit/onedet_cache"
 
 train:
     dataset: "train"
-    stdout: False
-    gpus: "2"
-    nworkers: 16
+    stdout: True
+    gpus: "0"
+    nworkers: 4
     pin_mem: True
 
     momentum: 0.9
@@ -30,20 +30,20 @@ train:
     backup_rates: [10000, 200]
 
     input_shape: [608, 608]
-    batch_size: 64
-    mini_batch_size: 16
+    batch_size: 4
+    mini_batch_size: 2
     weights: "weights/darknet19_448.conv.23"
 
 test:
     dataset: "test"
-    stdout: True
-    gpus: "1"
+    stdout: False
+    gpus: "2"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/RewYolov2/const_reweight/weights/weights_20000.pt" # "weights/Yolov2_60200.dw"
+    weights: "outputs/Yolov2/baseline/weights/weights_200.pt" # "weights/Yolov2_60200.dw"
 
     conf_thresh: 0.005
     nms_thresh: 0.45
