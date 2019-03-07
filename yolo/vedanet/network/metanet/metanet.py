@@ -50,7 +50,7 @@ class Metanet(nn.Module):
                 ]),
 
             OrderedDict([
-                ('14_globavgpool',  nn.AdaptiveAvgPool2d(1)),       # avg pooling to size (1 x 1)
+                ('14_globalmaxpool',  nn.AdaptiveMaxPool2d(1)),       # max pooling to size (1 x 1)
             ])
 
         ]
@@ -64,7 +64,7 @@ class Metanet(nn.Module):
         temp = [x[i] for i in range(x.shape[0])]
         x = torch.cat(temp, 0)
         feature = self.layers[0](x)
-        weights = self.layers[1](feature)
+        weights = self.layers[1](feature) + 1.0 # to test
         return weights
 
 
