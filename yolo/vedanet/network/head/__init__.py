@@ -10,3 +10,4 @@ from ._region_squeezenext import *
 from ._region_xception import *
 from ._region_light_xception import *
 from ._meta_yolov2 import *
+from ._yolov2dist import *

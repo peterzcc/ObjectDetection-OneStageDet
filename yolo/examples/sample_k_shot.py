@@ -61,7 +61,7 @@ def main():
     keys = list(annos)
 
     k_shot_classes = ['bird', 'bus', 'cow', 'motorbike', 'sofa']
-    generate_k_shot_for_all_classes = True
+    generate_k_shot_for_all_classes = False
 
     k_shot = 3
 
