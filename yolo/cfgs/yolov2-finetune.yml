@@ -37,7 +37,7 @@ train:
 test:
     dataset: "test"
     stdout: True
-    gpus: "2"
+    gpus: "3"
     nworkers: 4
     pin_mem: True
 
