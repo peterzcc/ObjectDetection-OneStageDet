@@ -112,7 +112,9 @@ class MetaLoss(nn.modules.loss._Loss):
         self.anchors = self.anchors.to(device)
 
         # Get x,y,w,h,conf,cls
-        output = output.view(nB, nA, -1, nH*nW)
+        output = output.view(nB, nC * nA, -1, nH*nW)
+        output = output.permute(0, 2, 1, 3, 4)
+        output = output.view(nB, nA * nC, -1, nH * nW)
         coord = torch.zeros_like(output[:, :, :4])
         coord[:, :, :2] = output[:, :, :2].sigmoid()    # tx,ty
         coord[:, :, 2:4] = output[:, :, 2:4]            # tw,th
@@ -135,6 +137,7 @@ class MetaLoss(nn.modules.loss._Loss):
 
         # Get target values
         coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls = self.build_targets(pred_boxes, target, nH, nW)
+
         # coord
         coord_mask = coord_mask.expand_as(tcoord)[:,:,:2] # 0 = 1 = 2 = 3, only need first two element
         coord_center, tcoord_center = coord[:,:,:2], tcoord[:,:,:2]

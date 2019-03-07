@@ -29,6 +29,7 @@ class HyperParams(object):
             self.trainfile = f'{self.data_root}/{dataset}.pkl'
 
             self.network_size = cur_cfg['input_shape']
+            self.meta_input_shape = cur_cfg['meta_input_shape']
 
             self.batch = cur_cfg['batch_size']
             self.mini_batch = cur_cfg['mini_batch_size']

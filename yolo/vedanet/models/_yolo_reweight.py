@@ -33,17 +33,17 @@ class Yolov2_Meta(YoloABC):
 
         self.backbone = backbone.Darknet19()
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
-        self.metanet = metanet.Metanet(num_classes=num_classes)
-
-        if train_flag == 2:
+        if train_flag == 1:
+            self.metanet = metanet.Metanet(num_classes=num_classes)
+        elif train_flag == 2:
             if reweights_file is not None:
                 with open(reweights_file, 'rb') as handle:
                     reweights = pickle.load(handle)
-                    self.reweights = torch.Tensor(len(reweights.keys()), len(reweights[0])).cuda()
+                    self.reweights = torch.Tensor(len(reweights.keys()), *reweights[0].shape).cuda()
                     for i in range(len(reweights.keys())):
                         self.reweights[i] = reweights[i]
             else:
-                print('no reweights input, use all 1 instead')
+                exit(0)
 
         if weights_file is not None:
             self.load_weights(weights_file, clear)
@@ -62,9 +62,11 @@ class Yolov2_Meta(YoloABC):
         return features
 
     def _forward_test(self, x, reweights):
+
         data = x
         middle_feats = self.backbone(data)
         features = self.head(middle_feats, reweights)
+
         loss_fn = loss.RegionLoss
 
         self.compose(data, features, loss_fn)
@@ -89,9 +91,12 @@ class Yolov2_Meta(YoloABC):
                 t2 = time.time()
             return loss
         else:
+            t1 = time.time()
             outputs = self._forward_test(x, reweights=self.reweights)
             if self.postprocess is None:
                 return  # speed
+            t2 = time.time()
+            print('forward took {:.5f}s'.format(t2 - t1))
             loss = None
             dets = []
 
@@ -106,7 +111,8 @@ class Yolov2_Meta(YoloABC):
                 for op in range(len(outputs)):
                     single_dets.extend(tdets[op][b])
                 dets.append(single_dets)
-
+            t3 = time.time()
+            print('postprocessing took {:.5f}s'.format(t3 - t2))
             if loss is not None:
                 return dets, loss
             else:

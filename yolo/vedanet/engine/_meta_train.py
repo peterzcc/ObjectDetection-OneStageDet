@@ -3,6 +3,9 @@ import torch
 from torchvision import transforms as tf
 from statistics import mean
 import os
+import random
+from PIL import Image
+import copy
 
 from .. import data
 from .. import models
@@ -26,14 +29,57 @@ class VOCDataset(data.MetaboxDataset):
         hsv = data.transform.HSVShift(hue, sat, val)
         it = tf.ToTensor()
 
+        lb = data.transform.Letterbox(hyper_params.meta_input_shape)
+
         img_tf = data.transform.Compose([rc, rf, hsv, it])
         anno_tf = data.transform.Compose([rc, rf])
+
+        self.meta_tf = data.transform.Compose([lb, it])
+        self.meta_anno_tf = data.transform.Compose([lb])
 
         def identify(img_id):
             # return f'{root}/VOCdevkit/{img_id}.jpg'
             return f'{img_id}'
 
         super(VOCDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
+
+    def __getitem__(self, index):
+        img, anno = super().__getitem__(index)
+
+        load_img = self.id(self.keys[index[1]])
+        meta_imgs = []
+        for i in range(len(self.class_label_map)):
+            if len(self.classid_anno[i]) != 0:
+                # get image
+                randidx = random.randint(0, len(self.classid_anno[i]) - 1)
+                class_img_name = self.classid_anno[i][randidx][0]
+                while class_img_name == load_img:
+                    randidx = random.randint(0, len(self.classid_anno[i]) - 1)
+                    class_img_name = self.classid_anno[i][randidx][0]
+                class_img = Image.open(class_img_name)
+                class_img_tf = self.meta_tf(class_img)          # [3, w, h]
+
+                # get annotation
+                class_anno = [copy.deepcopy(self.classid_anno[i][randidx][1])]
+                class_anno = self.meta_anno_tf(class_anno)
+                # while(len(class_anno) == 0):
+                #     class_img_tf = self.meta_tf(class_img)
+                #     class_anno = [copy.deepcopy(self.classid_anno[i][randidx][1])]
+                #     class_anno = self.meta_anno_tf(class_anno)
+                class_anno = class_anno[0]
+
+                # add a mask
+                x0 = int(class_anno.x_top_left)
+                y0 = int(class_anno.y_top_left)
+                x1 = int(class_anno.width + x0)
+                y1 = int(class_anno.height + y0)
+                mask = torch.zeros((1, class_img_tf.shape[1], class_img_tf.shape[2]))
+                mask[0, y0:y1, x0:x1] = 1
+                class_img = torch.cat((class_img_tf, mask), dim=0)
+                meta_imgs.append(class_img.unsqueeze(0))
+        meta_imgs = torch.cat(meta_imgs, dim=0)
+
+        return img, anno, meta_imgs
 
 
 class MetaTrainingEngine(engine.Engine):

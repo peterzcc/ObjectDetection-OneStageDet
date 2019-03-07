@@ -33,6 +33,7 @@ train:
     backup_rates: [1000, 200]
 
     input_shape: [608, 608]
+    meta_input_shape: [416, 416]
     batch_size: 4
     mini_batch_size: 1
     weights: "weights/darknet19_448.conv.23"
@@ -40,12 +41,12 @@ train:
 test:
     dataset: 'k_shot_base_test' # "test"
     stdout: True
-    gpus: "1"
+    gpus: "2"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
-    batch_size: 1
+    batch_size: 32
     weights: "outputs/Yolov2_Meta/meta_base/weights/final.dw" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
     nms_thresh: 0.45
@@ -55,7 +56,7 @@ test:
 weights:
     dataset: 'k_shot_base' # "test"
     stdout: True
-    gpus: "1"
+    gpus: "2"
     nworkers: 4
     pin_mem: True
 
