@@ -2,22 +2,22 @@ output_root: "outputs"
 output_version: "ft"
 backup_name: "weights"
 log_name: "logs"
-
+model_name: "Yolov2"
 labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
 data_root_dir: "VOCdevkit/onedet_cache"
 
 train:
-    dataset: "k_shot_finetune"
+    dataset: "k_shot_3_allclass"
     stdout: False
-    gpus: "0"
+    gpus: "3"
     nworkers: 1
     pin_mem: True
 
     momentum: 0.9
     decay: 0.0005
 
-    clear: False
+    clear: True
 
     warmup_lr: 0.001
     lr_steps: []#[400,700,900,1000, 40000,60000] 
