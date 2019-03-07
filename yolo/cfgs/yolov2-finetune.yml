@@ -41,7 +41,7 @@ test:
     nworkers: 4
     pin_mem: True
 
-    input_shape: [416, 416]
+    input_shape: [544, 544]
     batch_size: 16
     weights: "outputs/Yolov2/ft/weights/final.dw"
     conf_thresh: 0.005
