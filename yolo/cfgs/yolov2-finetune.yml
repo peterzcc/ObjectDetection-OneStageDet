@@ -17,7 +17,7 @@ train:
     momentum: 0.9
     decay: 0.0005
 
-    clear: False
+    clear: True
 
     warmup_lr: 0.001
     lr_steps: []#[400,700,900,1000, 40000,60000] 
