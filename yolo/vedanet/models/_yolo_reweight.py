@@ -55,7 +55,7 @@ class Yolov2_Meta(YoloABC):
         middle_feats = self.backbone(data)
         reweights = self.metanet(meta_imgs)
         features = self.head(middle_feats, reweights)
-        loss_fn = loss.RegionLoss
+        loss_fn = loss.MetaLoss
 
         self.compose(data, features, loss_fn)
 
@@ -67,7 +67,7 @@ class Yolov2_Meta(YoloABC):
         middle_feats = self.backbone(data)
         features = self.head(middle_feats, reweights)
 
-        loss_fn = loss.RegionLoss
+        loss_fn = loss.MetaLoss
 
         self.compose(data, features, loss_fn)
 

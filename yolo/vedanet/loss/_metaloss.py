@@ -112,8 +112,8 @@ class MetaLoss(nn.modules.loss._Loss):
         self.anchors = self.anchors.to(device)
 
         # Get x,y,w,h,conf,cls
-        output = output.view(nB, nC * nA, -1, nH*nW)
-        output = output.permute(0, 2, 1, 3, 4)
+        output = output.view(nB, nC, nA, -1, nH*nW).contiguous()
+        output = output.transpose(1, 2).contiguous()
         output = output.view(nB, nA * nC, -1, nH * nW)
         coord = torch.zeros_like(output[:, :, :4])
         coord[:, :, :2] = output[:, :, :2].sigmoid()    # tx,ty
@@ -124,11 +124,11 @@ class MetaLoss(nn.modules.loss._Loss):
 
         # Create prediction boxes
         # time consuming
-        pred_boxes = torch.zeros(nB*nA*nH*nW, 4, dtype=torch.float, device=device)
+        pred_boxes = torch.zeros(nB*nA*nC*nH*nW, 4, dtype=torch.float, device=device)
         lin_x = torch.linspace(0, nW-1, nW).to(device).repeat(nH, 1).view(nH*nW)
         lin_y = torch.linspace(0, nH-1, nH).to(device).repeat(nW, 1).t().contiguous().view(nH*nW)
-        anchor_w = self.anchors[self.anchors_mask, 0].view(nA, 1).to(device) 
-        anchor_h = self.anchors[self.anchors_mask, 1].view(nA, 1).to(device)
+        anchor_w = self.anchors[self.anchors_mask, 0].view(nA, 1).repeat(nC, 1).to(device)
+        anchor_h = self.anchors[self.anchors_mask, 1].view(nA, 1).repeat(nC, 1).to(device)
 
         pred_boxes[:, 0] = (coord[:, :, 0].detach() + lin_x).view(-1)
         pred_boxes[:, 1] = (coord[:, :, 1].detach() + lin_y).view(-1)
@@ -144,7 +144,7 @@ class MetaLoss(nn.modules.loss._Loss):
         coord_wh, tcoord_wh = coord[:,:,2:], tcoord[:,:,2:]
         if nC > 1:
             tcls = tcls[cls_mask].view(-1).long()
-
+            print(tcls)
             cls_mask = cls_mask.view(-1, 1).repeat(1, nC)
             cls = cls[cls_mask].view(-1, nC)
 
@@ -197,17 +197,18 @@ class MetaLoss(nn.modules.loss._Loss):
         # Parameters
         nB = len(ground_truth)
         nA = self.num_anchors
-        nAnchors = nA*nH*nW
+        nC = self.num_classes
+        nAnchors = nA*nH*nW*nC
         nPixels = nH*nW
         device = pred_boxes.device
 
         # Tensors
-        conf_pos_mask = torch.zeros(nB, nA, nH*nW, requires_grad=False, device=device)
-        conf_neg_mask = torch.ones(nB, nA, nH*nW, requires_grad=False, device=device)
-        coord_mask = torch.zeros(nB, nA, 1, nH*nW, requires_grad=False, device=device)
+        conf_pos_mask = torch.zeros(nB, nA*nC, nH*nW, requires_grad=False, device=device)
+        conf_neg_mask = torch.zeros(nB, nA*nC, nH*nW, requires_grad=False, device=device)
+        coord_mask = torch.zeros(nB, nA*nC, 1, nH*nW, requires_grad=False, device=device)
         cls_mask = torch.zeros(nB, nA, nH*nW, requires_grad=False, dtype=torch.uint8, device=device)
-        tcoord = torch.zeros(nB, nA, 4, nH*nW, requires_grad=False, device=device)
-        tconf = torch.zeros(nB, nA, nH*nW, requires_grad=False, device=device)
+        tcoord = torch.zeros(nB, nA*nC, 4, nH*nW, requires_grad=False, device=device)
+        tconf = torch.zeros(nB, nA*nC, nH*nW, requires_grad=False, device=device)
         tcls = torch.zeros(nB, nA, nH*nW, requires_grad=False, device=device)
 
         recall50 = 0
@@ -257,7 +258,7 @@ class MetaLoss(nn.modules.loss._Loss):
                 else:
                     continue
 
-                iou = iou_gt_pred[i][best_n*nPixels+gj*nW+gi]
+                iou = iou_gt_pred[i][best_n*nPixels*nC+gj*nW+gi]
                 # debug information
                 obj_cur += 1
                 recall50 += (iou > 0.5).item()
@@ -268,15 +269,16 @@ class MetaLoss(nn.modules.loss._Loss):
                     conf_pos_mask[b][best_n][gj*nW+gi] = 0
                     conf_neg_mask[b][best_n][gj*nW+gi] = 0
                 else:
-                    coord_mask[b][best_n][0][gj*nW+gi] = 2 - anno.width*anno.height/(nW*nH*self.reduction*self.reduction)
+                    coord_mask[b, best_n*nC + anno.class_id, 0, gj*nW+gi] = 2 - anno.width*anno.height/(nW*nH*self.reduction*self.reduction)
                     cls_mask[b][best_n][gj*nW+gi] = 1
-                    conf_pos_mask[b][best_n][gj*nW+gi] = 1 
-                    conf_neg_mask[b][best_n][gj*nW+gi] = 0
-                    tcoord[b][best_n][0][gj*nW+gi] = gt[i, 0] - gi
-                    tcoord[b][best_n][1][gj*nW+gi] = gt[i, 1] - gj
-                    tcoord[b][best_n][2][gj*nW+gi] = math.log(gt[i, 2]/self.anchors[cur_n, 0])
-                    tcoord[b][best_n][3][gj*nW+gi] = math.log(gt[i, 3]/self.anchors[cur_n, 1])
-                    tconf[b][best_n][gj*nW+gi] = iou
+                    conf_pos_mask[b, best_n*nC + anno.class_id, gj*nW+gi] = 1
+                    conf_neg_mask[b, best_n*nC:(best_n+1)*nC, gj*nW+gi] = 1
+                    conf_neg_mask[b, best_n * nC + anno.class_id, gj * nW + gi] = 0
+                    tcoord[b, best_n*nC + anno.class_id, 0, gj*nW+gi] = gt[i, 0] - gi
+                    tcoord[b, best_n*nC + anno.class_id, 1, gj*nW+gi] = gt[i, 1] - gj
+                    tcoord[b, best_n*nC + anno.class_id, 2, gj*nW+gi] = math.log(gt[i, 2]/self.anchors[cur_n, 0])
+                    tcoord[b, best_n*nC + anno.class_id, 3, gj*nW+gi] = math.log(gt[i, 3]/self.anchors[cur_n, 1])
+                    tconf[b, best_n*nC + anno.class_id, gj*nW+gi] = iou
                     tcls[b][best_n][gj*nW+gi] = anno.class_id
         # loss informaion
         self.info['obj_cur'] = obj_cur

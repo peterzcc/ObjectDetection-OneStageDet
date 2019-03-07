@@ -51,7 +51,7 @@ class YoloABC(Darknet):
                 for idx in range(self.nloss):
                     reduction = float(x.shape[2] / features[idx].shape[2]) # n, c, h, w
                     self.loss.append(loss_fn(self.num_classes, self.anchors, self.anchors_mask[idx],
-                        reduction, self.seen, head_idx=idx, noobject_scale=0.1))
+                        reduction, self.seen, head_idx=idx))
         elif self.train_flag == 2: # test
             if self.postprocess is None:
                 self.postprocess = [] # for testing
