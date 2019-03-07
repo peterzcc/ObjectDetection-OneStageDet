@@ -43,11 +43,11 @@ test:
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/Yolov2/ft/weights/final.dw"
+    weights: "outputs/Yolov2/ft/weights/weights_100.pt"
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190201_ft_40000"
+    results: "re_190307_ft_100"
 
 speed:
     gpus: "7"
