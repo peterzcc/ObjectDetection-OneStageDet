@@ -8,12 +8,12 @@ log_name: "logs"
 
 # base labels
 labels: ['aeroplane', 'bicycle', 'boat', 'bottle', 'car', 'cat', 'chair', 'diningtable', 'dog', 'horse', 'person', 'pottedplant', 'sheep', 'train', 'tvmonitor']
-data_root_dir: "../VOCdevkit/onedet_cache"
+data_root_dir: "./VOCdevkit/onedet_cache"
 
 train:
     dataset: "k_shot_base" #"k_shot_joint"
     stdout: True
-    gpus: "2"
+    gpus: "1"
     nworkers: 16
     pin_mem: True
 

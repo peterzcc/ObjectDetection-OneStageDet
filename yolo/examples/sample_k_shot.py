@@ -1,6 +1,6 @@
 import sys
-sys.path.append('/home/data/urop2018/sfuab/ObjectDetection-OneStageDet/yolo')
-
+#sys.path.append('/home/data/urop2018/sfuab/ObjectDetection-OneStageDet/yolo')
+sys.path.append('../')
 import brambox.boxes as bbb
 from collections import OrderedDict
 import numpy as np

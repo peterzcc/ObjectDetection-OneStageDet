@@ -10,7 +10,7 @@ from pprint import pformat
 
 import sys
 sys.path.insert(0, '.')
-
+#sys.path.append('../')
 import brambox.boxes as bbb
 import vedanet as vn
 from utils.envs import initEnv, randomSeeding
