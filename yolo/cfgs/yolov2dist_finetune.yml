@@ -1,5 +1,5 @@
 output_root: "outputs"
-output_version: "base_class"
+output_version: "finetune"
 backup_name: "weights"
 log_name: "logs"
 model_name: "Yolov2dist"
@@ -8,21 +8,21 @@ labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", 
 data_root_dir: "./VOCdevkit/onedet_cache"
 
 train:
-    dataset: "k_shot_base" #"k_shot_joint"
+    dataset: "k_shot_3_allclass" #"k_shot_joint"
     stdout: False
-    gpus: "1"
+    gpus: "3"
     nworkers: 16
     pin_mem: True
 
     momentum: 0.9
     decay: 0.0005
 
-    clear: False
+    clear: True
 
     warmup_lr: 0.0001
-    lr_steps: [400,700,900,1000, 20000]
-    lr_rates: [0.0001,0.0005,0.0005,0.001, 0.0001]
-    max_batches: 70000
+    lr_steps: []
+    lr_rates: []
+    max_batches: 30000
     resize_interval: 10
 
     backup_interval: 200
@@ -30,7 +30,7 @@ train:
     backup_rates: [1000, 200]
 
     input_shape: [608, 608]
-    batch_size: 64
+    batch_size: 16
     mini_batch_size: 16
     weights: "outputs/Yolov2dist/base_class/weights/weights_25000.pt"
 
@@ -43,11 +43,11 @@ test:
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/Yolov2dist/base_class/weights/weights_25000.pt" #
+    weights: "outputs/Yolov2dist/base_class/weights/weights_10000.pt" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190308_dist"
+    results: "re_190307_dist"
 
 speed:
     gpus: "7"
