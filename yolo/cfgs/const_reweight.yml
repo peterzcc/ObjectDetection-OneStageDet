@@ -37,13 +37,13 @@ train:
 test:
     dataset: "test"
     stdout: True
-    gpus: "1"
+    gpus: "0"
     nworkers: 4
     pin_mem: True
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/RewYolov2/const_reweight/weights/weights_20000.pt" # "weights/Yolov2_60200.dw"
+    weights: "outputs/RewYolov2/const_reweight/weights/w1.pt" # "weights/Yolov2_60200.dw"
 
     conf_thresh: 0.005
     nms_thresh: 0.45
