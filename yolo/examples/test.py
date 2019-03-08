@@ -18,7 +18,7 @@ from examples.eval import generate_aps
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='OneDet: an one stage framework based on PyTorch')
-    parser.add_argument('model_name', help='model name', default=None)
+    parser.add_argument('model_name', help='model name', default=None,nargs='?')
     parser.add_argument('--cfg', type=str, default=None)
     args = parser.parse_args()
 

@@ -46,7 +46,7 @@ test:
     weights: "outputs/Yolov2dist/base_class/weights/weights_25000.pt" #
     conf_thresh: 0.005
     nms_thresh: 0.45
-
+    reweights: ~
     results: "re_190308_dist"
 
 speed:
