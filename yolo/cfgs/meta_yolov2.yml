@@ -11,7 +11,7 @@ labels: ['train', 'tvmonitor'] # ['aeroplane', 'bicycle', 'boat', 'bottle', 'car
 data_root_dir: "../VOCdevkit/onedet_cache"
 
 train:
-    dataset: 'two_class_base' # "k_shot_base" #"k_shot_joint"
+    dataset: "k_shot_base" #"k_shot_joint"
     stdout: False
     gpus: "0"
     nworkers: 16
