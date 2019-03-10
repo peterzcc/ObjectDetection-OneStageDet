@@ -43,11 +43,11 @@ test:
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/Yolov2dist/base_class/weights/weights_25000.pt" #
+    weights: "outputs/Yolov2dist/base_class/weights/weights_60000.pt" #
     conf_thresh: 0.005
     nms_thresh: 0.45
     reweights: ~
-    results: "re_190308_dist"
+    results: "re_190309_dist"
 
 speed:
     gpus: "7"
