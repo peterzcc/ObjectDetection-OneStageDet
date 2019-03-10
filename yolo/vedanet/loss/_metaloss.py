@@ -144,7 +144,7 @@ class MetaLoss(nn.modules.loss._Loss):
         coord_wh, tcoord_wh = coord[:,:,2:], tcoord[:,:,2:]
         if nC > 1:
             tcls = tcls[cls_mask].view(-1).long()
-            print(tcls)
+
             cls_mask = cls_mask.view(-1, 1).repeat(1, nC)
             cls = cls[cls_mask].view(-1, nC)
 
@@ -169,8 +169,8 @@ class MetaLoss(nn.modules.loss._Loss):
         self.loss_conf = loss_conf_pos +  loss_conf_neg 
 
         if nC > 1 and cls.numel() > 0:
-            self.loss_cls = self.class_scale * 1.0 * ce(cls, tcls)
             cls_softmax = F.softmax(cls, 1)
+            self.loss_cls = self.class_scale * 1.0 * ce(cls_softmax, tcls)
             t_ind = torch.unsqueeze(tcls, 1).expand_as(cls_softmax)      
             class_prob = torch.gather(cls_softmax, 1, t_ind)[:, 0]
         else:
@@ -258,7 +258,7 @@ class MetaLoss(nn.modules.loss._Loss):
                 else:
                     continue
 
-                iou = iou_gt_pred[i][best_n*nPixels*nC+gj*nW+gi]
+                iou = iou_gt_pred[i][best_n*nPixels*nC+anno.class_id*nPixels+gj*nW+gi]
                 # debug information
                 obj_cur += 1
                 recall50 += (iou > 0.5).item()
@@ -271,14 +271,14 @@ class MetaLoss(nn.modules.loss._Loss):
                 else:
                     coord_mask[b, best_n*nC + anno.class_id, 0, gj*nW+gi] = 2 - anno.width*anno.height/(nW*nH*self.reduction*self.reduction)
                     cls_mask[b][best_n][gj*nW+gi] = 1
-                    conf_pos_mask[b, best_n*nC + anno.class_id, gj*nW+gi] = 1
-                    conf_neg_mask[b, best_n*nC:(best_n+1)*nC, gj*nW+gi] = 1
-                    conf_neg_mask[b, best_n * nC + anno.class_id, gj * nW + gi] = 0
+                    conf_pos_mask[b, best_n*nC:(best_n+1)*nC, gj*nW+gi] = 1
+                    conf_neg_mask[b, :, gj*nW+gi] = 1
+                    conf_neg_mask[b, best_n*nC:(best_n+1)*nC, gj*nW+gi] = 0
                     tcoord[b, best_n*nC + anno.class_id, 0, gj*nW+gi] = gt[i, 0] - gi
                     tcoord[b, best_n*nC + anno.class_id, 1, gj*nW+gi] = gt[i, 1] - gj
                     tcoord[b, best_n*nC + anno.class_id, 2, gj*nW+gi] = math.log(gt[i, 2]/self.anchors[cur_n, 0])
                     tcoord[b, best_n*nC + anno.class_id, 3, gj*nW+gi] = math.log(gt[i, 3]/self.anchors[cur_n, 1])
-                    tconf[b, best_n*nC + anno.class_id, gj*nW+gi] = iou
+                    tconf[b, best_n*nC:(best_n+1)*nC, gj*nW+gi] = iou
                     tcls[b][best_n][gj*nW+gi] = anno.class_id
         # loss informaion
         self.info['obj_cur'] = obj_cur

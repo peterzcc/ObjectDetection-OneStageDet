@@ -111,7 +111,12 @@ class MetaTrainingEngine(engine.Engine):
         decay = hyper_params.decay
         batch = hyper_params.batch
         log.info(f'Adjusting learning rate to [{learning_rate}]')
-        optim = torch.optim.SGD(net.parameters(), lr=learning_rate / batch, momentum=momentum, dampening=0,
+        meta_net_parameters = [
+            {'params': net.metanet.parameters(), 'lr': learning_rate / batch},
+            {'params': net.backbone.parameters()},
+            {'params': net.head.parameters()}
+        ]
+        optim = torch.optim.SGD(meta_net_parameters, lr=learning_rate / batch, momentum=momentum, dampening=0,
                                 weight_decay=decay * batch)
 
         log.debug('Creating dataloader')
@@ -159,7 +164,7 @@ class MetaTrainingEngine(engine.Engine):
         if self.cuda:
             data = data.cuda()
             meta_imgs = meta_imgs.cuda()
-        # data = torch.autograd.Variable(data, requires_grad=True)
+        # meta_imgs = torch.autograd.Variable(meta_imgs, requires_grad=True)
 
         loss = self.network((data, meta_imgs), target)
         loss.backward()
