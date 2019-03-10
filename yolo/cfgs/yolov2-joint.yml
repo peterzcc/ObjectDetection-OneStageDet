@@ -2,7 +2,7 @@ output_root: "outputs"
 output_version: "joint"
 backup_name: "weights"
 log_name: "logs"
-
+model_name: "Yolov2"
 labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
 data_root_dir: "VOCdevkit/onedet_cache"
@@ -37,17 +37,17 @@ train:
 test:
     dataset: "test"
     stdout: True
-    gpus: "2"
+    gpus: "3"
     nworkers: 16
     pin_mem: True
 
-    input_shape: [416, 416]
+    input_shape: [544, 544]
     batch_size: 16
     weights: "outputs/Yolov2/joint/weights/weights_50000.pt" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190131_joint_50000"
+    results: "re_190307_joint_50000"
 
 speed:
     gpus: "7"

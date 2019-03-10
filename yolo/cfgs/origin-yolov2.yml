@@ -43,7 +43,7 @@ test:
 
     input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/Yolov2/baseline/weights/weights_200.pt" # "weights/Yolov2_60200.dw"
+    weights: "outputs/Yolov2/baseline/weights/weights_20000.pt"
 
     conf_thresh: 0.005
     nms_thresh: 0.45

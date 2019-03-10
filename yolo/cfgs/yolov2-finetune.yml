@@ -1,28 +1,28 @@
 output_root: "outputs"
-output_version: "ft"
+output_version: "ftall"
 backup_name: "weights"
 log_name: "logs"
-
+model_name: "Yolov2"
 labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
 data_root_dir: "VOCdevkit/onedet_cache"
 
 train:
-    dataset: "k_shot_finetune"
+    dataset: "k_shot_3_allclass"
     stdout: False
-    gpus: "0"
+    gpus: "3"
     nworkers: 1
     pin_mem: True
 
     momentum: 0.9
     decay: 0.0005
 
-    clear: False
+    clear: True
 
-    warmup_lr: 0.001
+    warmup_lr: 0.0005
     lr_steps: []#[400,700,900,1000, 40000,60000] 
     lr_rates: []#[0.0001,0.0005,0.0005,0.001, 0.0001,0.00001] 
-    max_batches: 10000
+    max_batches: 30000
     resize_interval: 10
 
     backup_interval: 100
@@ -37,17 +37,17 @@ train:
 test:
     dataset: "test"
     stdout: True
-    gpus: "2"
-    nworkers: 4
+    gpus: "0"
+    nworkers: 16
     pin_mem: True
 
-    input_shape: [416, 416]
+    input_shape: [544, 544]
     batch_size: 16
-    weights: "outputs/Yolov2/ft/weights/final.dw"
+    weights: "outputs/Yolov2/ftall/weights/weights_1000.pt"
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190201_ft_40000"
+    results: "re_190308_ftall_1000"
 
 speed:
     gpus: "7"
