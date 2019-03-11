@@ -91,10 +91,11 @@ def MetaWeights(hyper_params):
         class_weight[i] = sum(class_weight[i]) / len(class_weight[i])
         print('weight for class {} is {}'.format(labels[i], class_weight[i]))
 
-    if not os.path.isdir(results):
+    if not os.path.isdir(results) and not results.endswith('.pkl'):
         os.mkdir(results)
+        results = os.path.join(results, 'weights.pkl')
 
-    with open(os.path.join(results, 'weights.pkl'), 'wb') as handle:
+    with open(results, 'wb') as handle:
         pickle.dump(class_weight, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     ''' to load weights

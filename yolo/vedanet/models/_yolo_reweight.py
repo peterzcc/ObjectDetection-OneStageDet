@@ -2,6 +2,7 @@ import os
 from collections import OrderedDict, Iterable
 import torch
 import time
+import copy
 import torch.nn as nn
 from .. import loss
 import pickle
@@ -28,22 +29,24 @@ class Yolov2_Meta(YoloABC):
         self.train_flag = train_flag
         self.test_args = test_args
 
+        self.last_layer = None
+
         self.loss = None
         self.postprocess = None
 
         self.backbone = backbone.Darknet19()
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
         self.metanet = metanet.Metanet(num_classes=num_classes)
-
         if train_flag == 2:
             if reweights_file is not None:
                 with open(reweights_file, 'rb') as handle:
                     reweights = pickle.load(handle)
-                    self.reweights = torch.Tensor(len(reweights.keys()), len(reweights[0])).cuda()
+                    print(reweights_file)
+                    self.reweights = torch.Tensor(len(reweights.keys()), *reweights[0].shape).cuda()
                     for i in range(len(reweights.keys())):
                         self.reweights[i] = reweights[i]
             else:
-                print('no reweights input, use all 1 instead')
+                exit(0)
 
         if weights_file is not None:
             self.load_weights(weights_file, clear)
@@ -55,21 +58,27 @@ class Yolov2_Meta(YoloABC):
         middle_feats = self.backbone(data)
         reweights = self.metanet(meta_imgs)
         features = self.head(middle_feats, reweights)
-        loss_fn = loss.RegionLoss
+        loss_fn = loss.MetaLoss
 
         self.compose(data, features, loss_fn)
-
+        for param in self.metanet.parameters():
+            if self.last_layer is not None:
+                print((param.data[0] - self.last_layer).sum())
+            self.last_layer = copy.deepcopy(param.data[0])
+            break
         return features
 
     def _forward_test(self, x, reweights):
+
         data = x
         middle_feats = self.backbone(data)
         features = self.head(middle_feats, reweights)
-        loss_fn = loss.RegionLoss
+
+        loss_fn = loss.MetaLoss
 
         self.compose(data, features, loss_fn)
 
-        return features
+        return [self.convert_to_yolo_output(f) for f in features]
 
     def forward(self, x, target=None):
         if self.train_flag == 1:
@@ -89,9 +98,12 @@ class Yolov2_Meta(YoloABC):
                 t2 = time.time()
             return loss
         else:
+            t1 = time.time()
             outputs = self._forward_test(x, reweights=self.reweights)
             if self.postprocess is None:
                 return  # speed
+            t2 = time.time()
+            print('forward took {:.5f}s'.format(t2 - t1))
             loss = None
             dets = []
 
@@ -106,7 +118,8 @@ class Yolov2_Meta(YoloABC):
                 for op in range(len(outputs)):
                     single_dets.extend(tdets[op][b])
                 dets.append(single_dets)
-
+            t3 = time.time()
+            print('postprocessing took {:.5f}s'.format(t3 - t2))
             if loss is not None:
                 return dets, loss
             else:
@@ -127,3 +140,24 @@ class Yolov2_Meta(YoloABC):
                 yield from self.modules_recurse(module)
             else:
                 yield module
+
+    def convert_to_yolo_output(self, prediction):
+        if self.num_classes == 1:
+            return prediction
+        batch_size = int(prediction.shape[0] / self.num_classes)
+        grouped_prediction = prediction.view(batch_size, self.num_classes, 5, 6, *prediction.shape[2:])
+        grouped_prediction = grouped_prediction.permute(0, 2, 1, 3, 4, 5)               # (batch, num_anchors, num_classes, 6, h, w)
+
+        class_score = grouped_prediction[:, :, :, 5:6, :, :]
+        max_class_probs, max_ids = torch.max(class_score, dim=2, keepdim=True)
+
+        gather_ids = max_ids.repeat(1, 1, 1, 5, 1, 1)
+        final_prediction_0_5 = torch.gather(grouped_prediction[:, :, :, 0:5, :, :],
+                                        dim=2, index=gather_ids).squeeze(dim=2)
+        final_prediction_5 = class_score.squeeze(dim=3)
+        final_prediction = torch.cat([final_prediction_0_5,
+                                      final_prediction_5],
+                                     dim=2)
+        reshaped_final_prediction = final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
+        assert not torch.isnan(reshaped_final_prediction).any()
+        return reshaped_final_prediction

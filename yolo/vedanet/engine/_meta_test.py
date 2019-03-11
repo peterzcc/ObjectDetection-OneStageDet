@@ -7,6 +7,7 @@ import os
 from .. import data as vn_data
 from .. import models
 from . import engine
+import time
 from utils.test import voc_wrapper
 from examples.eval import generate_aps
 from ._voc_test import CustomDataset
@@ -58,18 +59,23 @@ def MetaTest(hyper_params):
     cls_loss = []
     anno, det = {}, {}
     num_det = 0
-
+    t0 = time.time()
     for idx, (data, box) in enumerate(loader):
         if (idx + 1) % 20 == 0:
             log.info('%d/%d' % (idx + 1, len(loader)))
         if use_cuda:
             data = data.cuda()
+        t1 = time.time()
+        # print('prepare data took {:.4f}s'.format(t1 - t0))
         with torch.no_grad():
             output, loss = net(data, box)
-
+            t2 = time.time()
+            # print('forward took {:.4f}s'.format(t2 - t1))
         key_val = len(anno)
         anno.update({loader.dataset.keys[key_val+k]: v for k,v in enumerate(box)})
         det.update({loader.dataset.keys[key_val+k]: v for k,v in enumerate(output)})
+        t0 = time.time()
+        # print('update took {:.4f}s'.format(t0 - t2))
 
     netw, neth = network_size
     reorg_dets = voc_wrapper.reorgDetection(det, netw, neth) #, prefix)

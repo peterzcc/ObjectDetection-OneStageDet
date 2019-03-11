@@ -59,20 +59,20 @@ class MetaYolov2(nn.Module):
             reweight = reweight.unsqueeze(2).unsqueeze(3)
         reweighted_preout = tiled_preout * reweight
         reshaped_preout = reweighted_preout.view(-1, *reweighted_preout.shape[2:])      # (batch * num_classes, C, h, w)
-        prediction = detector(reshaped_preout)                                          # (batch * num_classes, (5 + 1) * num_anchors, h, w)
-        grouped_prediction = prediction.view(batch_size, self.num_classes, 5, 6, *prediction.shape[2:])
-        grouped_prediction = grouped_prediction.permute(0, 2, 1, 3, 4, 5)               # (batch, num_anchors, num_classes, 6, h, w)
-
-        class_score = grouped_prediction[:, :, :, 5:6, :, :]
-        max_class_probs, max_ids = torch.max(class_score, dim=2, keepdim=True)
-
-        gather_ids = max_ids.repeat(1, 1, 1, 5, 1, 1)
-        final_prediction_0_5 = torch.gather(grouped_prediction[:, :, :, 0:5, :, :],
-                                        dim=2, index=gather_ids).squeeze(dim=2)
-        final_prediction_5 = class_score.squeeze(dim=3)
-        final_prediction = torch.cat([final_prediction_0_5,
-                                      final_prediction_5],
-                                     dim=2)
-        reshaped_final_prediction = final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
-        assert not torch.isnan(reshaped_final_prediction).any()
-        return reshaped_final_prediction
+        prediction = detector(reshaped_preout)                                          # (batch * num_classes, num_anchors * (5 + 1), h, w)
+        # grouped_prediction = prediction.view(batch_size, self.num_classes, 5, 6, *prediction.shape[2:])
+        # grouped_prediction = grouped_prediction.permute(0, 2, 1, 3, 4, 5)               # (batch, num_anchors, num_classes, 6, h, w)
+        #
+        # class_score = grouped_prediction[:, :, :, 5:6, :, :]
+        # max_class_probs, max_ids = torch.max(class_score, dim=2, keepdim=True)
+        #
+        # gather_ids = max_ids.repeat(1, 1, 1, 5, 1, 1)
+        # final_prediction_0_5 = torch.gather(grouped_prediction[:, :, :, 0:5, :, :],
+        #                                 dim=2, index=gather_ids).squeeze(dim=2)
+        # final_prediction_5 = class_score.squeeze(dim=3)
+        # final_prediction = torch.cat([final_prediction_0_5,
+        #                               final_prediction_5],
+        #                              dim=2)
+        # reshaped_final_prediction = final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
+        # assert not torch.isnan(reshaped_final_prediction).any()
+        return prediction.clone() # reshaped_final_prediction

@@ -12,11 +12,11 @@ def main():
     anno_format = "anno_pickle"
     class_label_map = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
     identify = lambda f: f
-    anno_filename = '../VOCdevkit/onedet_cache/train.pkl'
+    anno_filename = '../VOCdevkit/onedet_cache/test.pkl'
     kwargs = {}
     annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
     keys = list(annos)
-    k_shot_classes = ['bird', 'bus', 'cow', 'motorbike', 'sofa']
+    k_shot_classes = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa"] # ['bird', 'bus', 'cow', 'motorbike', 'sofa']
 
     class2id = {k_shot_classes[i]: i for i in range(len(k_shot_classes))}
     class2file2numdet = {cls: OrderedDict() for cls in k_shot_classes}
@@ -72,9 +72,9 @@ def main():
     print(f"sampled {len(k_shot_annos)} files in total")
     print(f"removed {len(files2remove)} files in total")
     print(f"got {len(base_anno.keys())} base files in total")
-    bbb.generate('anno_pickle', joint_annos, "../VOCdevkit/onedet_cache/k_shot_{}_joint.pkl".format(k_shot))
-    bbb.generate('anno_pickle', k_shot_annos, "../VOCdevkit/onedet_cache/k_shot_{}_finetune.pkl".format(k_shot))
-    bbb.generate('anno_pickle', base_anno, "../VOCdevkit/onedet_cache/k_shot_base.pkl")
+    # bbb.generate('anno_pickle', joint_annos, "../VOCdevkit/onedet_cache/k_shot_{}_joint.pkl".format(k_shot))
+    # bbb.generate('anno_pickle', k_shot_annos, "../VOCdevkit/onedet_cache/k_shot_{}_finetune.pkl".format(k_shot))
+    bbb.generate('anno_pickle', base_anno, "../VOCdevkit/onedet_cache/two_class_base_test.pkl")
     pass
 
 
