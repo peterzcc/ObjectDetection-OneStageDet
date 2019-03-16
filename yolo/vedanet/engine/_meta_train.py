@@ -172,7 +172,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
             self.network_module = self.network
             self.metanet_module = self.meta_network
 
-        self.nloss = self.network.nloss
+        self.nloss = self.network_module.nloss
 
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
 
