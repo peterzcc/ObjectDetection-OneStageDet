@@ -133,7 +133,7 @@ def cpu_nms(np.ndarray[np.float32_t, ndim=2] dets, np.float thresh):
     # variables for computing overlap with box j (lower scoring box)
     cdef np.float32_t xx1, yy1, xx2, yy2
     cdef np.float32_t w, h
-    cdef np.float32_t inter, ovr
+    cdef np.float32_t inter, ovr, un
 
     keep = []
     for _i in range(ndets):
@@ -157,7 +157,10 @@ def cpu_nms(np.ndarray[np.float32_t, ndim=2] dets, np.float thresh):
             w = max(0.0, xx2 - xx1 + 1)
             h = max(0.0, yy2 - yy1 + 1)
             inter = w * h
-            ovr = inter / (iarea + areas[j] - inter)
+            un = iarea + areas[j] - inter
+            ovr = 0
+            if un != 0:
+                ovr = inter / un
             if ovr >= thresh:
                 suppressed[j] = 1
 

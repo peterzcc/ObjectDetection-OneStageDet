@@ -62,8 +62,8 @@ class Yolov2_Meta(YoloABC):
 
         self.compose(data, features, loss_fn)
         for param in self.metanet.parameters():
-            if self.last_layer is not None:
-                print((param.data[0] - self.last_layer).sum())
+            # if self.last_layer is not None:
+            #     print((param.data[0] - self.last_layer).sum())
             self.last_layer = copy.deepcopy(param.data[0])
             break
         return features

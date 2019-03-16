@@ -169,8 +169,8 @@ class MetaLoss(nn.modules.loss._Loss):
         self.loss_conf = loss_conf_pos +  loss_conf_neg 
 
         if nC > 1 and cls.numel() > 0:
+            self.loss_cls = self.class_scale * 1.0 * ce(cls, tcls)
             cls_softmax = F.softmax(cls, 1)
-            self.loss_cls = self.class_scale * 1.0 * ce(cls_softmax, tcls)
             t_ind = torch.unsqueeze(tcls, 1).expand_as(cls_softmax)      
             class_prob = torch.gather(cls_softmax, 1, t_ind)[:, 0]
         else:
