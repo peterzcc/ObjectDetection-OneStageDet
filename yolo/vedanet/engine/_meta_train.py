@@ -165,12 +165,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         )
 
         super(MetaTrainingEngine, self).__init__(net, metanet, optim, dataloader, meta_dataloader)
-        if self.multi_gpu:
-            self.network_module = self.network.module
-            self.metanet_module = self.meta_network.module
-        else:
-            self.network_module = self.network
-            self.metanet_module = self.meta_network
+
 
         self.nloss = self.network_module.nloss
 

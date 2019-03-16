@@ -52,6 +52,12 @@ class DualEngine(ABC):
             self.meta_network = meta_network
         else:
             log.warn('No network given, make sure to have a self.network property for this engine to work with.')
+        if self.multi_gpu:
+            self.network_module = self.network.module
+            self.metanet_module = self.meta_network.module
+        else:
+            self.network_module = self.network
+            self.metanet_module = self.meta_network
 
         if optimizer is not None:
             self.optimizer = optimizer
@@ -147,7 +153,7 @@ class DualEngine(ABC):
         Return:
             int: Computed as self.network.seen // self.batch_size
         """
-        return self.network.seen // self.batch_size
+        return self.network_module.seen // self.batch_size
 
     @property
     def batch_subdivisions(self):
