@@ -36,7 +36,7 @@ class Yolov2_Meta(YoloABC):
 
         self.backbone = backbone.Darknet19()
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
-        self.metanet = metanet.Metanet(num_classes=num_classes)
+        # self.metanet = metanet.Metanet(num_classes=num_classes)
         if train_flag == 2:
             if reweights_file is not None:
                 with open(reweights_file, 'rb') as handle:
@@ -54,18 +54,13 @@ class Yolov2_Meta(YoloABC):
             self.init_weights(slope=0.1)
 
     def _forward(self, x):
-        data, meta_imgs = x
+        data, reweights = x
         middle_feats = self.backbone(data)
-        reweights = self.metanet(meta_imgs)
+        # reweights = self.metanet(meta_imgs)
         features = self.head(middle_feats, reweights)
         loss_fn = loss.MetaLoss
 
         self.compose(data, features, loss_fn)
-        for param in self.metanet.parameters():
-            # if self.last_layer is not None:
-            #     print((param.data[0] - self.last_layer).sum())
-            self.last_layer = copy.deepcopy(param.data[0])
-            break
         return features
 
     def _forward_test(self, x, reweights):
@@ -82,10 +77,10 @@ class Yolov2_Meta(YoloABC):
 
     def forward(self, x, target=None):
         if self.train_flag == 1:
-            x, meta_imgs = x
+            x, reweights = x
             self.seen += x.size(0)
             t1 = time.time()
-            outputs = self._forward((x, meta_imgs))
+            outputs = self._forward((x, reweights))
             t2 = time.time()
 
             assert len(outputs) == len(self.loss)

@@ -219,3 +219,6 @@ def list_collate(batch):
             items[i] = default_collate(items[i])
 
     return items
+
+def meta_collate(batch):
+    return batch
