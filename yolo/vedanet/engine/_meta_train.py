@@ -1,5 +1,6 @@
 import logging as log
 import torch
+from torch.utils.data.dataloader import default_collate
 from torchvision import transforms as tf
 from statistics import mean
 import os
@@ -9,7 +10,8 @@ import copy
 
 from .. import data
 from .. import models
-from . import engine
+from . import dual_engine
+from .. import network
 
 __all__ = ['MetaTrainingEngine']
 
@@ -29,10 +31,25 @@ class VOCDataset(data.MetaboxDataset):
         hsv = data.transform.HSVShift(hue, sat, val)
         it = tf.ToTensor()
 
-        lb = data.transform.Letterbox(hyper_params.meta_input_shape)
-
         img_tf = data.transform.Compose([rc, rf, hsv, it])
         anno_tf = data.transform.Compose([rc, rf])
+
+        def identify(img_id):
+            # return f'{root}/VOCdevkit/{img_id}.jpg'
+            return f'{img_id}'
+
+        super(VOCDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
+
+
+class VOCMetaDataset(data.MetaboxDataset):
+    def __init__(self, hyper_params):
+        anno = hyper_params.trainfile
+        network_size = hyper_params.network_size
+        labels = hyper_params.labels
+
+        it = tf.ToTensor()
+
+        lb = data.transform.Letterbox(hyper_params.meta_input_shape)
 
         self.meta_tf = data.transform.Compose([lb, it])
         self.meta_anno_tf = data.transform.Compose([lb])
@@ -41,31 +58,21 @@ class VOCDataset(data.MetaboxDataset):
             # return f'{root}/VOCdevkit/{img_id}.jpg'
             return f'{img_id}'
 
-        super(VOCDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
+        super(VOCMetaDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, self.meta_tf, self.meta_anno_tf)
 
     def __getitem__(self, index):
-        img, anno = super().__getitem__(index)
-
-        load_img = self.id(self.keys[index[1]])
         meta_imgs = []
         for i in range(len(self.class_label_map)):
             if len(self.classid_anno[i]) != 0:
                 # get image
                 randidx = random.randint(0, len(self.classid_anno[i]) - 1)
                 class_img_name = self.classid_anno[i][randidx][0]
-                while class_img_name == load_img:
-                    randidx = random.randint(0, len(self.classid_anno[i]) - 1)
-                    class_img_name = self.classid_anno[i][randidx][0]
                 class_img = Image.open(class_img_name)
                 class_img_tf = self.meta_tf(class_img)          # [3, w, h]
 
                 # get annotation
                 class_anno = [copy.deepcopy(self.classid_anno[i][randidx][1])]
                 class_anno = self.meta_anno_tf(class_anno)
-                # while(len(class_anno) == 0):
-                #     class_img_tf = self.meta_tf(class_img)
-                #     class_anno = [copy.deepcopy(self.classid_anno[i][randidx][1])]
-                #     class_anno = self.meta_anno_tf(class_anno)
                 class_anno = class_anno[0]
 
                 # add a mask
@@ -79,10 +86,10 @@ class VOCDataset(data.MetaboxDataset):
                 meta_imgs.append(class_img.unsqueeze(0))
         meta_imgs = torch.cat(meta_imgs, dim=0)
 
-        return img, anno, meta_imgs
+        return meta_imgs
 
 
-class MetaTrainingEngine(engine.Engine):
+class MetaTrainingEngine(dual_engine.DualEngine):
     """ This is a custom engine for this training cycle """
 
     def __init__(self, hyper_params):
@@ -101,9 +108,11 @@ class MetaTrainingEngine(engine.Engine):
         model_name = hyper_params.model_name
         net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1,
                                           clear=hyper_params.clear)
+        metanet = network.metanet.Metanet(hyper_params.classes)
         log.info('Net structure\n\n%s\n' % net)
         if self.cuda:
             net.cuda()
+            metanet.cuda()
 
         log.debug('Creating optimizer')
         learning_rate = hyper_params.learning_rate
@@ -112,7 +121,7 @@ class MetaTrainingEngine(engine.Engine):
         batch = hyper_params.batch
         log.info(f'Adjusting learning rate to [{learning_rate}]')
         meta_net_parameters = [
-            {'params': net.metanet.parameters(), 'lr': learning_rate * 100.0 / batch},
+            {'params': metanet.parameters(), 'lr': learning_rate * 100.0 / batch},
             {'params': net.backbone.parameters()},
             {'params': net.head.parameters()}
         ]
@@ -131,7 +140,18 @@ class MetaTrainingEngine(engine.Engine):
             collate_fn=data.list_collate,
         )
 
-        super(MetaTrainingEngine, self).__init__(net, optim, dataloader)
+        meta_dataset = VOCMetaDataset(hyper_params)
+        meta_dataloader = data.DataLoader(
+            meta_dataset,
+            batch_size=1,
+            shuffle=True,
+            drop_last=True,
+            num_workers=0,
+            pin_memory=hyper_params.pin_mem if self.cuda else False,
+            collate_fn=default_collate,
+        )
+
+        super(MetaTrainingEngine, self).__init__(net, metanet, optim, dataloader, meta_dataloader)
 
         self.nloss = self.network.nloss
 
@@ -158,16 +178,22 @@ class MetaTrainingEngine(engine.Engine):
 
         self.dataloader.change_input_dim()
 
+    def process_meta_img(self, meta_imgs):
+        if self.cuda:
+            meta_imgs = meta_imgs.cuda()
+
+        reweights = self.meta_network(meta_imgs)
+        return reweights
+
     def process_batch(self, data):
-        data, target, meta_imgs = data
+        data, target, reweights = data
         # to(device)
         if self.cuda:
             data = data.cuda()
-            meta_imgs = meta_imgs.cuda()
         # meta_imgs = torch.autograd.Variable(meta_imgs, requires_grad=True)
 
-        loss = self.network((data, meta_imgs), target)
-        loss.backward()
+        loss = self.network((data, reweights), target)
+        loss.backward(retain_graph=True)
 
         for ii in range(self.nloss):
             self.train_loss[ii]['tot'].append(self.network.loss[ii].loss_tot.item() / self.mini_batch_size)

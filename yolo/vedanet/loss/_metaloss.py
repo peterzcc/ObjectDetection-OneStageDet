@@ -169,9 +169,9 @@ class MetaLoss(nn.modules.loss._Loss):
         self.loss_conf = loss_conf_pos +  loss_conf_neg 
 
         if nC > 1 and cls.numel() > 0:
+            self.loss_cls = self.class_scale * 1.0 * ce(cls, tcls)
             cls_softmax = F.softmax(cls, 1)
-            self.loss_cls = self.class_scale * 1.0 * ce(cls_softmax, tcls)
-            t_ind = torch.unsqueeze(tcls, 1).expand_as(cls_softmax)      
+            t_ind = torch.unsqueeze(tcls, 1).expand_as(cls_softmax)
             class_prob = torch.gather(cls_softmax, 1, t_ind)[:, 0]
         else:
             self.loss_cls = torch.tensor(0.0, device=device)
@@ -272,7 +272,7 @@ class MetaLoss(nn.modules.loss._Loss):
                     coord_mask[b, best_n*nC + anno.class_id, 0, gj*nW+gi] = 2 - anno.width*anno.height/(nW*nH*self.reduction*self.reduction)
                     cls_mask[b][best_n][gj*nW+gi] = 1
                     conf_pos_mask[b, best_n*nC + anno.class_id, gj*nW+gi] = 1
-                    conf_neg_mask[b, :, anno.class_id, gj*nW+gi] = 1
+                    conf_neg_mask[b, :, anno.class_id, :] = 1
                     conf_neg_mask[b, best_n, anno.class_id, gj*nW+gi] = 0
                     tcoord[b, best_n*nC + anno.class_id, 0, gj*nW+gi] = gt[i, 0] - gi
                     tcoord[b, best_n*nC + anno.class_id, 1, gj*nW+gi] = gt[i, 1] - gj
