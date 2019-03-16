@@ -111,8 +111,13 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         metanet = network.metanet.Metanet(hyper_params.classes)
         log.info('Net structure\n\n%s\n' % net)
         if self.cuda:
+
             net.cuda()
             metanet.cuda()
+            if torch.cuda.device_count() > 1:
+                print("Let's use", torch.cuda.device_count(), "GPUs!")
+                net = torch.nn.DataParallel(net)
+                metanet = torch.nn.DataParallel(metanet)
 
         log.debug('Creating optimizer')
         learning_rate = hyper_params.learning_rate
