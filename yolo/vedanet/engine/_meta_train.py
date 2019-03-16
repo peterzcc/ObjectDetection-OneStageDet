@@ -125,11 +125,18 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         decay = hyper_params.decay
         batch = hyper_params.batch
         log.info(f'Adjusting learning rate to [{learning_rate}]')
-        meta_net_parameters = [
-            {'params': metanet.parameters(), 'lr': learning_rate * 100.0 / batch},
-            {'params': net.backbone.parameters()},
-            {'params': net.head.parameters()}
-        ]
+        if torch.cuda.device_count() > 1:
+            meta_net_parameters = [
+                {'params': metanet.module.parameters(), 'lr': learning_rate * 100.0 / batch},
+                {'params': net.module.backbone.parameters()},
+                {'params': net.module.head.parameters()}
+            ]
+        else:
+            meta_net_parameters = [
+                {'params': metanet.parameters(), 'lr': learning_rate * 100.0 / batch},
+                {'params': net.backbone.parameters()},
+                {'params': net.head.parameters()}
+            ]
         optim = torch.optim.SGD(meta_net_parameters, lr=learning_rate / batch, momentum=momentum, dampening=0,
                                 weight_decay=decay * batch)
 
