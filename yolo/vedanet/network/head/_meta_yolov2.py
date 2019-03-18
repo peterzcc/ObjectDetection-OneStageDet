@@ -8,6 +8,7 @@ from .. import layer as vn_layer
 __all__ = ['MetaYolov2']
 
 
+
 class MetaYolov2(nn.Module):
     def __init__(self, num_anchors, num_classes, input_channels=48):
         """ Network initialisation """
@@ -33,8 +34,9 @@ class MetaYolov2(nn.Module):
 
         self.layers = nn.ModuleList([nn.Sequential(layer_dict) for layer_dict in layer_list])
         self.num_classes = num_classes
+        self.reweight = None
 
-    def forward(self, middle_feats, reweight):
+    def forward(self, middle_feats, reweight=None):
         outputs = []
         # stage 5
         # Route : layers=-9
@@ -45,7 +47,9 @@ class MetaYolov2(nn.Module):
         out = self.layers[1](torch.cat((stage6_reorg, stage6), 1))
 
         # TODO: put reweight here
-        out = self.get_reweighted_output(out, self.layers[2], reweight)
+        if reweight is not None:
+            self.reweight = reweight
+        out = self.get_reweighted_output(out, self.layers[2], self.reweight)
         features = [out]
         return features
 

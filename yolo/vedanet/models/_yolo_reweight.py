@@ -44,6 +44,11 @@ class Yolov2_Meta(YoloABC):
         else:
             self.dist_backbone = self.backbone
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
+        if torch.cuda.device_count() > 1:
+            self.dist_head = torch.nn.DataParallel(self.head)
+        else:
+            self.dist_head = self.head
+
         # self.metanet = metanet.Metanet(num_classes=num_classes)
         if train_flag == 2:
             if reweights_file is not None:
@@ -64,7 +69,8 @@ class Yolov2_Meta(YoloABC):
     def _forward(self, x):
         data, reweights = x
         middle_feats = self.dist_backbone(data)
-        features = self.head(middle_feats, reweights)
+        self.head.reweight = reweights
+        features = self.dist_head(middle_feats, reweights)
         self.compose(data, features, self.loss_fn)
         return features
 
@@ -72,7 +78,8 @@ class Yolov2_Meta(YoloABC):
 
         data = x
         middle_feats = self.dist_backbone(data)
-        features = self.head(middle_feats, reweights)
+        self.head.reweight = reweights
+        features = self.dist_head(middle_feats, reweights)
 
         self.compose(data, features, self.loss_fn)
 
