@@ -114,7 +114,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         self.multi_gpu = False
         if self.cuda:
             net.cuda()
-            metanet.cuda()
+            metanet.to(torch.cuda.device(1))
 
         log.debug('Creating optimizer')
         learning_rate = hyper_params.learning_rate
