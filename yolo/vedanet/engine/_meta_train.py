@@ -109,6 +109,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1,
                                           clear=hyper_params.clear)
         metanet = network.metanet.Metanet(hyper_params.classes)
+
         log.info('Net structure\n\n%s\n' % net)
         self.multi_gpu = False
         if self.cuda:
@@ -186,7 +187,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         if self.cuda:
             meta_imgs = meta_imgs.cuda()
 
-        reweights = self.meta_network(meta_imgs)
+        reweights = self.dist_meta_network(meta_imgs)
         return reweights
 
     def process_batch(self, data):

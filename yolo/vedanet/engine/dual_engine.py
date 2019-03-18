@@ -50,6 +50,10 @@ class DualEngine(ABC):
         if network is not None and meta_network is not None:
             self.network = network
             self.meta_network = meta_network
+            if torch.cuda.device_count() > 1:
+                self.dist_meta_network = torch.nn.DataParallel(self.meta_network)
+            else:
+                self.dist_meta_network = self.meta_network
         else:
             log.warn('No network given, make sure to have a self.network property for this engine to work with.')
 

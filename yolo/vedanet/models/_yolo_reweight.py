@@ -64,7 +64,6 @@ class Yolov2_Meta(YoloABC):
     def _forward(self, x):
         data, reweights = x
         middle_feats = self.dist_backbone(data)
-        # reweights = self.metanet(meta_imgs)
         features = self.head(middle_feats, reweights)
         self.compose(data, features, self.loss_fn)
         return features
@@ -72,7 +71,7 @@ class Yolov2_Meta(YoloABC):
     def _forward_test(self, x, reweights):
 
         data = x
-        middle_feats = self.backbone(data)
+        middle_feats = self.dist_backbone(data)
         features = self.head(middle_feats, reweights)
 
         self.compose(data, features, self.loss_fn)
