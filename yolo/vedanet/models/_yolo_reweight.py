@@ -35,7 +35,7 @@ class Yolov2_Meta(YoloABC):
         self.loss = None
         self.postprocess = None
         if tiny_backbone:
-            self.backbone = backbone.TinyYolov2()
+            self.backbone = backbone.NanoYolov2()
         else:
             self.backbone = backbone.Darknet19()
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
