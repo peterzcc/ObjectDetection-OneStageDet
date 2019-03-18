@@ -67,6 +67,7 @@ class DualEngine(ABC):
         if dataloader is not None and meta_dataloader is not None:
             self.dataloader = dataloader
             self.meta_dataloader = meta_dataloader
+            self.meta_dataloader_iterator = iter(self.meta_dataloader)
         else:
             log.warn('No dataloader given, make sure to have a self.dataloader property for this engine to work with.')
 
@@ -86,6 +87,13 @@ class DualEngine(ABC):
             else:
                 log.warn(f'{key} attribute already exists on engine. Keeping original value [{getattr(self, key)}]')
         '''
+    def sample_reweight(self):
+        try:
+            meta_imgs = next(self.meta_dataloader_iterator)
+        except StopIteration:
+            self.meta_dataloader_iterator = iter(self.meta_dataloader)
+            meta_imgs = next(self.meta_dataloader_iterator)
+        return meta_imgs
 
     def __call__(self):
         """ Start the training cycle. """
@@ -99,15 +107,11 @@ class DualEngine(ABC):
         self.meta_network.train()
         while True:
             loader = self.dataloader
-            meta_dataloader_iterator = iter(self.meta_dataloader)
+
             for idx, data in enumerate(loader):
                 # init meta images first
                 if idx % self.batch_subdivisions == 0:
-                    try:
-                        meta_imgs = next(meta_dataloader_iterator)
-                    except StopIteration:
-                        meta_dataloader_iterator = iter(self.meta_dataloader)
-                        meta_imgs = next(meta_dataloader_iterator)
+                    meta_imgs = self.sample_reweight()
                     reweights = self.process_meta_img(meta_imgs)
                 data = data + [reweights, ]
                 # Forward and backward on (mini-)batches

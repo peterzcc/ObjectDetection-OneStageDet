@@ -34,6 +34,7 @@ class Yolov2_Meta(YoloABC):
 
         self.loss = None
         self.postprocess = None
+        self.loss_fn = loss.RepLoss
         if tiny_backbone:
             self.backbone = backbone.NanoYolov2()
         else:
@@ -61,9 +62,7 @@ class Yolov2_Meta(YoloABC):
         middle_feats = self.backbone(data)
         # reweights = self.metanet(meta_imgs)
         features = self.head(middle_feats, reweights)
-        loss_fn = loss.MetaLoss
-
-        self.compose(data, features, loss_fn)
+        self.compose(data, features, self.loss_fn)
         return features
 
     def _forward_test(self, x, reweights):
@@ -72,9 +71,7 @@ class Yolov2_Meta(YoloABC):
         middle_feats = self.backbone(data)
         features = self.head(middle_feats, reweights)
 
-        loss_fn = loss.MetaLoss
-
-        self.compose(data, features, loss_fn)
+        self.compose(data, features, self.loss_fn)
 
         return [self.convert_to_yolo_output(f) for f in features]
 
