@@ -73,10 +73,10 @@ def main():
     print(f"sampled {len(k_shot_annos)} files in total")
     print(f"removed {len(files2remove)} files in total")
     print(f"got {len(base_anno.keys())} base files in total")
-    # bbb.generate('anno_pickle', joint_annos, "../VOCdevkit/onedet_cache/k_shot_{}_joint.pkl".format(k_shot))
-    # bbb.generate('anno_pickle', k_shot_annos, "../VOCdevkit/onedet_cache/k_shot_{}_finetune.pkl".format(k_shot))
+    bbb.generate('anno_pickle', joint_annos, "../VOCdevkit/onedet_cache/k_shot_{}_joint.pkl".format(k_shot))
+    bbb.generate('anno_pickle', k_shot_annos, "../VOCdevkit/onedet_cache/k_shot_{}_finetune.pkl".format(k_shot))
 
-    bbb.generate('anno_pickle', base_anno, "../VOCdevkit/onedet_cache/k_shot_base.pkl")
+    # bbb.generate('anno_pickle', base_anno, "../VOCdevkit/onedet_cache/k_shot_base.pkl")
     pass
 
 

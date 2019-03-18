@@ -11,3 +11,4 @@ cfg_dict:
     RegionXception: region_xception.yml
     RegionLightXception: region_light_xception.yml
     Yolov2_Meta: meta_yolov2.yml
+    TinyYolov2_Meta: meta_tiny.yml
