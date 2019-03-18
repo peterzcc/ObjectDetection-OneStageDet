@@ -45,7 +45,7 @@ class Yolov2_Meta(YoloABC):
             self.dist_backbone = self.backbone
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
         if torch.cuda.device_count() > 1:
-            self.dist_head = torch.nn.DataParallel(self.head)
+            self.dist_head = torch.nn.DataParallel(self.head, output_device=list(range(torch.cuda.device_count()))[1])
         else:
             self.dist_head = self.head
 
