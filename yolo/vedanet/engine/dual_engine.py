@@ -51,7 +51,7 @@ class DualEngine(ABC):
             self.network = network
             self.meta_network = meta_network
             if torch.cuda.device_count() > 1:
-                self.dist_meta_network = torch.nn.DataParallel(self.meta_network, device_ids=[1,0,2,3])
+                self.dist_meta_network = torch.nn.DataParallel(self.meta_network)
             else:
                 self.dist_meta_network = self.meta_network
         else:
