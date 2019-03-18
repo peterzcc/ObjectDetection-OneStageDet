@@ -9,7 +9,7 @@ import signal
 from statistics import mean
 from abc import ABC, abstractmethod
 import torch
-
+from ..network import metanet
 import vedanet as vn
 
 __all__ = ['DualEngine']
@@ -50,8 +50,9 @@ class DualEngine(ABC):
         if network is not None and meta_network is not None:
             self.network = network
             self.meta_network = meta_network
-            if torch.cuda.device_count() > 1:
-                self.dist_meta_network = torch.nn.DataParallel(self.meta_network)
+            if torch.cuda.device_count() > 1 and metanet.Metanet.device is not None:
+                self.dist_meta_network = torch.nn.DataParallel(self.meta_network,
+                                                               output_device=metanet.Metanet.device)
             else:
                 self.dist_meta_network = self.meta_network
         else:

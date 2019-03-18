@@ -27,6 +27,7 @@ class Metanet(nn.Module):
         self.postprocess (fn): Postprocessing function. By default this is :class:`~lightnet.data.GetBoundingBoxes`
 
     """
+    device = None
     def __init__(self, num_classes=20, weights_file=None):
         """ Network initialisation """
         super().__init__()

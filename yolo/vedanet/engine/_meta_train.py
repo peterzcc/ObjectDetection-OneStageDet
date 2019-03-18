@@ -116,9 +116,11 @@ class MetaTrainingEngine(dual_engine.DualEngine):
             net.cuda()
             if torch.cuda.device_count() > 1:
                 metanet_device = 1
+                network.metanet.Metanet.device = metanet_device
             else:
                 metanet_device = 0
-            metanet.cuda(device=metanet_device)
+                network.metanet.Metanet.device = metanet_device
+            metanet.cuda(device=network.metanet.Metanet.device)
 
         log.debug('Creating optimizer')
         learning_rate = hyper_params.learning_rate
