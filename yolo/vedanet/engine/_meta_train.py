@@ -184,8 +184,8 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         self.dataloader.change_input_dim()
 
     def process_meta_img(self, meta_imgs):
-        if self.cuda:
-            meta_imgs = meta_imgs.cuda()
+        # if self.cuda:
+        #     meta_imgs = meta_imgs.cuda()
 
         reweights = self.dist_meta_network(meta_imgs)
         return reweights
@@ -193,8 +193,8 @@ class MetaTrainingEngine(dual_engine.DualEngine):
     def process_batch(self, data):
         data, target, reweights = data
         # to(device)
-        if self.cuda:
-            data = data.cuda()
+        # if self.cuda:
+        #     data = data.cuda()
         # meta_imgs = torch.autograd.Variable(meta_imgs, requires_grad=True)
 
         loss = self.network((data, reweights), target)
