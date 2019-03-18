@@ -11,13 +11,14 @@ from ..network import backbone
 from ..network import head
 from ..network import metanet
 
-__all__ = ['Yolov2_Meta']
+__all__ = ['Yolov2_Meta', 'TinyYolov2_Meta']
 
 
 class Yolov2_Meta(YoloABC):
     def __init__(self, num_classes=20, weights_file=None, input_channels=3,
                  anchors=[(42.31, 55.41), (102.17, 128.30), (161.79, 259.17), (303.08, 154.90), (359.56, 320.23)],
-                 anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None, reweights_file=None):
+                 anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None, reweights_file=None,
+                 tiny_backbone=False):
         """ Network initialisation """
         super().__init__()
 
@@ -33,8 +34,10 @@ class Yolov2_Meta(YoloABC):
 
         self.loss = None
         self.postprocess = None
-
-        self.backbone = backbone.Darknet19()
+        if tiny_backbone:
+            self.backbone = backbone.TinyYolov2()
+        else:
+            self.backbone = backbone.Darknet19()
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
         # self.metanet = metanet.Metanet(num_classes=num_classes)
         if train_flag == 2:
@@ -156,3 +159,13 @@ class Yolov2_Meta(YoloABC):
         reshaped_final_prediction = final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
         assert not torch.isnan(reshaped_final_prediction).any()
         return reshaped_final_prediction
+
+
+class TinyYolov2_Meta(Yolov2_Meta):
+    def __init__(self, num_classes=20, weights_file=None, input_channels=3,
+                 anchors=[(42.31, 55.41), (102.17, 128.30), (161.79, 259.17), (303.08, 154.90), (359.56, 320.23)],
+                 anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None, reweights_file=None):
+        super(TinyYolov2_Meta, self).__init__(num_classes, weights_file, input_channels,
+                                              anchors,
+                                              anchors_mask, train_flag, clear, test_args, reweights_file,
+                                              tiny_backbone=True)
