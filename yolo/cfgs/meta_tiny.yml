@@ -34,8 +34,8 @@ train:
 
     input_shape: [608, 608]
     meta_input_shape: [416, 416]
-    batch_size: 16
-    mini_batch_size: 2
+    batch_size: 32
+    mini_batch_size: 4
     weights: ~
 
 test:
