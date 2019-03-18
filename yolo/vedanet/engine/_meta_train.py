@@ -119,7 +119,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
                 self.multi_gpu = True
                 print("Let's use", torch.cuda.device_count(), "GPUs!")
                 net = torch.nn.DataParallel(net)
-                metanet = metanet # torch.nn.DataParallel(metanet)
+                metanet = torch.nn.DataParallel(metanet)
 
         log.debug('Creating optimizer')
         learning_rate = hyper_params.learning_rate
