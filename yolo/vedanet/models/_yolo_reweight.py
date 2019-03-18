@@ -70,7 +70,7 @@ class Yolov2_Meta(YoloABC):
         data, reweights = x
         middle_feats = self.dist_backbone(data)
         self.head.reweight = reweights
-        features = self.dist_head(middle_feats, reweights)
+        features = self.dist_head(middle_feats, None)
         self.compose(data, features, self.loss_fn)
         return features
 
@@ -79,7 +79,7 @@ class Yolov2_Meta(YoloABC):
         data = x
         middle_feats = self.dist_backbone(data)
         self.head.reweight = reweights
-        features = self.dist_head(middle_feats, reweights)
+        features = self.dist_head(middle_feats, None)
 
         self.compose(data, features, self.loss_fn)
 
