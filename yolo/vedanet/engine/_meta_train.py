@@ -133,8 +133,9 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         else:
             net_module = net
             metanet_module = metanet
+
         meta_net_parameters = [
-            {'params': metanet_module.parameters(), 'lr': learning_rate * 100.0 / batch},
+            {'params': metanet_module.parameters(), },#'lr': learning_rate * 100.0 / batch},
             {'params': net_module.backbone.parameters()},
             {'params': net_module.head.parameters()}
         ]

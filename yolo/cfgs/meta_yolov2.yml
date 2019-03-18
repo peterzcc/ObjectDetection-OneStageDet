@@ -30,7 +30,7 @@ train:
 
     backup_interval: 200
     backup_steps: [1000, 60000]
-    backup_rates: [1000, 200]
+    backup_rates: [1000, 1000]
 
     input_shape: [608, 608]
     meta_input_shape: [416, 416]
