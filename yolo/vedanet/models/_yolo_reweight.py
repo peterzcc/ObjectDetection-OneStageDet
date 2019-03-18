@@ -39,6 +39,10 @@ class Yolov2_Meta(YoloABC):
             self.backbone = backbone.NanoYolov2()
         else:
             self.backbone = backbone.Darknet19()
+        if torch.cuda.device_count() > 1:
+            self.dist_backbone = torch.nn.DataParallel(self.backbone)
+        else:
+            self.dist_backbone = self.backbone
         self.head = head.MetaYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
         # self.metanet = metanet.Metanet(num_classes=num_classes)
         if train_flag == 2:
@@ -59,7 +63,7 @@ class Yolov2_Meta(YoloABC):
 
     def _forward(self, x):
         data, reweights = x
-        middle_feats = self.backbone(data)
+        middle_feats = self.dist_backbone(data)
         # reweights = self.metanet(meta_imgs)
         features = self.head(middle_feats, reweights)
         self.compose(data, features, self.loss_fn)

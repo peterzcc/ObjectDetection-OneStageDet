@@ -112,14 +112,8 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         log.info('Net structure\n\n%s\n' % net)
         self.multi_gpu = False
         if self.cuda:
-
             net.cuda()
             metanet.cuda()
-            if torch.cuda.device_count() > 1:
-                self.multi_gpu = True
-                print("Let's use", torch.cuda.device_count(), "GPUs!")
-                net = torch.nn.DataParallel(net)
-                metanet = torch.nn.DataParallel(metanet)
 
         log.debug('Creating optimizer')
         learning_rate = hyper_params.learning_rate
@@ -127,17 +121,12 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         decay = hyper_params.decay
         batch = hyper_params.batch
         log.info(f'Adjusting learning rate to [{learning_rate}]')
-        if self.multi_gpu:
-            net_module = net.module
-            metanet_module = metanet #.module
-        else:
-            net_module = net
-            metanet_module = metanet
+
 
         meta_net_parameters = [
-            {'params': metanet_module.parameters(), },#'lr': learning_rate * 100.0 / batch},
-            {'params': net_module.backbone.parameters()},
-            {'params': net_module.head.parameters()}
+            {'params': metanet.parameters(), },#'lr': learning_rate * 100.0 / batch},
+            {'params': net.backbone.parameters()},
+            {'params': net.head.parameters()}
         ]
         optim = torch.optim.SGD(meta_net_parameters, lr=learning_rate / batch, momentum=momentum, dampening=0,
                                 weight_decay=decay * batch)
@@ -168,7 +157,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         super(MetaTrainingEngine, self).__init__(net, metanet, optim, dataloader, meta_dataloader)
 
 
-        self.nloss = self.network_module.nloss
+        self.nloss = self.network.nloss
 
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
 
@@ -211,11 +200,11 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         loss.backward(retain_graph=True)
 
         for ii in range(self.nloss):
-            self.train_loss[ii]['tot'].append(self.network_module.loss[ii].loss_tot.item() / self.mini_batch_size)
-            self.train_loss[ii]['coord'].append(self.network_module.loss[ii].loss_coord.item() / self.mini_batch_size)
-            self.train_loss[ii]['conf'].append(self.network_module.loss[ii].loss_conf.item() / self.mini_batch_size)
-            if self.network_module.loss[ii].loss_cls is not None:
-                self.train_loss[ii]['cls'].append(self.network_module.loss[ii].loss_cls.item() / self.mini_batch_size)
+            self.train_loss[ii]['tot'].append(self.network.loss[ii].loss_tot.item() / self.mini_batch_size)
+            self.train_loss[ii]['coord'].append(self.network.loss[ii].loss_coord.item() / self.mini_batch_size)
+            self.train_loss[ii]['conf'].append(self.network.loss[ii].loss_conf.item() / self.mini_batch_size)
+            if self.network.loss[ii].loss_cls is not None:
+                self.train_loss[ii]['cls'].append(self.network.loss[ii].loss_cls.item() / self.mini_batch_size)
 
     def train_batch(self):
         self.optimizer.step()
@@ -250,10 +239,10 @@ class MetaTrainingEngine(dual_engine.DualEngine):
                 f'{self.batch} # All : Loss:{round(all_tot, 5)} (Coord:{round(all_coord, 2)} Conf:{round(all_conf, 2)})')
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
         if self.batch % self.backup_rate == 0:
-            self.network_module.save_weights(os.path.join(self.backup_dir, f'weights_{self.batch}.pt'))
+            self.network.save_weights(os.path.join(self.backup_dir, f'weights_{self.batch}.pt'))
 
         if self.batch % 100 == 0:
-            self.network_module.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
+            self.network.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
 
         if self.batch % self.resize_rate == 0:
             if self.batch + 200 >= self.max_batches:
@@ -264,10 +253,10 @@ class MetaTrainingEngine(dual_engine.DualEngine):
 
     def quit(self):
         if self.sigint:
-            self.network_module.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
+            self.network.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
             return True
         elif self.batch >= self.max_batches:
-            self.network_module.save_weights(os.path.join(self.backup_dir, f'final.dw'))
+            self.network.save_weights(os.path.join(self.backup_dir, f'final.dw'))
             return True
         else:
             return False
