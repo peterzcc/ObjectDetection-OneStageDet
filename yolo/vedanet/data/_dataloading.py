@@ -151,10 +151,11 @@ class DataLoader(torchDataLoader):
 
         self.sampler = sampler
         self.batch_sampler = batch_sampler
+        self.resize_range = resize_range
 
         self.__initialized = True
 
-    def change_input_dim(self, multiple=32, random_range=(10, 19), finish=False):
+    def change_input_dim(self, multiple=32, finish=False):
         """ This function will compute a new size and update it on the next mini_batch.
 
         Args:
@@ -168,6 +169,7 @@ class DataLoader(torchDataLoader):
             If ``multiple`` is an integer we generate a square size. If you give a tuple of **(width, height)**,
             the size is computed as :math:`rng * multiple[0], rng * multiple[1]`.
         """
+        random_range = self.resize_range
         if finish:
             size = random_range[1]
         else:

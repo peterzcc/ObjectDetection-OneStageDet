@@ -127,6 +127,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         momentum = hyper_params.momentum
         decay = hyper_params.decay
         batch = hyper_params.batch
+        self.max_input_shape = hyper_params.network_size
         log.info(f'Adjusting learning rate to [{learning_rate}]')
 
 
@@ -148,6 +149,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
             num_workers=hyper_params.nworkers if self.cuda else 0,
             pin_memory=hyper_params.pin_mem if self.cuda else False,
             collate_fn=data.list_collate,
+            resize_range=(10, self.max_input_shape[0]//32)
         )
 
         meta_dataset = VOCMetaDataset(hyper_params)
