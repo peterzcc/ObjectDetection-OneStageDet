@@ -32,10 +32,10 @@ train:
     backup_steps: [1000, 60000]
     backup_rates: [1000, 1000]
 
-    input_shape: [608, 608]
+    input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 32
-    mini_batch_size: 8
+    batch_size: 64
+    mini_batch_size: 16
     weights: "weights/darknet19_448.conv.23"
 
 test:
@@ -46,7 +46,7 @@ test:
     pin_mem: True
 
 
-    input_shape: [544, 544]
+    input_shape: [416, 416]
     batch_size: 32
     weights: "outputs/Yolov2_Meta/great_metanet_lr/weights/backup.pt" #"weights/yolov2_60200.dw" #
     conf_thresh: 0.005
