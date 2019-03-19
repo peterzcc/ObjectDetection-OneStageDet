@@ -111,7 +111,7 @@ class DualEngine(ABC):
 
             for idx, data in enumerate(loader):
                 # init meta images first
-                if idx % self.batch_subdivisions == 0:
+                if True: #idx % self.batch_subdivisions == 0:
                     meta_imgs = self.sample_reweight()
                     reweights = self.process_meta_img(meta_imgs)
                 data = data + [reweights, ]
