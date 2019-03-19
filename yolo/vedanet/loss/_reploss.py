@@ -57,7 +57,7 @@ class RepLoss(nn.modules.loss._Loss):
         self.smooth_l1 = nn.SmoothL1Loss(reduce=False)
         self.ce = nn.CrossEntropyLoss(size_average=False)
 
-    def forward(self, output, target, seen=None):
+    def forward(self, output, target: list, seen=None):
             """ Compute Region loss.
 
             Args:
@@ -117,10 +117,13 @@ class RepLoss(nn.modules.loss._Loss):
             coord[:, :, :2] = output[:, :, :2].sigmoid()    # tx,ty
             coord[:, :, 2:4] = output[:, :, 2:4]            # tw,th
             conf = output[:, :, 4].sigmoid()
+            cls_balance_scale = 1.0
             if nC > 1:
-                pre_cls = output[:, :, 5].view(nB // nC, 1, nC, nA, nH * nW)
-                rep_cls = pre_cls.transpose(2, 3).repeat(1, nC, 1, 1, 1)
-                cls = rep_cls.contiguous().view(nB*nA, nC, nH*nW).transpose(1, 2).contiguous().view(-1, nC)
+                cls = output[:, :, 5].view(nB * nA, nC, nH * nW).transpose(1, 2).contiguous().view(-1, nC)
+                cls_balance_scale = 20.0
+                # pre_cls = output[:, :, 5].view(nB // nC, 1, nC, nA, nH * nW)
+                # rep_cls = pre_cls.transpose(2, 3).repeat(1, nC, 1, 1, 1)
+                # cls = rep_cls.contiguous().view(nB*nA, nC, nH*nW).transpose(1, 2).contiguous().view(-1, nC)
 
             # Create prediction boxes
             # time consuming
@@ -134,15 +137,18 @@ class RepLoss(nn.modules.loss._Loss):
             pred_boxes[:, 1] = (coord[:, :, 1].detach() + lin_y).view(-1)
             pred_boxes[:, 2] = (coord[:, :, 2].detach().exp() * anchor_w).view(-1)
             pred_boxes[:, 3] = (coord[:, :, 3].detach().exp() * anchor_h).view(-1)
-            new_target = []
+            obj_target = []
             for img_bbs in target:
                 img_targets = [list() for i in range(nC)]
                 for a in img_bbs:
                     img_targets[a.class_id].append(a)
-                new_target.extend(img_targets)
-            target = new_target
-            # Get target values
-            coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls = self.build_targets(pred_boxes, target, nH, nW)
+                obj_target.extend(img_targets)
+            coord_mask, conf_pos_mask, conf_neg_mask, tcoord, tconf = self.build_xywho(pred_boxes, obj_target, nH, nW)
+
+            cls_mask, tcls = self.build_cls(pred_boxes.device, target, nH, nW)
+
+            # # Get target values
+            # coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls = self.build_targets(pred_boxes, target, nH, nW)
             # coord
             coord_mask = coord_mask.expand_as(tcoord)[:,:,:2] # 0 = 1 = 2 = 3, only need first two element
             coord_center, tcoord_center = coord[:,:,:2], tcoord[:,:,:2]
@@ -174,7 +180,7 @@ class RepLoss(nn.modules.loss._Loss):
             self.loss_conf = loss_conf_pos +  loss_conf_neg
 
             if nC > 1 and cls.numel() > 0:
-                self.loss_cls = self.class_scale * 1.0 * ce(cls, tcls)
+                self.loss_cls = cls_balance_scale * self.class_scale * 1.0 * ce(cls, tcls)
                 cls_softmax = F.softmax(cls, 1)
                 t_ind = torch.unsqueeze(tcls, 1).expand_as(cls_softmax)
                 class_prob = torch.gather(cls_softmax, 1, t_ind)[:, 0]
@@ -293,6 +299,154 @@ class RepLoss(nn.modules.loss._Loss):
         self.info['recall75'] = recall75 / obj_cur
 
         return coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls
+
+    def build_xywho(self, pred_boxes, ground_truth, nH, nW):
+        """ Compare prediction boxes and ground truths, convert ground truths to network output tensors """
+        # Parameters
+        nB = len(ground_truth)
+        nA = self.num_anchors
+        nAnchors = nA * nH * nW
+        nPixels = nH * nW
+        device = pred_boxes.device
+
+        # Tensors
+        conf_pos_mask = torch.zeros(nB, nA, nH * nW, requires_grad=False, device=device)
+        conf_neg_mask = torch.ones(nB, nA, nH * nW, requires_grad=False, device=device)
+        coord_mask = torch.zeros(nB, nA, 1, nH * nW, requires_grad=False, device=device)
+        tcoord = torch.zeros(nB, nA, 4, nH * nW, requires_grad=False, device=device)
+        tconf = torch.zeros(nB, nA, nH * nW, requires_grad=False, device=device)
+
+        recall50 = 0
+        recall75 = 0
+        obj_all = 0
+        obj_cur = 0
+        iou_sum = 0
+        for b in range(nB):
+            if len(ground_truth[b]) == 0:  # No gt for this image
+                continue
+
+            obj_all += len(ground_truth[b])
+
+            # Build up tensors
+            cur_pred_boxes = pred_boxes[b * nAnchors:(b + 1) * nAnchors]
+            if self.anchor_step == 4:
+                anchors = self.anchors.clone()
+                anchors[:, :2] = 0
+            else:
+                anchors = torch.cat([torch.zeros_like(self.anchors), self.anchors], 1)
+            gt = torch.zeros(len(ground_truth[b]), 4, device=device)
+            for i, anno in enumerate(ground_truth[b]):
+                gt[i, 0] = (anno.x_top_left + anno.width / 2) / self.reduction
+                gt[i, 1] = (anno.y_top_left + anno.height / 2) / self.reduction
+                gt[i, 2] = anno.width / self.reduction
+                gt[i, 3] = anno.height / self.reduction
+
+            # Set confidence mask of matching detections to 0
+            iou_gt_pred = bbox_ious(gt, cur_pred_boxes)
+            mask = (iou_gt_pred > self.thresh).sum(0) >= 1
+            conf_neg_mask[b][mask.view_as(conf_neg_mask[b])] = 0
+
+            # Find best anchor for each gt
+            gt_wh = gt.clone()
+            gt_wh[:, :2] = 0
+            iou_gt_anchors = bbox_ious(gt_wh, anchors)
+            _, best_anchors = iou_gt_anchors.max(1)
+
+            # Set masks and target values for each gt
+            # time consuming
+            for i, anno in enumerate(ground_truth[b]):
+                gi = min(nW - 1, max(0, int(gt[i, 0])))
+                gj = min(nH - 1, max(0, int(gt[i, 1])))
+                cur_n = best_anchors[i]
+                if cur_n in self.anchors_mask:
+                    best_n = self.anchors_mask.index(cur_n)
+                else:
+                    continue
+
+                iou = iou_gt_pred[i][best_n * nPixels + gj * nW + gi]
+                # debug information
+                obj_cur += 1
+                recall50 += (iou > 0.5).item()
+                recall75 += (iou > 0.75).item()
+                iou_sum += iou.item()
+
+                if anno.ignore:
+                    conf_pos_mask[b][best_n][gj * nW + gi] = 0
+                    conf_neg_mask[b][best_n][gj * nW + gi] = 0
+                else:
+                    coord_mask[b][best_n][0][gj * nW + gi] = 2 - anno.width * anno.height / (
+                                nW * nH * self.reduction * self.reduction)
+                    conf_pos_mask[b][best_n][gj * nW + gi] = 1
+                    conf_neg_mask[b][best_n][gj * nW + gi] = 0
+                    tcoord[b][best_n][0][gj * nW + gi] = gt[i, 0] - gi
+                    tcoord[b][best_n][1][gj * nW + gi] = gt[i, 1] - gj
+                    tcoord[b][best_n][2][gj * nW + gi] = math.log(gt[i, 2] / self.anchors[cur_n, 0])
+                    tcoord[b][best_n][3][gj * nW + gi] = math.log(gt[i, 3] / self.anchors[cur_n, 1])
+                    tconf[b][best_n][gj * nW + gi] = iou
+        # loss informaion
+        self.info['obj_cur'] = obj_cur
+        self.info['obj_all'] = obj_all
+        if obj_cur == 0:
+            obj_cur = 1
+        self.info['avg_iou'] = iou_sum / obj_cur
+        self.info['recall50'] = recall50 / obj_cur
+        self.info['recall75'] = recall75 / obj_cur
+
+        return coord_mask, conf_pos_mask, conf_neg_mask, tcoord, tconf,
+
+    def build_cls(self, device, ground_truth, nH, nW):
+        """ Compare prediction boxes and ground truths, convert ground truths to network output tensors """
+        # Parameters
+        nB = len(ground_truth)
+        nA = self.num_anchors
+        nAnchors = nA * nH * nW
+        nPixels = nH * nW
+
+        # Tensors
+
+        cls_mask = torch.zeros(nB, nA, nH * nW, requires_grad=False, dtype=torch.uint8, device=device)
+        tcls = torch.zeros(nB, nA, nH * nW, requires_grad=False, device=device)
+
+
+        for b in range(nB):
+            if len(ground_truth[b]) == 0:  # No gt for this image
+                continue
+
+            # Build up tensors
+            if self.anchor_step == 4:
+                anchors = self.anchors.clone()
+                anchors[:, :2] = 0
+            else:
+                anchors = torch.cat([torch.zeros_like(self.anchors), self.anchors], 1)
+            gt = torch.zeros(len(ground_truth[b]), 4, device=device)
+            for i, anno in enumerate(ground_truth[b]):
+                gt[i, 0] = (anno.x_top_left + anno.width / 2) / self.reduction
+                gt[i, 1] = (anno.y_top_left + anno.height / 2) / self.reduction
+                gt[i, 2] = anno.width / self.reduction
+                gt[i, 3] = anno.height / self.reduction
+
+            # Find best anchor for each gt
+            gt_wh = gt.clone()
+            gt_wh[:, :2] = 0
+            iou_gt_anchors = bbox_ious(gt_wh, anchors)
+            _, best_anchors = iou_gt_anchors.max(1)
+
+            # Set masks and target values for each gt
+            # time consuming
+            for i, anno in enumerate(ground_truth[b]):
+                gi = min(nW - 1, max(0, int(gt[i, 0])))
+                gj = min(nH - 1, max(0, int(gt[i, 1])))
+                cur_n = best_anchors[i]
+                if cur_n in self.anchors_mask:
+                    best_n = self.anchors_mask.index(cur_n)
+                else:
+                    continue
+
+                if not anno.ignore:
+                    cls_mask[b][best_n][gj * nW + gi] = 1
+                    tcls[b][best_n][gj * nW + gi] = anno.class_id
+
+        return cls_mask, tcls
 
     def printInfo(self):
         info = self.info
