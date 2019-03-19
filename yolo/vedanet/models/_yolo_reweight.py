@@ -34,7 +34,7 @@ class Yolov2_Meta(YoloABC):
 
         self.loss = None
         self.postprocess = None
-        self.loss_fn = loss.RepLoss
+        self.loss_fn = loss.MetaLoss
         if tiny_backbone:
             self.backbone = backbone.NanoYolov2()
         else:
