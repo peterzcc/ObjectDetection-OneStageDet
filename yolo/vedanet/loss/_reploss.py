@@ -118,8 +118,8 @@ class RepLoss(nn.modules.loss._Loss):
             coord[:, :, 2:4] = output[:, :, 2:4]            # tw,th
             conf = output[:, :, 4].sigmoid()
             if nC > 1:
-                pre_cls = output[:, :, 5].view(nB // nC, nC, nA, nH * nW)
-                rep_cls = pre_cls.transpose(1,2).repeat(nC, 1, 1, 1)
+                pre_cls = output[:, :, 5].view(nB // nC, 1, nC, nA, nH * nW)
+                rep_cls = pre_cls.transpose(2, 3).repeat(1, nC, 1, 1, 1)
                 cls = rep_cls.contiguous().view(nB*nA, nC, nH*nW).transpose(1, 2).contiguous().view(-1, nC)
 
             # Create prediction boxes
