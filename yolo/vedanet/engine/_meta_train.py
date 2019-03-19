@@ -193,7 +193,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         # if self.cuda:
         #     meta_imgs = meta_imgs.cuda()
 
-        reweights = self.dist_meta_network(meta_imgs)
+        reweights = self.dist_meta_network(meta_imgs[0])
         return reweights
 
     def process_batch(self, data):
