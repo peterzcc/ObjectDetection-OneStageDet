@@ -194,7 +194,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
     def process_meta_img(self, meta_imgs):
         # if self.cuda:
         #     meta_imgs = meta_imgs.cuda()
-
+        assert meta_imgs.shape[0] == 1
         reweights = self.dist_meta_network(meta_imgs[0])
         return reweights
 

@@ -77,6 +77,8 @@ def MetaWeights(hyper_params):
             log.info('%d/%d' % (idx + 1, len(loader)))
         if use_cuda:
             data = data.cuda()
+        assert data.shape[0] == 1
+        data = data[0]
 
         with torch.no_grad():
             reweights = net(data)
