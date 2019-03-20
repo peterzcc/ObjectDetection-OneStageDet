@@ -44,14 +44,12 @@ test:
     gpus: "3"
     nworkers: 16
     pin_mem: True
-
-
     input_shape: [416, 416]
     batch_size: 32
     weights: "outputs/Yolov2_Meta/parallel/weights/weights_8000.pt"
-    conf_thresh: 0.005
+    conf_thresh: 0.05
     nms_thresh: 0.45
-    reweights: "outputs/Yolov2_Meta/parallel/weights/reweights_8000.pt"
+    reweights: "outputs/Yolov2_Meta/parallel/weights/reweights_8000.pkl"
     results: "re_190320_parallel"
 
 weights:
@@ -64,7 +62,7 @@ weights:
     input_shape: [416, 416]
     batch_size: 1
     weights: "outputs/Yolov2_Meta/parallel/weights/weights_8000.pt"
-    results: "outputs/Yolov2_Meta/parallel/weights/reweights_8000.pt"
+    results: "outputs/Yolov2_Meta/parallel/weights/reweights_8000.pkl"
 speed:
     gpus: "7"
     batch_size: 1
