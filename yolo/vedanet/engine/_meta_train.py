@@ -218,7 +218,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
     def train_batch(self):
         self.optimizer.step()
         self.optimizer.zero_grad()
-        print(f"batch#: {self.batch}")
+        # print(f"batch#: {self.batch}")
         all_tot = 0.0
         all_coord = 0.0
         all_conf = 0.0
