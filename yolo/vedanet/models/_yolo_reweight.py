@@ -36,8 +36,8 @@ class Yolov2_Meta(YoloABC):
         self.postprocess = None
 
         def get_loss(num_classes, anchors, anchors_mask, reduction=32, seen=0,
-                     coord_scale=0., noobject_scale=0., object_scale=0.,
-                     #coord_scale=1.0, noobject_scale=1.0, object_scale=5.0,
+                     # coord_scale=0., noobject_scale=0., object_scale=0.,
+                     coord_scale=1.0, noobject_scale=1.0, object_scale=5.0,
                      class_scale=1.0, thresh=0.6, head_idx=0):
             return loss.RepLoss(num_classes, anchors, anchors_mask, reduction, seen,
                                 coord_scale, noobject_scale, object_scale, class_scale, thresh, head_idx)
