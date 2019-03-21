@@ -108,7 +108,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         model_name = hyper_params.model_name
         net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1,
                                           clear=hyper_params.clear)
-        metanet = network.metanet.Metanet(hyper_params.classes)
+        metanet = network.metanet.Metanet(hyper_params.classes, weights_file=hyper_params.meta_weights)
 
         log.info('Net structure\n\n%s\n' % net)
         self.multi_gpu = False

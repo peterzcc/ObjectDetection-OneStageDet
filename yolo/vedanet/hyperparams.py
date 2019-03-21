@@ -60,6 +60,11 @@ class HyperParams(object):
             self.rs_rates = []
 
             self.weights = cur_cfg['weights']
+            try:
+                self.meta_weights = cur_cfg['meta_weights']
+            except KeyError:
+                log.info("no meta weights")
+                self.meta_weights = None
             self.clear = cur_cfg['clear']
         elif train_flag == 2:
             cur_cfg = config
