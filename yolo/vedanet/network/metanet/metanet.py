@@ -97,9 +97,6 @@ class Metanet(nn.Module):
         '''
         self.load_state_dict(state['weights'])
 
-        if hasattr(self.loss, 'seen'):
-            self.loss.seen = self.seen
-
         log.info(f'Loaded weights from {weights_file}')
 
     def save_weights(self, weights_file, seen=None):
@@ -109,8 +106,7 @@ class Metanet(nn.Module):
             weights_file (str): path to file
             seen (int, optional): Number of images trained on; Default **self.seen**
         """
-        if seen is None:
-            seen = self.seen
+
 
         state = {
             'weights': self.state_dict()
