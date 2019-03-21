@@ -37,6 +37,7 @@ train:
     batch_size: 64
     mini_batch_size: 64
     weights: "weights/darknet19_448.conv.23"
+    meta_weights: ~
 
 test:
     dataset: 'k_shot_3_joint' #'k_shot_base_test' # "test
