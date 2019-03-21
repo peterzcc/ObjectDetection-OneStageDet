@@ -250,9 +250,11 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
         if self.batch % self.backup_rate == 0:
             self.network.save_weights(os.path.join(self.backup_dir, f'weights_{self.batch}.pt'))
+            self.meta_network.save_weights(os.path.join(self.backup_dir, f'meta_weights_{self.batch}.pt'))
 
         if self.batch % 100 == 0:
             self.network.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
+            self.meta_network.save_weights(os.path.join(self.backup_dir, f'meta_backup.pt'))
 
         if self.batch % self.resize_rate == 0:
             if self.batch + 200 >= self.max_batches:
@@ -264,9 +266,11 @@ class MetaTrainingEngine(dual_engine.DualEngine):
     def quit(self):
         if self.sigint:
             self.network.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
+            self.meta_network.save_weights(os.path.join(self.backup_dir, f'meta_backup.pt'))
             return True
         elif self.batch >= self.max_batches:
             self.network.save_weights(os.path.join(self.backup_dir, f'final.dw'))
+            self.meta_network.save_weights(os.path.join(self.backup_dir, f'final.pt'))
             return True
         else:
             return False
