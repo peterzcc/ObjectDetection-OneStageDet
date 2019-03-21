@@ -1,5 +1,5 @@
 output_root: "outputs"
-output_version: "hpc"
+output_version: "v0321_allobj"
 backup_name: "weights"
 log_name: "logs"
 model_name: "Yolov2_Meta"
@@ -12,7 +12,7 @@ data_root_dir: "../VOCdevkit/onedet_cache"
 
 train:
     dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
-    stdout: True
+    stdout: False
     gpus: "0,1,2,3"
     nworkers: 16
     pin_mem: True
@@ -22,9 +22,9 @@ train:
 
     clear: False
 
-    warmup_lr: 0.00001
-    lr_steps: [500, 1000, 10000,12000]
-    lr_rates: [0.00001,0.0001, 0.00001,0.000001]
+    warmup_lr: 0.0001
+    lr_steps: [500, 40000, 60000]
+    lr_rates: [0.001,0.0001, 0.00001]
     max_batches: 90000
     resize_interval: 10
 
@@ -34,8 +34,8 @@ train:
 
     input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 64
-    mini_batch_size: 64
+    batch_size: 48
+    mini_batch_size: 48
     weights: "weights/darknet19_448.conv.23"
 
 test:

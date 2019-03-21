@@ -14,7 +14,7 @@ train:
     dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
     stdout: True
     gpus: "0,1,2,3"
-    nworkers: 16
+    nworkers: 2
     pin_mem: True
 
     momentum: 0.9
@@ -34,8 +34,8 @@ train:
 
     input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 64
-    mini_batch_size: 64
+    batch_size: 2
+    mini_batch_size: 2
     weights: "weights/darknet19_448.conv.23"
 
 test:

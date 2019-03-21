@@ -30,7 +30,10 @@ class RepLoss(nn.modules.loss._Loss):
         thresh (float): minimum iou between a predicted box and ground truth for them to be considered matching
         seen (int): How many images the network has already been trained on.
     """
-    def __init__(self, num_classes, anchors, anchors_mask, reduction=32, seen=0, coord_scale=1.0, noobject_scale=1.0, object_scale=5.0, class_scale=1.0, thresh=0.6, head_idx=0):
+    def __init__(self, num_classes, anchors, anchors_mask,
+                 reduction=32, seen=0, coord_scale=1.0, noobject_scale=1.0, object_scale=5.0, class_scale=1.0,
+                 thresh=0.6, head_idx=0,
+                 all_obj=False):
         super().__init__()
         self.num_classes = num_classes
         self.num_anchors = len(anchors_mask)
@@ -56,6 +59,7 @@ class RepLoss(nn.modules.loss._Loss):
         self.bce = nn.BCELoss(reduce=False)
         self.smooth_l1 = nn.SmoothL1Loss(reduce=False)
         self.ce = nn.CrossEntropyLoss(size_average=False)
+        self.all_obj = all_obj
 
     def forward(self, output, target: list, seen=None):
             """ Compute Region loss.
@@ -137,12 +141,17 @@ class RepLoss(nn.modules.loss._Loss):
             pred_boxes[:, 1] = (coord[:, :, 1].detach() + lin_y).view(-1)
             pred_boxes[:, 2] = (coord[:, :, 2].detach().exp() * anchor_w).view(-1)
             pred_boxes[:, 3] = (coord[:, :, 3].detach().exp() * anchor_h).view(-1)
-            obj_target = []
-            for img_bbs in target:
-                img_targets = [list() for i in range(nC)]
-                for a in img_bbs:
-                    img_targets[a.class_id].append(a)
-                obj_target.extend(img_targets)
+            if self.all_obj:
+                obj_target = []
+                for img_bbs in target:
+                    obj_target.extend([img_bbs]*nC)
+            else:
+                obj_target = []
+                for img_bbs in target:
+                    img_targets = [list() for i in range(nC)]
+                    for a in img_bbs:
+                        img_targets[a.class_id].append(a)
+                    obj_target.extend(img_targets)
             coord_mask, conf_pos_mask, conf_neg_mask, tcoord, tconf = self.build_xywho(pred_boxes, obj_target, nH, nW)
 
             cls_mask, tcls = self.build_cls(pred_boxes.device, target, nH, nW)

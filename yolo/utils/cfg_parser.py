@@ -9,18 +9,20 @@ def parse(fp):
         y = yaml.load(cont)
         return y
 
-def getConfig(cfgs_root, model_name):
-    #cfgs_root = 'cfgs'
-    main_cfg = parse('%s/main.yml' % cfgs_root)
-    #model_name = main_cfg['model']
-    if model_name not in main_cfg['cfg_dict'].keys():
-        models = ', '.join(main_cfg['cfg_dict'].keys())
-        print('There are models like %s\n' % models, file=sys.stderr)
-        raise Exception
-    cfg_fp = './' + cfgs_root + '/' + main_cfg['cfg_dict'][model_name]
-    print(cfg_fp)
-    config =  parse(cfg_fp)
 
+def getConfig(cfgs_root, model_name, cfg_file=None):
+    if cfg_file is not None:
+        cfg_fp = cfg_file
+    else:
+        #cfgs_root = 'cfgs'
+        main_cfg = parse('%s/main.yml' % cfgs_root)
+        #model_name = main_cfg['model']
+        if model_name not in main_cfg['cfg_dict'].keys():
+            models = ', '.join(main_cfg['cfg_dict'].keys())
+            print('There are models like %s\n' % models, file=sys.stderr)
+            raise Exception
+        cfg_fp = './' + cfgs_root + '/' + main_cfg['cfg_dict'][model_name]
+    config = parse(cfg_fp)
     #config['model_name'] = model_name
     #print(config)
     return config

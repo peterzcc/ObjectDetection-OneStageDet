@@ -46,12 +46,19 @@ def combineConfig(cur_cfg, train_flag):
     return ret_cfg
 
 
-def initEnv(train_flag, model_name):
+def initEnv(train_flag, model_name: str):
     cfgs_root = 'cfgs'
-    cur_cfg = getConfig(cfgs_root, model_name)
+    if model_name.endswith(".yml") and os.path.exists(model_name):
+        cfg_file = model_name
+        cur_cfg = getConfig(cfgs_root, model_name, cfg_file)
 
-    root_dir = cur_cfg['output_root']
-    cur_cfg['model_name'] = model_name
+        root_dir = cur_cfg['output_root']
+    else:
+        cfg_file = None
+        cur_cfg = getConfig(cfgs_root, model_name, cfg_file)
+        root_dir = cur_cfg['output_root']
+        cur_cfg['model_name'] = model_name
+
     version = cur_cfg['output_version']
     work_dir = os.path.join(root_dir, model_name, version)
 
