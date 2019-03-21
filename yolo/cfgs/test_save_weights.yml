@@ -36,8 +36,8 @@ train:
     meta_input_shape: [416, 416]
     batch_size: 2
     mini_batch_size: 2
-    weights: "weights/darknet19_448.conv.23"
-    meta_weights: ~
+    weights: "outputs/Yolov2_Meta/test_loading/weights/backup.pt"
+    meta_weights: "outputs/Yolov2_Meta/test_loading/weights/meta_backup.pt"
 
 test:
     dataset: 'k_shot_3_joint' #'k_shot_base_test' # "test
