@@ -36,12 +36,12 @@ class Yolov2_Meta(YoloABC):
         self.loss = None
         self.postprocess = None
 
-        self.apply_sigmoid_to_reweight = True #TODO: config
+        self.apply_sigmoid_to_reweight = False #TODO: config
 
         def get_loss(num_classes, anchors, anchors_mask, reduction=32, seen=0,
                      # coord_scale=0., noobject_scale=0., object_scale=0.,
                      coord_scale=1.0, noobject_scale=1.0, object_scale=5.0,
-                     class_scale=1.0, thresh=0.6, head_idx=0, all_obj=True):
+                     class_scale=1.0, thresh=0.6, head_idx=0, all_obj=False): #TODO: configure whether use all objs
             return loss.RepLoss(num_classes, anchors, anchors_mask, reduction, seen,
                                 coord_scale, noobject_scale, object_scale, class_scale,
                                 thresh, head_idx, all_obj=all_obj)
