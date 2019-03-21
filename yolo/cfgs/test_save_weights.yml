@@ -62,8 +62,8 @@ weights:
 
     input_shape: [416, 416]
     batch_size: 1
-    weights: "weights/tmp.pt"
-    results: "weights/tmp.pkl"
+    weights: "outputs/Yolov2_Meta/test_loading/weights/backup.pt"
+    results: "outputs/Yolov2_Meta/test_loading/weights/backup.pkl"
 
 speed:
     gpus: "7"
