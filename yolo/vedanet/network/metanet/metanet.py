@@ -78,7 +78,7 @@ class Metanet(nn.Module):
         """
         old_state = self.state_dict()
         state = torch.load(weights_file, lambda storage, loc: storage)
-        self.seen = 0 if clear else state['seen']
+        self.seen = 0
 
         '''
         for key in list(state['weights'].keys()):
