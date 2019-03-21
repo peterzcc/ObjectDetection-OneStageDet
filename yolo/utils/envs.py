@@ -51,7 +51,7 @@ def initEnv(train_flag, model_name: str):
     if model_name.endswith(".yml") and os.path.exists(model_name):
         cfg_file = model_name
         cur_cfg = getConfig(cfgs_root, model_name, cfg_file)
-
+        model_name = cur_cfg['model_name']
         root_dir = cur_cfg['output_root']
     else:
         cfg_file = None
