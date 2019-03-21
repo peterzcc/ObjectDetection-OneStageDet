@@ -1,5 +1,5 @@
 output_root: "outputs"
-output_version: "exp_0321_fix"
+output_version: "exp_0321_allobj"
 backup_name: "weights"
 log_name: "logs"
 model_name: "Yolov2_Meta"
