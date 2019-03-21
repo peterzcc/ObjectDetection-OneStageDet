@@ -62,7 +62,7 @@ weights:
 
     input_shape: [416, 416]
     batch_size: 1
-    weights: "outputs/Yolov2_Meta/test_loading/weights/backup.pt"
+    weights: "outputs/Yolov2_Meta/test_loading/weights/meta_backup.pt"
     results: "outputs/Yolov2_Meta/test_loading/weights/backup.pkl"
 
 speed:
