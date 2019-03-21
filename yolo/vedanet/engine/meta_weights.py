@@ -91,7 +91,7 @@ def MetaWeights(hyper_params):
 
     for i in class_weight:
         class_weight[i] = sum(class_weight[i]) / len(class_weight[i])
-        print('weight for class {} is {}'.format(labels[i], class_weight[i]))
+        print('weight for class {} is {}'.format(labels[i], torch.norm(class_weight[i].view(-1), p=2)))
 
     if not os.path.isdir(results) and not results.endswith('.pkl'):
         os.mkdir(results)
