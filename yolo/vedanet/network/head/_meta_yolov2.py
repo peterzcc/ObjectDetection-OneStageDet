@@ -46,7 +46,6 @@ class MetaYolov2(nn.Module):
         # Route : layers=-1, -4
         out = self.layers[1](torch.cat((stage6_reorg, stage6), 1))
 
-        # TODO: put reweight here
         if reweight is not None:
             self.reweight = reweight
         out = self.get_reweighted_output(out, self.layers[2], self.reweight)
@@ -58,7 +57,6 @@ class MetaYolov2(nn.Module):
         # (16,1024,19,19)
         tiled_preout = pre_ultimate_layer.unsqueeze(1).repeat(1, self.num_classes,1,1,1)    # (batch, num_classes, C, h, w)
 
-        # TODO: remove unsqueeze part
         if len(reweight.shape) <= 2:
             reweight = reweight.unsqueeze(2).unsqueeze(3)
         reweighted_preout = tiled_preout * reweight.to(tiled_preout.device)

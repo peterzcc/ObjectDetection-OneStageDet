@@ -54,7 +54,6 @@ class Box:
         return instance
 
     def __eq__(self, other):
-        # TODO: refactor -> use almost equal for floats
         return self.__dict__ == other.__dict__
 
     def serialize(self):

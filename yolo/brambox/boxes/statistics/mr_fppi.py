@@ -37,7 +37,6 @@ def mr_fppi(detections, ground_truth, overlap_threshold=0.5):
     return miss_rate, fppi
 
 
-# TODO ? maarten -> why 9
 def lamr(miss_rate, fppi, num_of_samples=9):
     """ Compute the log average miss-rate from a given MR-FPPI curve.
     The log average miss-rate is defined as the average of a number of evenly spaced log miss-rate samples

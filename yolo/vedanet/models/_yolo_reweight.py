@@ -4,6 +4,7 @@ import torch
 import time
 import copy
 import torch.nn as nn
+from torch.nn import functional
 from .. import loss
 import pickle
 from .yolo_abc import YoloABC
@@ -34,6 +35,8 @@ class Yolov2_Meta(YoloABC):
 
         self.loss = None
         self.postprocess = None
+
+        self.apply_sigmoid_to_reweight = True #TODO: config
 
         def get_loss(num_classes, anchors, anchors_mask, reduction=32, seen=0,
                      # coord_scale=0., noobject_scale=0., object_scale=0.,
@@ -77,16 +80,21 @@ class Yolov2_Meta(YoloABC):
     def _forward(self, x):
         data, reweights = x
         middle_feats = self.dist_backbone(data)
-        self.head.reweight = reweights
+        if self.apply_sigmoid_to_reweight:
+            self.head.reweight = 2 * functional.sigmoid(reweights)
+        else:
+            self.head.reweight = reweights
         features = self.dist_head(middle_feats, None)
         self.compose(data, features, self.loss_fn)
         return features
 
     def _forward_test(self, x, reweights):
-
         data = x
         middle_feats = self.dist_backbone(data)
-        self.head.reweight = reweights
+        if self.apply_sigmoid_to_reweight:
+            self.head.reweight = 2 * functional.sigmoid(reweights)
+        else:
+            self.head.reweight = reweights
         features = self.dist_head(middle_feats, None)
 
         self.compose(data, features, self.loss_fn)

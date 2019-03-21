@@ -19,7 +19,6 @@ __all__ = ['Darknet19']
 class Darknet19(nn.Module):
     """ `Darknet19`_ implementation with pytorch.
 
-    Todo:
         - Loss function: L2 (Crossentropyloss in pytorch)
 
     Args:
