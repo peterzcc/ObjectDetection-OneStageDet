@@ -113,7 +113,6 @@ class Metanet(nn.Module):
             seen = self.seen
 
         state = {
-            'seen': seen,
             'weights': self.state_dict()
         }
         torch.save(state, weights_file)
