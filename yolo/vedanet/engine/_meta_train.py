@@ -199,7 +199,7 @@ class MetaTrainingEngine(dual_engine.DualEngine):
             meta_imgs = meta_imgs.cuda()
         assert meta_imgs.shape[0] == 1
         reweights = self.dist_meta_network(meta_imgs[0])
-        log.info(f"reweights l2 norm: {torch.norm(reweights,p=2,dim=1).mean()}")
+        log.info(f"reweights l2 norm:\n {torch.norm(reweights,p=2,dim=2).view(-1)}")
         return reweights
 
     def process_batch(self, data):
