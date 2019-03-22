@@ -13,7 +13,7 @@ def main():
     anno_format = "anno_pickle"
     class_label_map = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
     identify = lambda f: f
-    anno_filename = 'VOCdevkit/onedet_cache/train.pkl'
+    anno_filename = '../VOCdevkit/onedet_cache/train.pkl'
     kwargs = {}
     annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
     keys = list(annos)
