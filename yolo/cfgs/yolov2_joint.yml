@@ -8,7 +8,7 @@ labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", 
 data_root_dir: "../VOCdevkit/onedet_cache"
 
 train:
-    dataset: "k_shot_3_finetune" #"k_shot_joint"
+    dataset: "k_shot_3_joint" #"k_shot_joint"
     stdout: False
     gpus: "3"
     nworkers: 16
