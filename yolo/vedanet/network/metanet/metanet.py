@@ -67,7 +67,7 @@ class Metanet(nn.Module):
         reweighting_id = reweighting_id.fmod(self.num_classes)
         reweighting_id = reweighting_id.view(1, 1, nf, 1, 1).repeat(1, self.num_classes, 1, 1, 1)
         v_class = torch.arange(0, self.num_classes, dtype=torch.float32, device=device)
-        v_class = v_class.view(1, self.num_classes, 1, 1, 1).repeat(1, 1, self.num_classes, 1, 1)
+        v_class = v_class.view(1, self.num_classes, 1, 1, 1).repeat(1, 1, nf, 1, 1)
         rew_layer = (reweighting_id == v_class).float()
         return rew_layer
 
