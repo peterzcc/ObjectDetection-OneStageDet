@@ -51,7 +51,7 @@ test:
     conf_thresh: 0.005
     nms_thresh: 0.45
     reweights: "weights/tmp.pkl"
-    results: "re_190321_hpc"
+    results: "re_190321_fix"
 
 weights:
     dataset: "k_shot_3_joint" #'two_class_base' # "test"
