@@ -1,5 +1,5 @@
 output_root: "outputs"
-output_version: "finetune"
+output_version: "exp_0322_joint"
 backup_name: "weights"
 log_name: "logs"
 
