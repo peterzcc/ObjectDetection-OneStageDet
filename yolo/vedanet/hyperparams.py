@@ -68,7 +68,7 @@ class HyperParams(object):
             self.loss_allobj = False
             if "loss_allobj" in cur_cfg:
                 self.loss_allobj = True
-            
+
             self.clear = cur_cfg['clear']
         elif train_flag == 2:
             cur_cfg = config
@@ -83,7 +83,10 @@ class HyperParams(object):
             self.conf_thresh = cur_cfg['conf_thresh']
             self.nms_thresh = cur_cfg['nms_thresh']
             self.results = cur_cfg['results']
-            self.reweights = cur_cfg['reweights']
+            if "reweights" in cur_cfg:
+                self.reweights = cur_cfg['reweights']
+            else:
+                self.reweights = None
 
         elif train_flag == 3:
             cur_cfg = config
