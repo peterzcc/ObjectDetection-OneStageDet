@@ -67,7 +67,10 @@ class Yolov2_Meta(YoloABC):
                 with open(reweights_file, 'rb') as handle:
                     reweights = pickle.load(handle)
                     print(reweights_file)
-                    self.reweights = torch.Tensor(len(reweights.keys()), *reweights[0].shape).cuda()
+
+                    self.reweights = torch.Tensor(len(reweights.keys()), *reweights[0].shape)
+                    if torch.cuda.is_available():
+                        self.reweights= self.reweights.cuda()
                     for i in range(len(reweights.keys())):
                         self.reweights[i] = reweights[i]
             else:
