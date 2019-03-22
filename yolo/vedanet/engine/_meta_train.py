@@ -110,7 +110,8 @@ class MetaTrainingEngine(dual_engine.DualEngine):
         net = models.Yolov2_Meta(hyper_params.classes, hyper_params.weights, train_flag=1,
                                  clear=hyper_params.clear,
                                  loss_allobj=hyper_params.loss_allobj)
-        metanet = network.metanet.Metanet(hyper_params.classes, weights_file=hyper_params.meta_weights)
+        metanet = network.metanet.Metanet(hyper_params.classes, weights_file=hyper_params.meta_weights,
+                                          use_dummy_reweight=hyper_params.use_dummy_reweight)
 
         log.info('Net structure\n\n%s\n' % net)
         self.multi_gpu = False
