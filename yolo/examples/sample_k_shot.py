@@ -1,9 +1,10 @@
-import sys
-sys.path.append('/home/data/urop2018/sfuab/ObjectDetection-OneStageDet/yolo')
-
 import brambox.boxes as bbb
 from collections import OrderedDict
 import numpy as np
+
+
+def convert_to_ordered(annos):
+    return OrderedDict([(k,v) for k,v in sorted(list(annos.items()),key=lambda x:x[0])])
 
 
 def main():
@@ -12,7 +13,7 @@ def main():
     anno_format = "anno_pickle"
     class_label_map = ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
     identify = lambda f: f
-    anno_filename = '../VOCdevkit/onedet_cache/test.pkl'
+    anno_filename = 'VOCdevkit/onedet_cache/train.pkl'
     kwargs = {}
     annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
     keys = list(annos)
@@ -48,7 +49,6 @@ def main():
             current_class_id = min(current_class_id+1, len(k_shot_classes))
             continue
         class_label = k_shot_classes[current_class_id]
-        print('class_label is {}'.format(class_label))
         file2numdet = class2file2numdet[class_label]
         sample_file_id = rng.randint(len(file2numdet))
         sample_file_name = list(file2numdet.items())[sample_file_id][0]
@@ -61,8 +61,9 @@ def main():
         if pred_sample_nums.max() <= k_shot:
             k_shot_samples.add(sample_file_name)
             existing_sample_nums = pred_sample_nums
+            print('class_label is {}'.format(class_label))
     assert not np.any(existing_sample_nums - k_shot)
-    k_shot_annos = {anno_filename: annos[anno_filename] for anno_filename in k_shot_samples}
+    k_shot_annos = {fn: annos[fn] for fn in k_shot_samples}
     full_k_shot_class_files = {file for cls in k_shot_classes for file in class2file2numdet[cls].keys()}
     files2remove = full_k_shot_class_files - k_shot_samples
     joint_anno_files = set(annos.keys()) - files2remove
