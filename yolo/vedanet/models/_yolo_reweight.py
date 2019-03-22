@@ -19,7 +19,7 @@ class Yolov2_Meta(YoloABC):
     def __init__(self, num_classes=20, weights_file=None, input_channels=3,
                  anchors=[(42.31, 55.41), (102.17, 128.30), (161.79, 259.17), (303.08, 154.90), (359.56, 320.23)],
                  anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None, reweights_file=None,
-                 tiny_backbone=False):
+                 tiny_backbone=False, loss_allobj=False):
         """ Network initialisation """
         super().__init__()
 
@@ -41,7 +41,8 @@ class Yolov2_Meta(YoloABC):
         def get_loss(num_classes, anchors, anchors_mask, reduction=32, seen=0,
                      # coord_scale=0., noobject_scale=0., object_scale=0.,
                      coord_scale=1.0, noobject_scale=1.0, object_scale=5.0,
-                     class_scale=1.0, thresh=0.6, head_idx=0, all_obj=False): #TODO: configure whether use all objs
+                     class_scale=num_classes if loss_allobj else 1.0,
+                     thresh=0.6, head_idx=0, all_obj=loss_allobj): #TODO: configure whether use all objs
             return loss.RepLoss(num_classes, anchors, anchors_mask, reduction, seen,
                                 coord_scale, noobject_scale, object_scale, class_scale,
                                 thresh, head_idx, all_obj=all_obj)

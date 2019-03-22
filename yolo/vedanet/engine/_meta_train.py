@@ -106,8 +106,10 @@ class MetaTrainingEngine(dual_engine.DualEngine):
 
         log.debug('Creating network')
         model_name = hyper_params.model_name
-        net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1,
-                                          clear=hyper_params.clear)
+        assert model_name == "Yolov2_Meta"
+        net = models.Yolov2_Meta(hyper_params.classes, hyper_params.weights, train_flag=1,
+                                 clear=hyper_params.clear,
+                                 loss_allobj=hyper_params.loss_allobj)
         metanet = network.metanet.Metanet(hyper_params.classes, weights_file=hyper_params.meta_weights)
 
         log.info('Net structure\n\n%s\n' % net)

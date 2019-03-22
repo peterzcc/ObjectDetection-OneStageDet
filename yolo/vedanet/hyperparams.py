@@ -65,6 +65,10 @@ class HyperParams(object):
             except KeyError:
                 log.info("no meta weights")
                 self.meta_weights = None
+            self.loss_allobj = False
+            if "loss_allobj" in cur_cfg:
+                self.loss_allobj = True
+            
             self.clear = cur_cfg['clear']
         elif train_flag == 2:
             cur_cfg = config
