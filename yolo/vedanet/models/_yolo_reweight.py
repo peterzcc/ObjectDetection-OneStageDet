@@ -100,10 +100,10 @@ class Yolov2_Meta(YoloABC):
         else:
             self.head.reweight = reweights
         features = self.dist_head(middle_feats, None)
-
+        features = [self.convert_to_yolo_output(f) for f in features]
         self.compose(data, features, self.loss_fn)
 
-        return [self.convert_to_yolo_output(f) for f in features]
+        return [features]
 
     def forward(self, x, target=None):
         if self.train_flag == 1:
