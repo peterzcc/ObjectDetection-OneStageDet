@@ -112,7 +112,8 @@ def parse(fmt, box_file, identify=None, offset=0, stride=1, **kwargs):
                 data[img_id] = parser.deserialize(f.read())
     else:
         raise AttributeError(f'Parser <{parser.__class__.__name__}> has not defined a parser_type class attribute')
-    sorted_data_strings = ";".join([f"{k}:{str(v)}" for k, v in sorted(data.items(), key=lambda x:x[0])]).encode()
+    sorted_data_strings = \
+        ";".join([f"{k}" for k, v in sorted(data.items(), key=lambda x:x[0])]).encode(encoding='UTF-8')
     log.info(f"hash of {box_file} is {sha256(sorted_data_strings).hexdigest()}")
     return data
 
