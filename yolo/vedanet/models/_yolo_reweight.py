@@ -103,7 +103,7 @@ class Yolov2_Meta(YoloABC):
         features = [self.convert_to_yolo_output(f) for f in features]
         self.compose(data, features, self.loss_fn)
 
-        return [features]
+        return features
 
     def forward(self, x, target=None):
         if self.train_flag == 1:
