@@ -1,5 +1,5 @@
 output_root: "outputs"
-output_version: "exp_0323_dummy"
+output_version: "exp_0323_dummy_fix"
 backup_name: "weights"
 log_name: "logs"
 model_name: "Yolov2_Meta"
@@ -14,7 +14,7 @@ use_dummy_reweight: True
 train:
     dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
     stdout: False
-    gpus: "0"
+    gpus: "0,1,2,3"
     nworkers: 16
     pin_mem: True
 
@@ -35,8 +35,8 @@ train:
 
     input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 64
-    mini_batch_size: 16
+    batch_size: 48
+    mini_batch_size: 12
     weights: "weights/darknet19_448.conv.23"
     meta_weights: ~
 
