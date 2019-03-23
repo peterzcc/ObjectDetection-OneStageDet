@@ -123,7 +123,7 @@ class RepLoss(nn.modules.loss._Loss):
             conf = output[:, :, 4].sigmoid()
             cls_balance_scale = 1.0
             if nC > 1:
-                cls = output[:, :, 5].view(nB//nC , nC, nA, nH * nW).transpose(1, 2)
+                cls = output[:, :, 5].view(nB//nC , nC, nA, nH * nW).permute(0, 2, 3, 1)
                 cls = cls.contiguous().view(-1, nC)
                 cls_balance_scale = 1.0
 
