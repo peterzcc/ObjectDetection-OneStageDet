@@ -125,7 +125,7 @@ class RepLoss(nn.modules.loss._Loss):
             if nC > 1:
                 cls = output[:, :, 5].view(nB//nC , nC, nA, nH * nW).permute(0, 2, 3, 1)
                 cls = cls.contiguous().view(-1, nC)
-                cls_balance_scale = 1.0
+                cls_balance_scale = 20.0
 
             # Create prediction boxes
             # time consuming
