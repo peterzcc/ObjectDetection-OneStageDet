@@ -19,7 +19,7 @@ class Yolov2_Meta(YoloABC):
     def __init__(self, num_classes=20, weights_file=None, input_channels=3,
                  anchors=[(42.31, 55.41), (102.17, 128.30), (161.79, 259.17), (303.08, 154.90), (359.56, 320.23)],
                  anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None, reweights_file=None,
-                 tiny_backbone=False, loss_allobj=False):
+                 tiny_backbone=False, loss_allobj=False, use_yolo_loss=False):
         """ Network initialisation """
         super().__init__()
 
@@ -127,7 +127,7 @@ class Yolov2_Meta(YoloABC):
             t1 = time.time()
             outputs = self._forward_test(x, reweights=self.reweights)
             if self.postprocess is None:
-                return  # speed
+                return
             t2 = time.time()
             print('forward took {:.5f}s'.format(t2 - t1))
             loss = None
