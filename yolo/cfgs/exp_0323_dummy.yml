@@ -9,6 +9,7 @@ labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", 
 # base labels
 #labels:  ['aeroplane', 'bicycle', 'boat', 'bottle', 'car', 'cat', 'chair', 'diningtable', 'dog', 'horse', 'person', 'pottedplant', 'sheep', 'train', 'tvmonitor']
 data_root_dir: "../VOCdevkit/onedet_cache"
+use_dummy_reweight: True
 
 train:
     dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
@@ -38,7 +39,6 @@ train:
     mini_batch_size: 16
     weights: "weights/darknet19_448.conv.23"
     meta_weights: ~
-    use_dummy_reweight: True
 
 test:
     dataset: 'test' #'k_shot_base_test' # "test

@@ -50,7 +50,8 @@ def MetaWeights(hyper_params):
     results = hyper_params.results
 
     print(model_name)
-    net = metanet.Metanet(num_classes=classes, weights_file=weights)
+    net = metanet.Metanet(num_classes=classes, weights_file=weights,
+                          use_dummy_reweight=hyper_params.use_dummy_reweight)
     net.eval()
     log.info('Net structure\n%s' % net)
 
