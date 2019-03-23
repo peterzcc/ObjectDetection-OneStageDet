@@ -71,6 +71,10 @@ class HyperParams(object):
             self.loss_allobj = False
             if "loss_allobj" in cur_cfg:
                 self.loss_allobj = cur_cfg["loss_allobj"]
+            try:
+                self.use_yolo_loss = cur_cfg["use_yolo_loss"]
+            except KeyError:
+                self.use_yolo_loss = False
 
             self.clear = cur_cfg['clear']
         elif train_flag == 2:

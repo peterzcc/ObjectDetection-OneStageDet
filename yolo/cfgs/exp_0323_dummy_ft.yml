@@ -13,7 +13,7 @@ use_dummy_reweight: True
 
 train:
     dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
-    stdout: False
+    stdout: True
     gpus: "0"
     nworkers: 16
     pin_mem: False
@@ -35,10 +35,11 @@ train:
 
     input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 64
-    mini_batch_size: 16
+    batch_size: 48
+    mini_batch_size: 12
     weights: "weights/tmp.pt"
     meta_weights: "weights/meta_tmp.pt"
+    use_yolo_loss: True
 
 test:
     dataset: 'test'

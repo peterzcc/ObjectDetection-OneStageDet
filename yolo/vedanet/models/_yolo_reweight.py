@@ -46,7 +46,11 @@ class Yolov2_Meta(YoloABC):
             return loss.RepLoss(num_classes, anchors, anchors_mask, reduction, seen,
                                 coord_scale, noobject_scale, object_scale, class_scale,
                                 thresh, head_idx, all_obj=all_obj)
-        self.loss_fn = get_loss
+        self.use_yolo_loss = use_yolo_loss
+        if self.use_yolo_loss:
+            self.loss_fn = loss.RegionLoss
+        else:
+            self.loss_fn = get_loss
         if tiny_backbone:
             self.backbone = backbone.NanoYolov2()
         else:
@@ -89,6 +93,8 @@ class Yolov2_Meta(YoloABC):
         else:
             self.head.reweight = reweights
         features = self.dist_head(middle_feats, None)
+        if self.use_yolo_loss:
+            features = [self.convert_to_yolo_output(f) for f in features]
         self.compose(data, features, self.loss_fn)
         return features
 
