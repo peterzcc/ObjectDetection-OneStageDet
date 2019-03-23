@@ -72,10 +72,10 @@ class Metanet(nn.Module):
         return rew_layer
 
     def get_dummy_reweight(self, device):
-        if self.dummy_reweight is None:
-            self.dummy_reweight = self.generate_dummy_reweight(device)
-        return self.dummy_reweight
-
+        # if self.dummy_reweight is None:
+        #     self.dummy_reweight = self.generate_dummy_reweight(device)
+        # return self.dummy_reweight
+        return self.get_dummy_reweight(device)
     def forward(self, x):
         # temp = [x[i] for i in range(x.shape[0])]
         # x = torch.cat(temp, 0)

@@ -10,7 +10,7 @@ __all__ = ['MetaYolov2']
 
 
 class MetaYolov2(nn.Module):
-    def __init__(self, num_anchors, num_classes, input_channels=48):
+    def  __init__(self, num_anchors, num_classes, input_channels=48):
         """ Network initialisation """
         super().__init__()
         layer_list = [
