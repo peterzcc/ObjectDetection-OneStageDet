@@ -87,10 +87,9 @@ def MetaWeights(hyper_params):
             for anno in annos:      # batch
                 for a in anno:
                     class_id = labels.index(a.class_label)
-                    if reweights.shape[0] > 1:
+                    if not hyper_params.use_dummy_reweight:
                         class_weight[class_id].append(reweights[cur_idx])
                     else:
-                        assert hyper_params.use_dummy_reweight
                         class_weight[class_id].append(reweights[0, class_id])
                     cur_idx += 1
 
