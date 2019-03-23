@@ -46,11 +46,14 @@ class DualEngine(ABC):
     test_rate = None
 
     #def __init__(self, network, optimizer, dataloader, **kwargs):
-    def __init__(self, network, meta_network, optimizer, dataloader, meta_dataloader):
+    def __init__(self, network, meta_network: metanet.Metanet,
+                 optimizer, dataloader, meta_dataloader):
         if network is not None and meta_network is not None:
             self.network = network
             self.meta_network = meta_network
-            if torch.cuda.device_count() > 1 and metanet.Metanet.device is not None:
+            if torch.cuda.device_count() > 1 \
+                    and metanet.Metanet.device is not None\
+                    and not self.meta_network.use_dummy_reweight:
                 self.dist_meta_network = torch.nn.DataParallel(
                     self.meta_network,
                     device_ids=[metanet.Metanet.device] +
