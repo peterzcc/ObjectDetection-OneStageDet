@@ -27,6 +27,7 @@ class Yolov2_Meta(YoloABC):
         self.num_classes = num_classes
         self.anchors = anchors
         self.anchors_mask = anchors_mask
+        self.num_anchors = len(anchors_mask[0])
         self.nloss = len(self.anchors_mask)
         self.train_flag = train_flag
         self.test_args = test_args
@@ -177,7 +178,7 @@ class Yolov2_Meta(YoloABC):
         if self.num_classes == 1:
             return prediction
         batch_size = int(prediction.shape[0] / self.num_classes)
-        grouped_prediction = prediction.view(batch_size, self.num_classes, 5, 6, *prediction.shape[2:])
+        grouped_prediction = prediction.view(batch_size, self.num_classes, self.num_anchors, 6, *prediction.shape[2:])
         grouped_prediction = grouped_prediction.permute(0, 2, 1, 3, 4, 5)               # (batch, num_anchors, num_classes, 6, h, w)
 
         class_score = grouped_prediction[:, :, :, 5:6, :, :]
