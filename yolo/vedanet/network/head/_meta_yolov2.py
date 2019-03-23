@@ -59,7 +59,10 @@ class MetaYolov2(nn.Module):
 
         if len(reweight.shape) <= 2:
             reweight = reweight.unsqueeze(2).unsqueeze(3)
-        reweighted_preout = tiled_preout * reweight.to(tiled_preout.device)
+        try:
+            reweighted_preout = tiled_preout * reweight.to(tiled_preout.device)
+        except RuntimeError:
+            raise ValueError(f"tiled_preout: {tiled_preout.shape}, reweight: {reweight.shape}")
         reshaped_preout = reweighted_preout.view(-1, *reweighted_preout.shape[2:])      # (batch * num_classes, C, h, w)
         prediction = detector(reshaped_preout)                                          # (batch * num_classes, num_anchors * (5 + 1), h, w)
         # grouped_prediction = prediction.view(batch_size, self.num_classes, 5, 6, *prediction.shape[2:])

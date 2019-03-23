@@ -99,6 +99,7 @@ class Yolov2_Meta(YoloABC):
             self.head.reweight = 2 * functional.sigmoid(reweights)
         else:
             self.head.reweight = reweights
+
         features = self.dist_head(middle_feats, None)
         features = [self.convert_to_yolo_output(f) for f in features]
         self.compose(data, features, self.loss_fn)
