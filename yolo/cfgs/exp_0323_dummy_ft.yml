@@ -39,7 +39,7 @@ train:
     mini_batch_size: 12
     weights: "weights/tmp.pt"
     meta_weights: "weights/meta_tmp.pt"
-    use_yolo_loss: True
+    use_yolo_loss: False
 
 test:
     dataset: 'test'
