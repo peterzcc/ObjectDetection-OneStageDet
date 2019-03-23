@@ -75,7 +75,7 @@ class Metanet(nn.Module):
         # if self.dummy_reweight is None:
         #     self.dummy_reweight = self.generate_dummy_reweight(device)
         # return self.dummy_reweight
-        return self.get_dummy_reweight(device)
+        return self.generate_dummy_reweight(device)
     def forward(self, x):
         # temp = [x[i] for i in range(x.shape[0])]
         # x = torch.cat(temp, 0)
