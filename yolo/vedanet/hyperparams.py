@@ -19,7 +19,10 @@ class HyperParams(object):
                 self.cuda = False
             else:
                 log.debug('CUDA enabled')
-
+        if "use_dummy_reweight" in cur_cfg:
+            self.use_dummy_reweight = cur_cfg["use_dummy_reweight"]
+        else:
+            self.use_dummy_reweight = False
         if train_flag == 1:
             cur_cfg = config
 
@@ -68,10 +71,7 @@ class HyperParams(object):
             self.loss_allobj = False
             if "loss_allobj" in cur_cfg:
                 self.loss_allobj = cur_cfg["loss_allobj"]
-            if "use_dummy_reweight" in cur_cfg:
-                self.use_dummy_reweight = cur_cfg["use_dummy_reweight"]
-            else:
-                self.use_dummy_reweight = False
+
             self.clear = cur_cfg['clear']
         elif train_flag == 2:
             cur_cfg = config
