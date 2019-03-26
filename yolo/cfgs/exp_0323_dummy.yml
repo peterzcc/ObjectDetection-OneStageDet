@@ -35,8 +35,8 @@ train:
 
     input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 48
-    mini_batch_size: 48
+    batch_size: 64
+    mini_batch_size: 64
     weights: "weights/darknet19_448.conv.23"
     meta_weights: ~
 
