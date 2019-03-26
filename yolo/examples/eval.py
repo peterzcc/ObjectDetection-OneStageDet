@@ -1,10 +1,9 @@
 import numpy as np
 import sys
-sys.path.append('/home/data/urop2018/sfuab/ObjectDetection-OneStageDet/yolo')
 from utils.test.datasets.voc_eval import voc_eval
 import os
 import argparse
-
+import logging as log
 
 def generate_aps(results_root="results"):
     results_dir = results_root+"/comp4_det_test_{}.txt"
@@ -23,6 +22,7 @@ def generate_aps(results_root="results"):
         # if os.path.exists(cache_file):
         #     os.remove(cache_file)
         if not os.path.exists(results_dir.format(class_name)):
+            log.warning(f"missing data: {class_name}")
             continue
         rec, prec, ap = voc_eval(results_dir, anno_path, imageset_path, class_name, cachedir, use_07_metric=True)
         recs.append(rec)

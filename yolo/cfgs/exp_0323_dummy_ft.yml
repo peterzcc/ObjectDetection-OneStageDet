@@ -49,11 +49,11 @@ test:
     pin_mem: True
     input_shape: [416, 416]
     batch_size: 32
-    weights: "weights/tmp.pt"
+    weights: "./outputs/Yolov2_Meta/exp_0323_dummy_fix/weights/weights_30000.pt"
     conf_thresh: 0.005
     nms_thresh: 0.45
-    reweights: "weights/tmp.pkl"
-    results: "re_190323_fix"
+    reweights: "./outputs/Yolov2_Meta/exp_0323_dummy_fix/weights/reweights_30000.pkl"
+    results: "./outputs/Yolov2_Meta/exp_0323_dummy_fix/result_30000"
 
 weights:
     dataset: "k_shot_3_joint"
@@ -64,8 +64,8 @@ weights:
 
     input_shape: [416, 416]
     batch_size: 1
-    weights: "weights/meta_tmp.pt"
-    results: "weights/tmp.pkl"
+    weights: "./outputs/Yolov2_Meta/exp_0323_dummy_fix/weights/meta_weights_30000.pt"
+    results: "./outputs/Yolov2_Meta/exp_0323_dummy_fix/weights/reweights_30000.pkl"
 speed:
     gpus: "7"
     batch_size: 1
