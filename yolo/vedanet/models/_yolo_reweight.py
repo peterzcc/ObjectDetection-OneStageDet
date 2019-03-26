@@ -136,7 +136,7 @@ class Yolov2_Meta(YoloABC):
             if self.postprocess is None:
                 return
             t2 = time.time()
-            print('forward took {:.5f}s'.format(t2 - t1))
+            # print('forward took {:.5f}s'.format(t2 - t1))
             loss = None
             dets = []
 
@@ -152,7 +152,7 @@ class Yolov2_Meta(YoloABC):
                     single_dets.extend(tdets[op][b])
                 dets.append(single_dets)
             t3 = time.time()
-            print('postprocessing took {:.5f}s'.format(t3 - t2))
+            # print('postprocessing took {:.5f}s'.format(t3 - t2))
             if loss is not None:
                 return dets, loss
             else:

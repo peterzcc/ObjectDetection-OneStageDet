@@ -6,13 +6,14 @@ import logging
 import torch
 import random
 import numpy as np
-
+import subprocess
+import logging
 
 # individual packages
 from .fileproc import safeMakeDirs
 from .cfg_parser import getConfig
 
-
+TRAIN, TEST, WEIGHTS = 1, 2, 3
 def setLogging(log_dir, stdout_flag):
     safeMakeDirs(log_dir)
     dt = datetime.now()
@@ -46,7 +47,7 @@ def combineConfig(cur_cfg, train_flag):
     return ret_cfg
 
 
-def initEnv(train_flag, model_name: str):
+def initEnv(train_flag, model_name: str, checkpoint=False):
     cfgs_root = 'cfgs'
     if model_name.endswith(".yml") and os.path.exists(model_name):
         cfg_file = model_name
@@ -68,8 +69,30 @@ def initEnv(train_flag, model_name: str):
     backup_dir = os.path.join(work_dir, backup_name)
     log_dir = os.path.join(work_dir, log_name)
 
+    if checkpoint and "checkpoint" in cur_cfg:
+        checkpoint_num = cur_cfg["checkpoint"]
+        weight_path = os.path.join(backup_dir, f"weights_{checkpoint_num}.pt")
+        meta_weight_path = os.path.join(backup_dir, f"meta_weights_{checkpoint_num}.pt")
+        reweight_path = os.path.join(backup_dir, f"reweights_{checkpoint_num}.pkl")
+        results_path = os.path.join(backup_dir, f"results_{checkpoint_num}")
+        if not (os.path.isfile(weight_path)
+                and os.path.isfile(meta_weight_path)) \
+                and "server" in cur_cfg:
+            with subprocess.Popen(f"rsync -RP {cur_cfg['server']}/./{weight_path} .",
+                                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as sp:
+                for line in sp.stdout:
+                    logging.critical(line)
+            with subprocess.Popen(f"rsync -RP {cur_cfg['server']}/./{meta_weight_path} .",
+                                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as sp:
+                for line in sp.stdout:
+                    logging.critical(line)
+    else:
+        weight_path = None
+        meta_weight_path = None
+        reweight_path = None
+        results_path = None
 
-    if train_flag == 1:
+    if train_flag == TRAIN:
         safeMakeDirs(backup_dir)
         stdout_flag = cur_cfg['train']['stdout']
         setLogging(log_dir, stdout_flag)
@@ -78,24 +101,29 @@ def initEnv(train_flag, model_name: str):
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
 
         cur_cfg['train']['backup_dir'] = backup_dir
-    elif train_flag == 2:
+    elif train_flag == TEST:
         stdout_flag = cur_cfg['test']['stdout']
         setLogging(log_dir, stdout_flag)
-
         gpus = cur_cfg['test']['gpus']
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
-    elif train_flag == 3:
+        if weight_path is not None and reweight_path is not None:
+            cur_cfg['test']['weights'] = weight_path
+            cur_cfg['test']['reweights'] = reweight_path
+            cur_cfg['test']['results'] = results_path
+    elif train_flag == WEIGHTS:
         stdout_flag = cur_cfg['weights']['stdout']
         setLogging(log_dir, stdout_flag)
 
         gpus = cur_cfg['weights']['gpus']
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
+        if weight_path is not None and meta_weight_path is not None:
+            cur_cfg['weights']['weights'] = meta_weight_path
+            cur_cfg['weights']['results'] = reweight_path
     else:
         gpus = cur_cfg['speed']['gpus']
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
 
     ret_cfg = combineConfig(cur_cfg, train_flag)
-
     return ret_cfg
 
 

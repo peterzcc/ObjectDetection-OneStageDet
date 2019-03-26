@@ -62,7 +62,7 @@ weights:
 
     input_shape: [416, 416]
     batch_size: 1
-    weights: "weights/meta_tmp.pt"
+    meta_weights: "weights/meta_tmp.pt"
     results: "weights/tmp.pkl"
 speed:
     gpus: "7"

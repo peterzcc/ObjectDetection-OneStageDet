@@ -10,6 +10,8 @@ labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", 
 #labels:  ['aeroplane', 'bicycle', 'boat', 'bottle', 'car', 'cat', 'chair', 'diningtable', 'dog', 'horse', 'person', 'pottedplant', 'sheep', 'train', 'tvmonitor']
 data_root_dir: "../VOCdevkit/onedet_cache"
 use_dummy_reweight: True
+server: "hpc:/home/peterzeng/peter/ObjectDetection-OneStageDet/yolo"
+checkpoint: 30000
 
 train:
     dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
@@ -48,11 +50,11 @@ test:
     pin_mem: True
     input_shape: [416, 416]
     batch_size: 32
-    weights: "weights/tmp.pt"
+    weights: ~
     conf_thresh: 0.005
     nms_thresh: 0.45
-    reweights: "weights/tmp.pkl"
-    results: "re_190323_fix"
+    reweights: ~
+    results: ~
 
 weights:
     dataset: "k_shot_3_joint" #'two_class_base' # "test"
@@ -63,8 +65,8 @@ weights:
 
     input_shape: [416, 416]
     batch_size: 1
-    weights: "weights/meta_tmp.pt"
-    results: "weights/tmp.pkl"
+    meta_weights: ~
+    results: ~
 speed:
     gpus: "7"
     batch_size: 1
