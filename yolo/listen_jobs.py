@@ -25,7 +25,7 @@ def get_git_revision_short_hash(filename, git_root="."):
 
 
 def main():
-    host_name = os.environ['HOSTNAME']
+    host_name = os.environ['SLURM_TOPOLOGY_ADDR']
     job_file_name = f"{host_name}.sh"
     git_root = "jobs"
     job_file_path = os.path.join(git_root, job_file_name)
