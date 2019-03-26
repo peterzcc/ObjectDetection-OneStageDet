@@ -23,8 +23,9 @@ def generate_aps(results_root="results"):
         #     os.remove(cache_file)
         if not os.path.exists(results_dir.format(class_name)):
             log.warning(f"missing data: {class_name}")
-            continue
-        rec, prec, ap = voc_eval(results_dir, anno_path, imageset_path, class_name, cachedir, use_07_metric=True)
+            rec, prec, ap = 0., 0., 0.
+        else:
+            rec, prec, ap = voc_eval(results_dir, anno_path, imageset_path, class_name, cachedir, use_07_metric=True)
         recs.append(rec)
         precs.append(prec)
         aps.append(ap)

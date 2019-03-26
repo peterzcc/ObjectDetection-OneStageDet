@@ -47,6 +47,18 @@ def combineConfig(cur_cfg, train_flag):
     return ret_cfg
 
 
+def exec_cmd(cmd):
+    with subprocess.Popen(cmd,
+                          shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,) as sp:
+        while True:
+            out = sp.stdout.read(1)
+            if out == b'' and sp.poll() != None:
+                break
+            if out != b'':
+                sys.stdout.write(out.decode())
+                sys.stdout.flush()
+
+
 def initEnv(train_flag, model_name: str, checkpoint=False):
     cfgs_root = 'cfgs'
     if model_name.endswith(".yml") and os.path.exists(model_name):
@@ -74,18 +86,12 @@ def initEnv(train_flag, model_name: str, checkpoint=False):
         weight_path = os.path.join(backup_dir, f"weights_{checkpoint_num}.pt")
         meta_weight_path = os.path.join(backup_dir, f"meta_weights_{checkpoint_num}.pt")
         reweight_path = os.path.join(backup_dir, f"reweights_{checkpoint_num}.pkl")
-        results_path = os.path.join(backup_dir, f"results_{checkpoint_num}")
+        results_path = os.path.join(work_dir, f"results_{checkpoint_num}")
         if not (os.path.isfile(weight_path)
                 and os.path.isfile(meta_weight_path)) \
                 and "server" in cur_cfg:
-            with subprocess.Popen(f"rsync -RP {cur_cfg['server']}/./{weight_path} .",
-                                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as sp:
-                for line in sp.stdout:
-                    logging.critical(line)
-            with subprocess.Popen(f"rsync -RP {cur_cfg['server']}/./{meta_weight_path} .",
-                                   shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as sp:
-                for line in sp.stdout:
-                    logging.critical(line)
+            exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{weight_path} .")
+            exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{meta_weight_path} .")
     else:
         weight_path = None
         meta_weight_path = None
