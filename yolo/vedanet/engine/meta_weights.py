@@ -10,7 +10,7 @@ from ..network import metanet
 
 
 __all__ = ['MetaWeights']
-
+rng = np.random.RandomState(123)
 class CustomDataset(vn_data.WeightDataset):
     def __init__(self, hyper_params):
         anno = hyper_params.trainfile
@@ -48,7 +48,7 @@ def MetaWeights(hyper_params):
     classes = hyper_params.classes
     labels = hyper_params.labels
     results = hyper_params.results
-
+    sample = hyper_params.sample
     print(model_name)
     net = metanet.Metanet(num_classes=classes, weights_file=weights,
                           use_dummy_reweight=hyper_params.use_dummy_reweight)
@@ -94,7 +94,14 @@ def MetaWeights(hyper_params):
                     cur_idx += 1
 
     for i in class_weight:
-        class_weight[i] = sum(class_weight[i]) / len(class_weight[i])
+        if sample is None:
+            class_weight[i] = sum(class_weight[i]) / len(class_weight[i])
+        else:
+            n_boxes = len(class_weight[i])
+            assert sample <= n_boxes
+            sample_ids = rng.choice(n_boxes,sample)
+            class_weight[i] = sum([class_weight[i][s] for s in sample_ids]) / sample
+
         print('weight for class {} is {}'.format(labels[i], torch.norm(class_weight[i].view(-1), p=2)))
 
     if not os.path.isdir(results) and not results.endswith('.pkl'):

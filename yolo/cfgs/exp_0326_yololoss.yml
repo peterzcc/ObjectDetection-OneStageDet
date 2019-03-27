@@ -61,7 +61,7 @@ weights:
     gpus: "0"
     nworkers: 4
     pin_mem: True
-
+    sample: 3
     input_shape: [416, 416]
     batch_size: 1
     weights: "weights/meta_tmp.pt"

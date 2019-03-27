@@ -2,6 +2,8 @@ import logging as log
 import torch
 
 __all__ = ['HyperParams']
+TRAIN, TEST, WEIGHTS = 1, 2, 3
+
 
 class HyperParams(object):
     def __init__(self, config, train_flag=1):
@@ -23,7 +25,7 @@ class HyperParams(object):
             self.use_dummy_reweight = config["use_dummy_reweight"]
         else:
             self.use_dummy_reweight = False
-        if train_flag == 1:
+        if train_flag == TRAIN:
             cur_cfg = config
 
             self.nworkers = cur_cfg['nworkers'] 
@@ -77,7 +79,7 @@ class HyperParams(object):
                 self.use_yolo_loss = False
 
             self.clear = cur_cfg['clear']
-        elif train_flag == 2:
+        elif train_flag == TEST:
             cur_cfg = config
 
             dataset = cur_cfg['dataset']
@@ -95,7 +97,7 @@ class HyperParams(object):
             else:
                 self.reweights = None
 
-        elif train_flag == 3:
+        elif train_flag == WEIGHTS:
             cur_cfg = config
 
             dataset = cur_cfg['dataset']
@@ -106,6 +108,10 @@ class HyperParams(object):
             self.batch = cur_cfg['batch_size']
             self.weights = cur_cfg['weights']
             self.results = cur_cfg['results']
+            try:
+                self.sample = cur_cfg["sample"]
+            except KeyError:
+                self.sample = None
 
         else:
             cur_cfg = config
