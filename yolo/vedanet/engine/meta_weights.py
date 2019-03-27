@@ -10,7 +10,6 @@ from ..network import metanet
 
 
 __all__ = ['MetaWeights']
-rng = np.random.RandomState(123)
 class CustomDataset(vn_data.WeightDataset):
     def __init__(self, hyper_params):
         anno = hyper_params.trainfile
@@ -49,6 +48,9 @@ def MetaWeights(hyper_params):
     labels = hyper_params.labels
     results = hyper_params.results
     sample = hyper_params.sample
+    sample_seed = hyper_params.sampleseed
+    rng = np.random.RandomState(sample_seed)
+
     print(model_name)
     net = metanet.Metanet(num_classes=classes, weights_file=weights,
                           use_dummy_reweight=hyper_params.use_dummy_reweight)

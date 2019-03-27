@@ -112,6 +112,10 @@ class HyperParams(object):
                 self.sample = cur_cfg["sample"]
             except KeyError:
                 self.sample = None
+            try:
+                self.sampleseed = cur_cfg["sampleseed"]
+            except KeyError:
+                self.sampleseed = 123
 
         else:
             cur_cfg = config
