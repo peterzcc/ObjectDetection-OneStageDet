@@ -56,7 +56,7 @@ test:
     results: "re_190323_yololoss"
 
 weights:
-    dataset: "k_shot_3_joint" #'two_class_base' # "test"
+    dataset: "test" #'two_class_base' # "test"
     stdout: True
     gpus: "0"
     nworkers: 4
