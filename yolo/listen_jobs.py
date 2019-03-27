@@ -53,7 +53,7 @@ def main():
                         print(f"sent SIGINT to {current_sp.pid}")
                         sig_time = time.time()
                         while current_sp.poll() is None:
-                            if time.time() - sig_time > 5.0:
+                            if time.time() - sig_time > 30.0:
                                 print("not finished. sending terminate signal")
                                 current_sp.terminate()
                             time.sleep(0.2)
