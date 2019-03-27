@@ -61,7 +61,7 @@ weights:
     gpus: "0"
     nworkers: 4
     pin_mem: True
-    sample: 1
+    sample: 3
     sampleseed: 1
     input_shape: [416, 416]
     batch_size: 1
