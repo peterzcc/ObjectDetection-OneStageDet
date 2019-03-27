@@ -12,7 +12,7 @@ data_root_dir: "../VOCdevkit/onedet_cache"
 #server: "hpc:/home/peterzeng/peter/ObjectDetection-OneStageDet/yolo"
 #checkpoint: 70000
 train:
-    dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
+    dataset: "test" #"k_shot_base" #"k_shot_joint"
     stdout: False
     gpus: "0,1,2,3"
     nworkers: 16
@@ -37,8 +37,8 @@ train:
     meta_input_shape: [416, 416]
     batch_size: 64
     mini_batch_size: 64
-    weights: "outputs/Yolov2_Meta/exp_0323_yololoss/weights/weights_70000.pt"
-    meta_weights: "outputs/Yolov2_Meta/exp_0323_yololoss/weights/meta_weights_70000.pt"
+    weights: "weights/darknet19_448.conv.23"
+    meta_weights: ~
     use_yolo_loss: True
 
 test:
@@ -56,7 +56,7 @@ test:
     results: "re_190323_yololoss"
 
 weights:
-    dataset: "k_shot_3_joint" #'two_class_base' # "test"
+    dataset: "test" #'two_class_base' # "test"
     stdout: True
     gpus: "0"
     nworkers: 4
