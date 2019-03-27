@@ -37,8 +37,8 @@ train:
     meta_input_shape: [416, 416]
     batch_size: 64
     mini_batch_size: 64
-    weights: "outputs/Yolov2_Meta/exp_0323_yololoss/weights/weights_70000"
-    meta_weights: "outputs/Yolov2_Meta/exp_0323_yololoss/weights/meta_weights_70000"
+    weights: "outputs/Yolov2_Meta/exp_0323_yololoss/weights/weights_70000.pt"
+    meta_weights: "outputs/Yolov2_Meta/exp_0323_yololoss/weights/meta_weights_70000.pt"
     use_yolo_loss: True
 
 test:
