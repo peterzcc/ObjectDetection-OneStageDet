@@ -75,12 +75,14 @@ class FewshotSampleManager(object):
         query_img_ids = deque(self.rng.permutation(np.arange(len(self.box_dataset.fileid_2_boxid), dtype=int)))
         support_box_ids = [deque(self.rng.permutation(self.box_dataset.cls_2_boxid[ci]))
                            for ci, boxids in enumerate(self.box_dataset.cls_2_boxid)]
-        is_box_seen = np.zeros(len(self.box_dataset.file_box), dtype=bool)
-        is_file_seen = np.zeros(len(self.box_dataset.fileid_2_boxid), dtype=bool)
 
         self.query_batches, self.support_batches = [], []
         finished_sampling = False
         while not finished_sampling:
+
+            is_box_seen = np.zeros(len(self.box_dataset.file_box), dtype=bool)
+            is_file_seen = np.zeros(len(self.box_dataset.fileid_2_boxid), dtype=bool)
+
             this_query_batch = []
             while not finished_sampling and len(this_query_batch) < self.batchsize:
                 if len(query_img_ids) == 0:
