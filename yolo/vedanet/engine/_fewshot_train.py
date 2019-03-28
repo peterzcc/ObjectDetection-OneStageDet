@@ -78,13 +78,11 @@ class FewshotSampleManager(object):
 
         self.query_batches, self.support_batches = [], []
         finished_sampling = False
+        is_file_seen = np.zeros(len(self.box_dataset.fileid_2_boxid), dtype=bool)
         while not finished_sampling:
-
             is_box_seen = np.zeros(len(self.box_dataset.file_box), dtype=bool)
-            is_file_seen = np.zeros(len(self.box_dataset.fileid_2_boxid), dtype=bool)
-
             this_query_batch = []
-            while not finished_sampling and len(this_query_batch) < self.batchsize:
+            while len(this_query_batch) < self.batchsize:
                 if len(query_img_ids) == 0:
                     return
                 this_img_id = query_img_ids.popleft()
