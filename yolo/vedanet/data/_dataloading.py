@@ -9,11 +9,13 @@ from functools import wraps
 import torch
 from torch.utils.data.dataset import Dataset as torchDataset
 from torch.utils.data.sampler import BatchSampler as torchBatchSampler
+from torch.utils.data.sampler import Sampler as torchSampler
+
 from torch.utils.data.dataloader import DataLoader as torchDataLoader
 from torch.utils.data.dataloader import default_collate
 
 
-__all__ = ['Dataset', 'DataLoader', 'list_collate']
+__all__ = ['Dataset', 'DataLoader', 'list_collate', 'ListBatchSampler']
 
 
 class Dataset(torchDataset):
@@ -199,6 +201,50 @@ class BatchSampler(torchBatchSampler):
         for batch in super(BatchSampler, self).__iter__():
             yield [(self.input_dim, idx) for idx in batch]
             self.__set_input_dim()
+
+    def __set_input_dim(self):
+        """ This function randomly changes the the input dimension of the dataset. """
+        if self.new_input_dim is not None:
+            log.info(f'Resizing network {self.new_input_dim[:2]}')
+            self.input_dim = (self.new_input_dim[0], self.new_input_dim[1])
+            self.new_input_dim = None
+            log.info(f'Resizing finished')
+
+
+class ListBatchSampler(torchSampler):
+    """ This batch sampler will generate mini-batches of (dim, index) tuples from another sampler.
+    It works just like the :class:`torch.utils.data.sampler.BatchSampler`, but it will prepend a dimension,
+    whilst ensuring it stays the same across one mini-batch.
+    """
+    def __init__(self,  input_dimension=None, f_get_batches=lambda : [],):
+        # super(ListBatchSampler, self).__init__()
+        self.input_dim = input_dimension
+        self.new_input_dim = None
+        self.f_get_batches = f_get_batches
+        self.batches = None
+        self.len = 0
+
+    def get_batches(self):
+        if self.batches is None:
+            self.batches = self.f_get_batches()
+        return self.batches
+
+    def reset_batches(self):
+        self.batches = None
+
+    def __iter__(self):
+        self.__set_input_dim()
+        self.batches = None
+
+        for batch in self.get_batches():
+            yield [(self.input_dim, idx) for idx in batch]
+            self.__set_input_dim()
+
+    def __len__(self):
+        if self.batches is None:
+            return 0
+        else:
+            return len(self.batches)
 
     def __set_input_dim(self):
         """ This function randomly changes the the input dimension of the dataset. """

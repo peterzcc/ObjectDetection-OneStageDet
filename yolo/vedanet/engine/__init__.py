@@ -12,3 +12,5 @@ from ._speed import *
 from ._meta_train import *
 from ._meta_test import *
 from .meta_weights import *
+from ._sync_dual_engine import *
+from ._fewshot_train import *
