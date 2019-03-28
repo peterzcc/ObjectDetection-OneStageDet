@@ -97,13 +97,14 @@ class FewshotSampleManager(object):
                     this_box_id = -1
                     while not finished_ci:
                         if len(support_box_ids[ci]) == 0:
-                            return
-                            # unseen_boxes = is_box_seen[boxids[ci]]
-                            # if np.any(unseen_boxes):
-                            #     support_box_ids[ci] = \
-                            #         deque(self.rng.permutation(boxids[ci][unseen_boxes]))
-                            # else:
-                            #     return
+                            unseen_boxes = np.logical_not(is_box_seen[boxids])
+                            if np.any(unseen_boxes):
+                                boxids_ci = (np.array(boxids))
+                                support_box_ids[ci] = \
+                                    deque(self.rng.permutation(
+                                        boxids_ci[unseen_boxes]))
+                            else:
+                                return
                         this_box_id = support_box_ids[ci].popleft()
                         if not is_box_seen[this_box_id]:
                             finished_ci = True
