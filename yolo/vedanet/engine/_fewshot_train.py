@@ -98,12 +98,18 @@ class FewshotSampleManager(object):
                     while not finished_ci:
                         if len(support_box_ids[ci]) == 0:
                             return
+                            # unseen_boxes = is_box_seen[boxids[ci]]
+                            # if np.any(unseen_boxes):
+                            #     support_box_ids[ci] = \
+                            #         deque(self.rng.permutation(boxids[ci][unseen_boxes]))
+                            # else:
+                            #     return
                         this_box_id = support_box_ids[ci].popleft()
                         if not is_box_seen[this_box_id]:
                             finished_ci = True
                     this_support_batch.append(this_box_id)
-                    is_box_seen[this_box_id] = True
-                    is_file_seen[self.box_dataset.boxid_2_fileid[this_box_id]] = True
+                    # is_box_seen[this_box_id] = True
+                    # is_file_seen[self.box_dataset.boxid_2_fileid[this_box_id]] = True
             self.query_batches.append(this_query_batch)
             self.support_batches.append(this_support_batch)
         return
