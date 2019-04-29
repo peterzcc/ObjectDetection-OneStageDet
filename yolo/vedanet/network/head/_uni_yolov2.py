@@ -50,7 +50,7 @@ class UniYolov2(nn.Module):
         anchor_aggregated = self.layers[2](feature_layer)
         b, _, h, w = anchor_aggregated.shape
         anchor_separated = anchor_aggregated.view(b, self.num_anchors, self.pred_input_size, h, w)
-        anchor_in_batch = anchor_separated.view(b*self.num_anchors, self.pred_input_size,h,w).contiguous()
+        anchor_in_batch = anchor_separated.view(b*self.num_anchors, self.pred_input_size, h, w).contiguous()
         out_anchor_in_batch = self.layers[3](anchor_in_batch)
         out = out_anchor_in_batch.view(b, -1, h, w).contiguous()
         features = [out]

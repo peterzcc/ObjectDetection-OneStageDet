@@ -1,5 +1,5 @@
 import brambox.boxes as bbb
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import numpy as np
 
 
@@ -18,31 +18,22 @@ def main():
     annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
     keys = list(annos)
 
-    k_shot_classes =['bird', 'bus', 'cow', 'motorbike', 'sofa'] # ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa"] #
-
+    novel_classes =['bird', 'bus', 'cow', 'motorbike', 'sofa'] # ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa"] #
+    novel_classes_set = set(novel_classes)
+    k_shot_classes = class_label_map.copy()
     class2id = {k_shot_classes[i]: i for i in range(len(k_shot_classes))}
-    class2file2numdet = {cls: OrderedDict() for cls in k_shot_classes}
-    base_anno = {}
+    class2file2numdet = {cls: defaultdict(lambda: 0) for cls in k_shot_classes}
     for file, list_annos in annos.items():
-        base_list = []
         for anno in list_annos:
             if anno.class_label in class2id:
-                try:
-                    class2file2numdet[anno.class_label][file] += 1
-                except KeyError:
-                    class2file2numdet[anno.class_label][file] = 1
-            else:
-                base_list.append(anno)
-        if len(base_list) > 0:
-            base_anno[file] = base_list
+                class2file2numdet[anno.class_label][file] += 1
 
     k_shot = 3
     existing_sample_nums = np.zeros(len(k_shot_classes))
 
     current_class_id = 0
     k_shot_samples = set()
-    finished_sampling = False
-
+    novel_class_samples = set()
     while existing_sample_nums.min() < k_shot:
         assert existing_sample_nums[current_class_id] <= k_shot
         if existing_sample_nums[current_class_id] == k_shot:
@@ -55,27 +46,38 @@ def main():
         if sample_file_name in k_shot_samples:
             continue
         pred_sample_nums = existing_sample_nums.copy()
+        contain_novel_class = False
         for anno in annos[sample_file_name]:
             if anno.class_label in k_shot_classes:
                 pred_sample_nums[class2id[anno.class_label]] += 1
+            if anno.class_label in novel_classes_set:
+                contain_novel_class = True
         if pred_sample_nums.max() <= k_shot:
             k_shot_samples.add(sample_file_name)
             existing_sample_nums = pred_sample_nums
-            print('class_label is {}'.format(class_label))
+            if contain_novel_class:
+                novel_class_samples.add(sample_file_name)
+            print(f"file: {sample_file_name}")
+            for anno in annos[sample_file_name]:
+                print('   {}'.format(anno.class_label))
     assert not np.any(existing_sample_nums - k_shot)
     k_shot_annos = {fn: annos[fn] for fn in k_shot_samples}
-    full_k_shot_class_files = {file for cls in k_shot_classes for file in class2file2numdet[cls].keys()}
-    files2remove = full_k_shot_class_files - k_shot_samples
+    novel_class_annos = {f: annos[f] for f in novel_class_samples}
+    novel_class_files = {file for cls in novel_classes for file in class2file2numdet[cls].keys()}
+    files2remove = novel_class_files - novel_class_samples
     joint_anno_files = set(annos.keys()) - files2remove
 
-    joint_annos = {k:annos[k] for k in joint_anno_files}
+    joint_annos = {k: annos[k] for k in joint_anno_files}
+    base_annos = {k: annos[k] for k in set(annos.keys())-novel_class_files}
     print(f"random seed: {random_seed}")
     print(f"total file number: {len(annos.keys())}")
     print(f"sampled {len(k_shot_annos)} files in total")
     print(f"removed {len(files2remove)} files in total")
-    print(f"got {len(base_anno.keys())} base files in total")
+    print(f"got {len(base_annos.keys())} base files in total")
+    bbb.generate('anno_pickle', novel_class_annos, "../VOCdevkit/onedet_cache/k_shot_{}_finetune.pkl".format(k_shot))
     bbb.generate('anno_pickle', joint_annos, "../VOCdevkit/onedet_cache/k_shot_{}_joint.pkl".format(k_shot))
-    bbb.generate('anno_pickle', k_shot_annos, "../VOCdevkit/onedet_cache/k_shot_{}_finetune.pkl".format(k_shot))
+    bbb.generate('anno_pickle', k_shot_annos, "../VOCdevkit/onedet_cache/k_shot_{}_allclass.pkl".format(k_shot))
+    bbb.generate('anno_pickle', base_annos, "../VOCdevkit/onedet_cache/base.pkl")
 
     # bbb.generate('anno_pickle', base_anno, "../VOCdevkit/onedet_cache/k_shot_base.pkl")
     pass
