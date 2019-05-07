@@ -153,16 +153,20 @@ class FewshotTrainingEngine(SyncDualEngine):
 
         log.debug('Creating network')
         model_name = hyper_params.model_name
+        model_cls = models.Yolov2_Meta
+        if model_name:
+            model_cls = models.__dict__[model_name]
 
-        net = models.__dict__[model_name](hyper_params.classes, hyper_params.weights, train_flag=1,
-                                 clear=hyper_params.clear,
-                                 loss_allobj=hyper_params.loss_allobj,
-                                 use_yolo_loss=hyper_params.use_yolo_loss)
+        net = model_cls(hyper_params.classes, hyper_params.weights, train_flag=1,
+                        clear=hyper_params.clear,
+                        loss_allobj=hyper_params.loss_allobj,
+                        use_yolo_loss=hyper_params.use_yolo_loss)
+
+        metanet_cls = network.metanet.Metanet
         meta_model_name = hyper_params.meta_model_name
         if meta_model_name:
             metanet_cls = network.metanet.__dict__[meta_model_name]
-        else:
-            metanet_cls = network.metanet.Metanet
+
         metanet = metanet_cls(hyper_params.classes, weights_file=hyper_params.meta_weights,
                               use_dummy_reweight=hyper_params.use_dummy_reweight)
 
@@ -225,12 +229,26 @@ class FewshotTrainingEngine(SyncDualEngine):
                                                 input_dimension=dataset.input_dim)
         )
 
-        super(FewshotTrainingEngine, self).__init__(net, metanet, optim, dataloader, meta_dataloader)
+        self.network = net
+        self.meta_network = metanet
+        if torch.cuda.device_count() > 1 \
+                and metanet.Metanet.device is not None\
+                and not self.meta_network.use_dummy_reweight:
+            self.dist_meta_network = torch.nn.DataParallel(
+                self.meta_network,
+                device_ids=[metanet.Metanet.device] +
+                           [d for d in list(range(torch.cuda.device_count())) if d != metanet.Metanet.device])
+        else:
+            self.dist_meta_network = self.meta_network
+        super(FewshotTrainingEngine, self).__init__( optim, dataloader, meta_dataloader)
 
 
         self.nloss = self.network.nloss
 
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
+
+    def get_num_samples_seen(self):
+        return self.network.seen
 
     def start(self):
         log.debug('Creating additional logging objects')
@@ -252,6 +270,8 @@ class FewshotTrainingEngine(SyncDualEngine):
         self.add_rate('resize_rate', rs_steps, rs_rates, resize)
 
         self.dataloader.change_input_dim()
+        self.network.train()
+        self.meta_network.train()
 
     def get_meta_state(self, meta_imgs):
         if self.cuda:

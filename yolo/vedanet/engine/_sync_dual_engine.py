@@ -25,13 +25,11 @@ class SyncDualEngine(ABC):
        :dedent: 4
 
     Args:
-        network (lightnet.network.Darknet, optional): Lightnet network to train
         optimizer (torch.optim, optional): Optimizer for the network
         dataloader (lightnet.data.DataLoader or torch.utils.data.DataLoader, optional): Dataloader for the training data
         **kwargs (dict, optional): Keywords arguments that will be set as attributes of the engine
 
     Attributes:
-        self.network: Lightnet network
         self.optimizer: Torch optimizer
         self.batch_size: Number indicating batch_size; Default **1**
         self.mini_batch_size: Size of a mini_batch; Default **1**
@@ -43,25 +41,10 @@ class SyncDualEngine(ABC):
     batch_size = 1
     mini_batch_size = 1
     max_batches = None
-    test_rate = None
 
-    #def __init__(self, network, optimizer, dataloader, **kwargs):
-    def __init__(self, network, meta_network: metanet.Metanet,
+    def __init__(self,
                  optimizer, dataloader, meta_dataloader):
-        if network is not None and meta_network is not None:
-            self.network = network
-            self.meta_network = meta_network
-            if torch.cuda.device_count() > 1 \
-                    and metanet.Metanet.device is not None\
-                    and not self.meta_network.use_dummy_reweight:
-                self.dist_meta_network = torch.nn.DataParallel(
-                    self.meta_network,
-                    device_ids=[metanet.Metanet.device] +
-                               [d for d in list(range(torch.cuda.device_count())) if d != metanet.Metanet.device])
-            else:
-                self.dist_meta_network = self.meta_network
-        else:
-            log.warn('No network given, make sure to have a self.network property for this engine to work with.')
+
 
         if optimizer is not None:
             self.optimizer = optimizer
@@ -91,24 +74,13 @@ class SyncDualEngine(ABC):
             else:
                 log.warn(f'{key} attribute already exists on engine. Keeping original value [{getattr(self, key)}]')
         '''
-    # def sample_reweight(self):
-    #     try:
-    #         meta_imgs = next(self.meta_dataloader_iterator)
-    #     except StopIteration:
-    #         self.meta_dataloader_iterator = iter(self.meta_dataloader)
-    #         meta_imgs = next(self.meta_dataloader_iterator)
-    #     return meta_imgs
 
     def __call__(self):
         """ Start the training cycle. """
         self.start()
         self._update_rates()
-        if self.test_rate is not None:
-            last_test = self.batch - (self.batch % self.test_rate)
 
         log.info('Start training')
-        self.network.train()
-        self.meta_network.train()
         while True:
             loader = self.dataloader
 
@@ -116,9 +88,7 @@ class SyncDualEngine(ABC):
                 # init meta images first
                 if isinstance(meta_imgs,list):
                     meta_imgs = meta_imgs[0]
-                if True: #idx % self.batch_subdivisions == 0:
-                    # meta_imgs = self.sample_reweight()
-                    meta_state = self.get_meta_state(meta_imgs)
+                meta_state = self.get_meta_state(meta_imgs)
                 data = data + [meta_state, ]
                 # Forward and backward on (mini-)batches
                 self.process_batch(data)
@@ -133,16 +103,6 @@ class SyncDualEngine(ABC):
                     log.info('Reached quitting criteria')
                     return
 
-                # Check if we need to perform testing
-                if self.test_rate is not None and self.batch - last_test >= self.test_rate:
-                    log.info('Start testing')
-                    last_test += self.test_rate
-                    self.network.eval()
-                    self.meta_network.eval()
-                    self.test()
-                    log.debug('Done testing')
-                    self.network.train()
-                    self.meta_network.train()
 
                 # Check if we need to stop training
                 if self.quit() or self.sigint:
@@ -155,15 +115,13 @@ class SyncDualEngine(ABC):
                 # Not enough mini-batches left to have an entire batch
                 if (len(loader) - idx) <= self.batch_subdivisions:
                     break
-
     @property
     def batch(self):
         """ Get current batch number.
 
         Return:
-            int: Computed as self.network.seen // self.batch_size
         """
-        return self.network.seen // self.batch_size
+        return self.get_num_samples_seen() // self.batch_size
 
     @property
     def batch_subdivisions(self):
@@ -269,6 +227,9 @@ class SyncDualEngine(ABC):
         """ First function that gets called when starting the engine. |br|
             Use it to create your dataloader, set the correct starting values for your rates, etc.
         """
+        pass
+    @abstractmethod
+    def get_num_samples_seen(self):
         pass
 
     @abstractmethod
