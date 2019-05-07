@@ -248,7 +248,7 @@ class FewshotTrainingEngine(SyncDualEngine):
 
         self.dataloader.change_input_dim()
 
-    def process_meta_img(self, meta_imgs):
+    def get_meta_state(self, meta_imgs):
         if self.cuda:
             meta_imgs = meta_imgs.cuda()
         if meta_imgs.shape[0] == 1:

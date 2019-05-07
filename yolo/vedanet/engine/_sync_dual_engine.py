@@ -118,8 +118,8 @@ class SyncDualEngine(ABC):
                     meta_imgs = meta_imgs[0]
                 if True: #idx % self.batch_subdivisions == 0:
                     # meta_imgs = self.sample_reweight()
-                    reweights = self.process_meta_img(meta_imgs)
-                data = data + [reweights, ]
+                    meta_state = self.get_meta_state(meta_imgs)
+                data = data + [meta_state, ]
                 # Forward and backward on (mini-)batches
                 self.process_batch(data)
                 if (idx + 1) % self.batch_subdivisions != 0:
@@ -272,7 +272,7 @@ class SyncDualEngine(ABC):
         pass
 
     @abstractmethod
-    def process_meta_img(self, meta_imgs):
+    def get_meta_state(self, meta_imgs):
         """ This function should contain the code to process the meta images at the beginning of each batch. """
         pass
 

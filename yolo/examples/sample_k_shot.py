@@ -79,7 +79,6 @@ def main():
     bbb.generate('anno_pickle', k_shot_annos, "../VOCdevkit/onedet_cache/k_shot_{}_allclass.pkl".format(k_shot))
     bbb.generate('anno_pickle', base_annos, "../VOCdevkit/onedet_cache/base.pkl")
 
-    # bbb.generate('anno_pickle', base_anno, "../VOCdevkit/onedet_cache/k_shot_base.pkl")
     pass
 
 

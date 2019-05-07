@@ -7,6 +7,7 @@ model_name: "UniYolov2"
 labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 
 data_root_dir: "../VOCdevkit/onedet_cache"
+checkpoint: 20000
 
 train:
     dataset: "train" #"k_shot_joint"
@@ -48,7 +49,7 @@ test:
     conf_thresh: 0.005
     nms_thresh: 0.45
 
-    results: "re_190322_joint"
+    results: "re_19505"
 
 speed:
     gpus: "7"
