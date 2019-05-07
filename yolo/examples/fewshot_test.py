@@ -29,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     train_flag = 2
-    config = initEnv(train_flag=train_flag, model_name=args.model_name,checkpoint=True)
+    config = initEnv(train_flag=train_flag, model_name=args.model_name, checkpoint=True)
 
     log.info('Config\n\n%s\n' % pformat(config))
 

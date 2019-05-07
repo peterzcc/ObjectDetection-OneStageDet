@@ -13,6 +13,7 @@ class HyperParams(object):
         self.classes = len(self.labels)
         self.data_root = config['data_root_dir'] 
         self.model_name = config['model_name']
+        self.meta_model_name = config.get("meta_model_name", None)
 
         # cuda check
         if self.cuda:
