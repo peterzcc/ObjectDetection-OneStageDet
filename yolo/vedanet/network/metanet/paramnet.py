@@ -12,10 +12,10 @@ import logging as log
 
 from .. import layer as vn_layer
 
-__all__ = ['Metanet']
+__all__ = ['Paramnet']
 
 
-class Metanet(nn.Module):
+class Paramnet(nn.Module):
     """ `Metanet`_ implementation with pytorch.
 
     Args:
@@ -28,10 +28,11 @@ class Metanet(nn.Module):
 
     """
     device = None
-    def __init__(self, num_classes=20, weights_file=None, use_dummy_reweight=False,num_anchors=1):
+    def __init__(self, num_classes=20, weights_file=None, use_dummy_reweight=False, num_anchors=1):
         """ Network initialisation """
         super().__init__()
         self.num_classes = num_classes
+        self.param_size = num_anchors*6*(1024+1)
         # Network
         layer_list = [
             OrderedDict([
@@ -47,7 +48,7 @@ class Metanet(nn.Module):
                 ('10_max',          nn.MaxPool2d(2, 2)),
                 ('11_convbatch',    vn_layer.Conv2dBatchLeaky(512, 1024, 3, 1)),
                 ('12_max',          nn.MaxPool2d(2, 2)),
-                ('13_convbatch',    vn_layer.Conv2dBatchLeaky(1024, 1024, 3, 1)),
+                ('13_convbatch',    nn.Conv2d(1024, self.param_size, 1, 1, 0)),
                 ]),
 
             OrderedDict([
@@ -62,14 +63,7 @@ class Metanet(nn.Module):
             self.load_weights(weights_file)
 
     def generate_dummy_reweight(self, device, nf=1024):
-        reweighting_id = torch.arange(0, nf, dtype=torch.float32, device=device)
-        # do modulo:
-        reweighting_id = reweighting_id.fmod(self.num_classes)
-        reweighting_id = reweighting_id.view(1, 1, nf, 1, 1).repeat(1, self.num_classes, 1, 1, 1)
-        v_class = torch.arange(0, self.num_classes, dtype=torch.float32, device=device)
-        v_class = v_class.view(1, self.num_classes, 1, 1, 1).repeat(1, 1, nf, 1, 1)
-        rew_layer = (reweighting_id == v_class).float()
-        return rew_layer
+        raise NotImplementedError
 
     def get_dummy_reweight(self, device):
         if self.dummy_reweight is None:
@@ -77,10 +71,8 @@ class Metanet(nn.Module):
         return self.dummy_reweight
 
     def forward(self, x):
-        # temp = [x[i] for i in range(x.shape[0])]
-        # x = torch.cat(temp, 0)
         if self.use_dummy_reweight:
-            return self.get_dummy_reweight(x.device)
+            raise NotImplementedError
         data = x
         feature = self.layers[0](data)
         weights = self.layers[1](feature)

@@ -11,3 +11,4 @@ from ._region_xception import *
 from ._region_light_xception import *
 from ._yolo_reweight import *
 from ._uni_yolov2 import *
+from ._yolov2_wrn import *

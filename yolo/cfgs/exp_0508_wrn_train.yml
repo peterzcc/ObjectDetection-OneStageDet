@@ -1,0 +1,74 @@
+output_root: "outputs"
+output_version: "exp_0508_wrn"
+backup_name: "weights"
+log_name: "logs"
+model_name: "Yolov2Wrn"
+meta_model_name: "Paramnet"
+# all labels
+labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
+
+# base labels
+data_root_dir: "../VOCdevkit/onedet_cache"
+server: "hpc:/home/peterzeng/peter/ObjectDetection-OneStageDet/yolo"
+checkpoint: 20000
+train:
+    dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
+    stdout: False
+    gpus: "0,1,2,3"
+    nworkers: 16
+    pin_mem: True
+
+    momentum: 0.9
+    decay: 0.0005
+
+    clear: False
+
+    warmup_lr: 0.0001
+    lr_steps: [500, 40000, 60000]
+    lr_rates: [0.001,0.0001, 0.00001]
+    max_batches: 90000
+    resize_interval: 10
+
+    backup_interval: 200
+    backup_steps: [1000, 60000]
+    backup_rates: [1000, 1000]
+
+    input_shape: [416, 416]
+    meta_input_shape: [416, 416]
+    batch_size: 64
+    mini_batch_size: 64
+    weights: "weights/darknet19_448.conv.23"
+    meta_weights: ~
+    use_yolo_loss: True
+
+test:
+    dataset: 'test' #'k_shot_base_test' # "test
+    stdout: True
+    gpus: "0"
+    nworkers: 16
+    pin_mem: True
+    input_shape: [416, 416]
+    batch_size: 32
+    weights: "weights/tmp.pt"
+    conf_thresh: 0.005
+    nms_thresh: 0.45
+    reweights: "weights/tmp.pkl"
+    results: "re_190323_yololoss"
+
+weights:
+    dataset: "k_shot_3_joint" #'two_class_base' # "test"
+    stdout: True
+    gpus: "0"
+    nworkers: 4
+    pin_mem: True
+#    sample: 3
+#    sampleseed: 1
+    input_shape: [416, 416]
+    batch_size: 1
+    weights: "weights/meta_tmp.pt"
+    results: "weights/tmp.pkl"
+speed:
+    gpus: "7"
+    batch_size: 1
+    max_iters: 200
+    input_shape: [544, 544]

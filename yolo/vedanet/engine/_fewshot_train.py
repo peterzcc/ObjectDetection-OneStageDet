@@ -168,7 +168,8 @@ class FewshotTrainingEngine(SyncDualEngine):
             metanet_cls = network.metanet.__dict__[meta_model_name]
 
         metanet = metanet_cls(hyper_params.classes, weights_file=hyper_params.meta_weights,
-                              use_dummy_reweight=hyper_params.use_dummy_reweight)
+                              use_dummy_reweight=hyper_params.use_dummy_reweight,
+                              num_anchors=net.num_anchors)
 
         log.info('Net structure\n\n%s\n' % net)
         self.multi_gpu = False
@@ -191,12 +192,12 @@ class FewshotTrainingEngine(SyncDualEngine):
         log.info(f'Adjusting learning rate to [{learning_rate}]')
 
 
-        meta_net_parameters = [
+        full_parameters = [
             {'params': metanet.parameters(), },
             {'params': net.backbone.parameters()},
             {'params': net.head.parameters()}
         ]
-        optim = torch.optim.SGD(meta_net_parameters, lr=learning_rate / batch, momentum=momentum, dampening=0,
+        optim = torch.optim.SGD(full_parameters, lr=learning_rate / batch, momentum=momentum, dampening=0,
                                 weight_decay=decay * batch)
 
         log.debug('Creating dataloader')
