@@ -233,11 +233,11 @@ class FewshotTrainingEngine(SyncDualEngine):
         self.network = net
         self.meta_network = metanet
         if torch.cuda.device_count() > 1 \
-                and metanet.Metanet.device is not None\
+                and type(self.meta_network).device is not None\
                 and not self.meta_network.use_dummy_reweight:
             self.dist_meta_network = torch.nn.DataParallel(
                 self.meta_network,
-                device_ids=[metanet.Metanet.device] +
+                device_ids=[type(self.meta_network).device] +
                            [d for d in list(range(torch.cuda.device_count())) if d != metanet.Metanet.device])
         else:
             self.dist_meta_network = self.meta_network
