@@ -238,7 +238,7 @@ class FewshotTrainingEngine(SyncDualEngine):
             self.dist_meta_network = torch.nn.DataParallel(
                 self.meta_network,
                 device_ids=[type(self.meta_network).device] +
-                           [d for d in list(range(torch.cuda.device_count())) if d != metanet.Metanet.device])
+                           [d for d in list(range(torch.cuda.device_count())) if d != metanet_cls.device])
         else:
             self.dist_meta_network = self.meta_network
         super(FewshotTrainingEngine, self).__init__( optim, dataloader, meta_dataloader)
