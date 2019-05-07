@@ -177,11 +177,11 @@ class FewshotTrainingEngine(SyncDualEngine):
             net.cuda()
             if torch.cuda.device_count() > 1:
                 metanet_device = 1
-                type(self.meta_network).device = metanet_device
+                metanet_cls.device = metanet_device
             else:
                 metanet_device = 0
-                type(self.meta_network).device = metanet_device
-            metanet.cuda(device=type(self.meta_network).device)
+                metanet_cls.device = metanet_device
+            metanet.cuda(device=metanet_cls.device)
 
         log.debug('Creating optimizer')
         learning_rate = hyper_params.learning_rate
