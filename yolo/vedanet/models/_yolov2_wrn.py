@@ -95,6 +95,9 @@ class Yolov2Wrn(YoloABC):
         self.compose(data, features, self.loss_fn)
         return features
 
+    def get_meta_state_grad(self):
+        return self.head.meta_state.grad
+
     def _forward_test(self, x):
         data, meta_state = x
         middle_feats = self.dist_backbone(data)
