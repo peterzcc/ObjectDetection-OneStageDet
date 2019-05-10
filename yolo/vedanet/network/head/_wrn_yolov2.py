@@ -38,7 +38,8 @@ class WrnYolov2(nn.Module):
         self.meta_state.requires_grad_(True)
 
     def set_meta_state(self, meta_state):
-        self.meta_state = meta_state
+        t_device = self.meta_state.device
+        self.meta_state = meta_state.to(t_device)
         # self.meta_state = cls_grouped_params  # .detach()
         # self.meta_state.requires_grad_(True)
 
