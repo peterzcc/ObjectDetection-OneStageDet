@@ -59,7 +59,7 @@ class Yolov2Wrn(YoloABC):
             self.dist_backbone = torch.nn.DataParallel(self.backbone)
         else:
             self.dist_backbone = torch.nn.DataParallel(self.backbone)
-        self.head = self.get_head()
+        self.head = self.init_head()
 
         self.meta_param_size = self.head.meta_param_size
         if torch.cuda.device_count() > 1:
@@ -199,3 +199,4 @@ class Yolov2Wrn(YoloABC):
 class Yolov2UniWrn(Yolov2Wrn):
     def init_head(self):
         self.head = head.UniWrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes)
+        return self.head
