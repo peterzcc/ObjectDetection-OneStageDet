@@ -152,6 +152,7 @@ class FewshotTrainingEngine(SyncDualEngine):
         self.backup_dir = hyper_params.backup_dir
 
         log.debug('Creating network')
+
         model_name = hyper_params.model_name
         model_cls = models.Yolov2_Meta
         if model_name:
@@ -161,6 +162,7 @@ class FewshotTrainingEngine(SyncDualEngine):
                         clear=hyper_params.clear,
                         loss_allobj=hyper_params.loss_allobj,
                         use_yolo_loss=hyper_params.use_yolo_loss)
+        meta_param_size = net.meta_param_size
 
         metanet_cls = network.metanet.Metanet
         meta_model_name = hyper_params.meta_model_name
@@ -169,7 +171,8 @@ class FewshotTrainingEngine(SyncDualEngine):
 
         metanet = metanet_cls(hyper_params.classes, weights_file=hyper_params.meta_weights,
                               use_dummy_reweight=hyper_params.use_dummy_reweight,
-                              num_anchors=net.num_anchors)
+                              num_anchors=net.num_anchors,
+                              meta_param_size=meta_param_size)
 
         log.info('Net structure\n\n%s\n' % net)
         self.multi_gpu = False

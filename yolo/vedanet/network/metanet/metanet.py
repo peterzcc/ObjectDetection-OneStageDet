@@ -28,10 +28,13 @@ class Metanet(nn.Module):
 
     """
     device = None
-    def __init__(self, num_classes=20, weights_file=None, use_dummy_reweight=False,num_anchors=1):
+    def __init__(self, num_classes=20, weights_file=None, use_dummy_reweight=False,
+                 num_anchors=1,
+                 meta_param_size=1024):
         """ Network initialisation """
         super().__init__()
         self.num_classes = num_classes
+        self.meta_param_size = meta_param_size
         # Network
         layer_list = [
             OrderedDict([
@@ -47,7 +50,7 @@ class Metanet(nn.Module):
                 ('10_max',          nn.MaxPool2d(2, 2)),
                 ('11_convbatch',    vn_layer.Conv2dBatchLeaky(512, 1024, 3, 1)),
                 ('12_max',          nn.MaxPool2d(2, 2)),
-                ('13_convbatch',    vn_layer.Conv2dBatchLeaky(1024, 1024, 3, 1)),
+                ('13_convbatch',    vn_layer.Conv2dBatchLeaky(1024, self.meta_param_size, 3, 1)),
                 ]),
 
             OrderedDict([

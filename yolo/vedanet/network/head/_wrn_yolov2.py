@@ -33,7 +33,9 @@ class WrnYolov2(nn.Module):
         self.layers = nn.ModuleList([nn.Sequential(layer_dict) for layer_dict in layer_list])
         self.num_classes = num_classes
         self.num_anchors = num_anchors
-        self.reweight = None
+        self.meta_param_size = num_anchors * 6*(1024+1)
+        self.register_buffer("meta_state", torch.zeros(self.num_classes, self.num_anchors*6, 1024+1))
+        self.meta_state.requires_grad_(True)
 
     def forward(self, middle_feats):
         outputs = []
@@ -53,7 +55,10 @@ class WrnYolov2(nn.Module):
         # (batch, C, h, w)
         # meta_state: (num_cls, num_anchors*6*(1024+1))
         t_device = pre_ultimate_layer.device
-        cls_grouped_params = meta_state.view(self.num_classes, self.num_anchors*6, 1024+1).to(t_device)
+        cls_grouped_params = meta_state.view(self.num_classes, self.num_anchors*6, 1024+1)
+        self.meta_state = cls_grouped_params.detach()
+        self.meta_state.requires_grad_(True)
+
         cls_weights = cls_grouped_params[:, :, 0:-1].view(self.num_classes, self.num_anchors*6, 1024, 1, 1)
         cls_biases = cls_grouped_params[:, :, -1]
         cls_detections = [F.conv2d(pre_ultimate_layer, cls_weights[cls], cls_biases[cls], 1, 0, 1, 1)

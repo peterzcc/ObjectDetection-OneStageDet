@@ -28,11 +28,14 @@ class Paramnet(nn.Module):
 
     """
     device = None
-    def __init__(self, num_classes=20, weights_file=None, use_dummy_reweight=False, num_anchors=1):
+
+    def __init__(self, num_classes=20, weights_file=None, use_dummy_reweight=False,
+                 num_anchors=1, meta_param_size=5*6*1025):
         """ Network initialisation """
         super().__init__()
         self.num_classes = num_classes
-        self.param_size = num_anchors*6*(1024+1)
+        self.num_anchors = num_anchors
+        self.param_size = meta_param_size
         # Network
         layer_list = [
             OrderedDict([
