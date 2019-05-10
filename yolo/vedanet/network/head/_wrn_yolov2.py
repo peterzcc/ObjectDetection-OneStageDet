@@ -70,6 +70,7 @@ class WrnYolov2(nn.Module):
         result = stacked_detections.view(batch_size*self.num_classes, self.num_anchors*6, *pre_ultimate_layer.shape[-2:])
         return result
 
+
 class UniWrnYolov2(nn.Module):
     def __init__(self, num_anchors, num_classes, input_channels=48):
         """ Network initialisation """
