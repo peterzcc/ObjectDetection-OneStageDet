@@ -12,7 +12,7 @@ from ..network import backbone
 from ..network import head
 from ..network import metanet
 
-__all__ = ['Yolov2Wrn',]
+__all__ = ['Yolov2Wrn', 'Yolov2UniWrn']
 
 
 class Yolov2Wrn(YoloABC):
@@ -59,7 +59,8 @@ class Yolov2Wrn(YoloABC):
             self.dist_backbone = torch.nn.DataParallel(self.backbone)
         else:
             self.dist_backbone = torch.nn.DataParallel(self.backbone)
-        self.head = head.WrnYolov2(num_anchors=len(anchors_mask[0]), num_classes=num_classes)
+        self.head = self.get_head()
+
         self.meta_param_size = self.head.meta_param_size
         if torch.cuda.device_count() > 1:
             self.dist_head = torch.nn.DataParallel(self.head, output_device=list(range(torch.cuda.device_count()))[1])
@@ -84,6 +85,9 @@ class Yolov2Wrn(YoloABC):
             self.load_weights(weights_file, clear)
         else:
             self.init_weights(slope=0.1)
+
+    def init_head(self):
+        self.head = head.WrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes)
 
     def _forward(self, x):
         data, meta_state = x
@@ -191,3 +195,7 @@ class Yolov2Wrn(YoloABC):
         assert not torch.isnan(reshaped_final_prediction).any()
         return reshaped_final_prediction
 
+
+class Yolov2UniWrn(Yolov2Wrn):
+    def init_head(self):
+        self.head = head.UniWrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes)
