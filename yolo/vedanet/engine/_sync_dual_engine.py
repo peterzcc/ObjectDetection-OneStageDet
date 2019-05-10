@@ -86,12 +86,12 @@ class SyncDualEngine(ABC):
 
             for idx, (data, meta_imgs) in enumerate(zip(self.dataloader, self.meta_dataloader)):
                 # init meta images first
-                if isinstance(meta_imgs,list):
-                    meta_imgs = meta_imgs[0]
-                meta_state = self.get_meta_state(meta_imgs)
-                data = data + [meta_state, ]
+                # if isinstance(meta_imgs,list):
+                #     meta_imgs = meta_imgs[0]
+                # meta_state = self.get_meta_state(meta_imgs)
+                # data = data + [meta_state, ]
                 # Forward and backward on (mini-)batches
-                self.process_batch(data)
+                self.process_batch(data, meta_imgs)
                 if (idx + 1) % self.batch_subdivisions != 0:
                     continue
 
@@ -232,13 +232,13 @@ class SyncDualEngine(ABC):
     def get_num_samples_seen(self):
         pass
 
-    @abstractmethod
-    def get_meta_state(self, meta_imgs):
-        """ This function should contain the code to process the meta images at the beginning of each batch. """
-        pass
+    # @abstractmethod
+    # def get_meta_state(self, meta_imgs):
+    #     """ This function should contain the code to process the meta images at the beginning of each batch. """
+    #     pass
 
     @abstractmethod
-    def process_batch(self, data):
+    def process_batch(self, data, meta_imgs=None):
         """ This function should contain the code to process the forward and backward pass of one (mini-)batch. """
         pass
 

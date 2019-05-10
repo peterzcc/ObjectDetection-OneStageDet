@@ -154,7 +154,7 @@ class FewshotTrainingEngine(SyncDualEngine):
         log.debug('Creating network')
 
         model_name = hyper_params.model_name
-        model_cls = models.Yolov2_Meta
+        model_cls = models.Yolov2Wrn
         if model_name:
             model_cls = models.__dict__[model_name]
 
@@ -164,7 +164,7 @@ class FewshotTrainingEngine(SyncDualEngine):
                         use_yolo_loss=hyper_params.use_yolo_loss)
         meta_param_size = net.meta_param_size
 
-        metanet_cls = network.metanet.Metanet
+        metanet_cls = network.metanet.Paramnet
         meta_model_name = hyper_params.meta_model_name
         if meta_model_name:
             metanet_cls = network.metanet.__dict__[meta_model_name]
@@ -277,23 +277,30 @@ class FewshotTrainingEngine(SyncDualEngine):
         self.network.train()
         self.meta_network.train()
 
-    def get_meta_state(self, meta_imgs):
-        if self.cuda:
-            meta_imgs = meta_imgs.cuda()
-        if meta_imgs.shape[0] == 1:
-            meta_imgs = meta_imgs[0]
-        reweights = self.dist_meta_network(meta_imgs)
-        # log.info(f"reweights l2 norm:\n {torch.norm(reweights,p=2,dim=2).view(-1)}")
-        return reweights
+    # def get_meta_state(self, meta_imgs):
+    #     if self.cuda:
+    #         meta_imgs = meta_imgs.cuda()
+    #     if meta_imgs.shape[0] == 1:
+    #         meta_imgs = meta_imgs[0]
+    #     reweights = self.dist_meta_network(meta_imgs)
+    #     # log.info(f"reweights l2 norm:\n {torch.norm(reweights,p=2,dim=2).view(-1)}")
+    #     return reweights
 
-    def process_batch(self, data):
-        data, target, reweights = data
+    def process_batch(self, data, meta_imgs=None):
+        data, target = data
         # to(device)
         # if self.cuda:
         #     data = data.cuda()
         # meta_imgs = torch.autograd.Variable(meta_imgs, requires_grad=True)
-
-        loss = self.network((data, reweights), target)
+        assert meta_imgs is not None
+        assert len(meta_imgs) == 1
+        meta_imgs = meta_imgs[0]
+        if self.cuda:
+            meta_imgs = meta_imgs.cuda()
+        if meta_imgs.shape[0] == 1:
+            meta_imgs = meta_imgs[0]
+        meta_state = self.dist_meta_network(meta_imgs)
+        loss = self.network((data, meta_state), target)
         loss.backward(retain_graph=True)
 
         for ii in range(self.nloss):

@@ -37,6 +37,11 @@ class WrnYolov2(nn.Module):
         self.register_buffer("meta_state", torch.zeros(self.num_classes, self.num_anchors*6, 1024+1))
         self.meta_state.requires_grad_(True)
 
+    def set_meta_state(self, meta_state):
+        self.meta_state = meta_state
+        # self.meta_state = cls_grouped_params  # .detach()
+        # self.meta_state.requires_grad_(True)
+
     def forward(self, middle_feats):
         outputs = []
         # stage 5
@@ -45,19 +50,17 @@ class WrnYolov2(nn.Module):
         # stage 6
         stage6 = middle_feats[0]
         preout = self.layers[1](torch.cat((stage6_reorg, stage6), 1))
-        out = self.get_reweighted_output(preout, self.reweight)
+        out = self.meta_predict(preout)
         features = [out]
         return features
 
-    def get_reweighted_output(self, pre_ultimate_layer: torch.Tensor, meta_state):
+    def meta_predict(self, pre_ultimate_layer: torch.Tensor):
         batch_size = pre_ultimate_layer.shape[0]
         # (16,1024,19,19)
         # (batch, C, h, w)
         # meta_state: (num_cls, num_anchors*6*(1024+1))
         t_device = pre_ultimate_layer.device
-        cls_grouped_params = meta_state.view(self.num_classes, self.num_anchors*6, 1024+1)
-        self.meta_state = cls_grouped_params.detach()
-        self.meta_state.requires_grad_(True)
+        cls_grouped_params = self.meta_state.view(self.num_classes, self.num_anchors*6, 1024+1)
 
         cls_weights = cls_grouped_params[:, :, 0:-1].view(self.num_classes, self.num_anchors*6, 1024, 1, 1)
         cls_biases = cls_grouped_params[:, :, -1]

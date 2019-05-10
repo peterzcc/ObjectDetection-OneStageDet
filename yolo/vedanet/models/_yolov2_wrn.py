@@ -86,32 +86,31 @@ class Yolov2Wrn(YoloABC):
             self.init_weights(slope=0.1)
 
     def _forward(self, x):
-        data, reweights = x
+        data, meta_state = x
         middle_feats = self.dist_backbone(data)
-        self.head.reweight = reweights
+        self.head.set_meta_state(meta_state)
         features = self.dist_head(middle_feats)
         if self.use_yolo_loss:
             features = [self.convert_to_yolo_output(f) for f in features]
         self.compose(data, features, self.loss_fn)
         return features
 
-    def _forward_test(self, x, reweights):
-        data = x
+    def _forward_test(self, x):
+        data, meta_state = x
         middle_feats = self.dist_backbone(data)
-        self.head.reweight = reweights
-
+        self.head.set_meta_state(meta_state)
         features = self.dist_head(middle_feats)
         features = [self.convert_to_yolo_output(f) for f in features]
         self.compose(data, features, self.loss_fn)
 
         return features
 
-    def forward(self, x, target=None):
+    def forward(self, data, target=None):
         if self.train_flag == 1:
-            x, reweights = x
+            x, meta_state = data
             self.seen += x.size(0)
             t1 = time.time()
-            outputs = self._forward((x, reweights))
+            outputs = self._forward((x, meta_state))
             t2 = time.time()
 
             assert len(outputs) == len(self.loss)
@@ -125,7 +124,8 @@ class Yolov2Wrn(YoloABC):
             return loss
         else:
             t1 = time.time()
-            outputs = self._forward_test(x, reweights=self.reweights)
+            x, meta_state = data
+            outputs = self._forward_test((x, meta_state))
             if self.postprocess is None:
                 return
             t2 = time.time()
