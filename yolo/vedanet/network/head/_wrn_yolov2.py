@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from .. import layer as vn_layer
 
 __all__ = ['WrnYolov2', 'UniWrnYolov2']
-
+DEBUG = True
 
 class WrnYolov2(nn.Module):
     def  __init__(self, num_anchors, num_classes, input_channels=48):
@@ -103,7 +103,7 @@ class UniWrnYolov2(nn.Module):
         self.layers = nn.ModuleList([nn.Sequential(layer_dict) for layer_dict in layer_list])
         self.meta_param_size = 6*(self.pred_input_size+1)
         self.register_buffer("meta_state", torch.zeros(self.num_classes, self.meta_param_size))
-        self.meta_state.requires_grad_(True)
+        # self.meta_state.requires_grad_(True)
 
     def set_meta_state(self, meta_state):
         t_device = self.meta_state.device
@@ -120,6 +120,7 @@ class UniWrnYolov2(nn.Module):
         # Route : layers=-1, -4
         feature_layer = self.layers[1](torch.cat((stage6_reorg, stage6), 1))
         anchor_aggregated = self.layers[2](feature_layer)
+        if DEBUG: assert not torch.isnan(anchor_aggregated).any()
         b, _, h, w = anchor_aggregated.shape
         anchor_separated = anchor_aggregated.view(b, self.num_anchors, self.pred_input_size, h, w)
         anchor_in_batch = anchor_separated.view(b*self.num_anchors, self.pred_input_size, h, w).contiguous()
@@ -138,11 +139,11 @@ class UniWrnYolov2(nn.Module):
 
         cls_weights = cls_grouped_params[:, :, 0:-1].view(self.num_classes, 6, self.pred_input_size, 1, 1)
         cls_biases = cls_grouped_params[:, :, -1]
-        assert not torch.isnan(pre_ultimate_layer).any()
+        if DEBUG: assert not torch.isnan(pre_ultimate_layer).any()
         cls_detections = [F.conv2d(pre_ultimate_layer, cls_weights[cls], cls_biases[cls], 1, 0, 1, 1)
                           for cls in range(self.num_classes)]
         stacked_detections = torch.stack(cls_detections, dim=1)
         result = stacked_detections.view(batch_size*self.num_classes, 6, *pre_ultimate_layer.shape[-2:])
-        assert not torch.isnan(result).any()
+        if DEBUG: assert not torch.isnan(result).any()
         return result
 
