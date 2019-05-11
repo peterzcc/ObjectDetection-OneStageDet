@@ -13,10 +13,22 @@ def bbox_ious(boxes1, boxes2):
     b1_len = boxes1.size(0)
     b2_len = boxes2.size(0)
 
+    if DEBUG: assert not torch.isnan(boxes1).any()
+    if DEBUG: assert not torch.isnan(boxes2).any()
+
     b1x1, b1y1 = (boxes1[:, :2] - (boxes1[:, 2:4] / 2)).split(1, 1)
     b1x2, b1y2 = (boxes1[:, :2] + (boxes1[:, 2:4] / 2)).split(1, 1)
     b2x1, b2y1 = (boxes2[:, :2] - (boxes2[:, 2:4] / 2)).split(1, 1)
     b2x2, b2y2 = (boxes2[:, :2] + (boxes2[:, 2:4] / 2)).split(1, 1)
+
+    if DEBUG: assert not torch.isnan(b1x1).any()
+    if DEBUG: assert not torch.isnan(b1x2).any()
+    if DEBUG: assert not torch.isnan(b2x1).any()
+    if DEBUG: assert not torch.isnan(b2x2).any()
+    if DEBUG: assert not torch.isnan(b1y1).any()
+    if DEBUG: assert not torch.isnan(b1y2).any()
+    if DEBUG: assert not torch.isnan(b2y1).any()
+    if DEBUG: assert not torch.isnan(b2y2).any()
 
     dx = (b1x2.min(b2x2.t()) - b1x1.max(b2x1.t())).clamp(min=0)
     dy = (b1y2.min(b2y2.t()) - b1y1.max(b2y1.t())).clamp(min=0)
