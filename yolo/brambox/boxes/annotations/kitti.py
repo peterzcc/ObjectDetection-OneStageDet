@@ -25,7 +25,7 @@ class KittiAnnotation(Annotation):
         else:
             occluded = 0
 
-        return f'{class_label} {truncated:.2f} {occluded} -10 {self.x_top_left:.2f} {self.y_top_left:.2f} {self.x_top_left+self.width:.2f} {self.y_top_left+self.height:.2f} -1 -1 -1 -1000 -1000 -1000 -10'
+        return '{} {} {} -10 {} {} {} {} -1 -1 -1 -1000 -1000 -1000 -10'.format(class_label, truncated, occluded, self.x_top_left, self.y_top_left, self.x_top_left+self.width, self.y_top_left+self.height)
 
     def deserialize(self, string):
         """ parse a KITTI annotation string """

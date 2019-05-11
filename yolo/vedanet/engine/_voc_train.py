@@ -34,7 +34,7 @@ class VOCDataset(data.BramboxDataset):
 
         def identify(img_id):
             #return f'{root}/VOCdevkit/{img_id}.jpg'
-            return f'{img_id}'
+            return '{}'.format(img_id)
 
         super(VOCDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
@@ -66,7 +66,7 @@ class VOCTrainingEngine(engine.Engine):
         momentum = hyper_params.momentum
         decay = hyper_params.decay
         batch = hyper_params.batch
-        log.info(f'Adjusting learning rate to [{learning_rate}]')
+        log.info('Adjusting learning rate to [{}]'.format(learning_rate))
         optim = torch.optim.SGD(net.parameters(), lr=learning_rate/batch, momentum=momentum, dampening=0, weight_decay=decay*batch)
 
         log.debug('Creating dataloader')
@@ -124,7 +124,7 @@ class VOCTrainingEngine(engine.Engine):
             self.train_loss[ii]['conf'].append(self.network.loss[ii].loss_conf.item() / self.mini_batch_size)
             if self.network.loss[ii].loss_cls is not None:
                 self.train_loss[ii]['cls'].append(self.network.loss[ii].loss_cls.item() / self.mini_batch_size)
-    
+
     def train_batch(self):
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -145,20 +145,20 @@ class VOCTrainingEngine(engine.Engine):
                 all_cls += cls
 
             if self.classes > 1:
-                log.info(f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)} Cls:{round(cls, 2)})')
+                log.info('{} # {}: Loss:{} (Coord:{} Conf:{} Cls:{})'.format(self.batch, ii, round(tot, 5), round(coord, 2), round(conf, 2), round(cls, 2)))
             else:
-                log.info(f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)})')
+                log.info('{} # {}: Loss:{} (Coord:{} Conf:{})'.format(self.batch, ii, round(tot, 5), round(coord, 2), round(conf, 2)))
 
         if self.classes > 1:
-            log.info(f'{self.batch} # All : Loss:{round(all_tot, 5)} (Coord:{round(all_coord, 2)} Conf:{round(all_conf, 2)} Cls:{round(all_cls, 2)})')
+            log.info('{} # All : Loss:{} (Coord:{} Conf:{} Cls:{})'.format(self.batch, round(all_tot, 5), round(all_coord, 2), round(all_conf, 2), round(all_cls, 2)))
         else:
-            log.info(f'{self.batch} # All : Loss:{round(all_tot, 5)} (Coord:{round(all_coord, 2)} Conf:{round(all_conf, 2)})')
+            log.info('{} # All : Loss:{} (Coord:{} Conf:{})'.format(self.batch, round(all_tot, 5), round(all_coord, 2), round(all_conf, 2)))
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
         if self.batch % self.backup_rate == 0:
-            self.network.save_weights(os.path.join(self.backup_dir, f'weights_{self.batch}.pt'))
+            self.network.save_weights(os.path.join(self.backup_dir, 'weights_{}.pt'.format(self.batch)))
 
         if self.batch % 100 == 0:
-            self.network.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
+            self.network.save_weights(os.path.join(self.backup_dir, 'backup.pt'))
 
         if self.batch % self.resize_rate == 0:
             if self.batch + 200 >= self.max_batches:
@@ -169,10 +169,10 @@ class VOCTrainingEngine(engine.Engine):
 
     def quit(self):
         if self.sigint:
-            self.network.save_weights(os.path.join(self.backup_dir, f'backup.pt'))
+            self.network.save_weights(os.path.join(self.backup_dir, 'backup.pt'))
             return True
         elif self.batch >= self.max_batches:
-            self.network.save_weights(os.path.join(self.backup_dir, f'final.dw'))
+            self.network.save_weights(os.path.join(self.backup_dir, 'final.dw'))
             return True
         else:
             return False

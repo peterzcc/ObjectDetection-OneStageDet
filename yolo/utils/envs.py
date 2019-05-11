@@ -83,15 +83,15 @@ def initEnv(train_flag, model_name: str, checkpoint=False):
 
     if checkpoint and "checkpoint" in cur_cfg:
         checkpoint_num = cur_cfg["checkpoint"]
-        weight_path = os.path.join(backup_dir, f"weights_{checkpoint_num}.pt")
-        meta_weight_path = os.path.join(backup_dir, f"meta_weights_{checkpoint_num}.pt")
-        reweight_path = os.path.join(backup_dir, f"reweights_{checkpoint_num}.pkl")
-        results_path = os.path.join(work_dir, f"results_{checkpoint_num}")
+        weight_path = os.path.join(backup_dir, "weights_{}.pt".format(checkpoint_num))
+        meta_weight_path = os.path.join(backup_dir, "meta_weights_{}.pt".format(checkpoint_num))
+        reweight_path = os.path.join(backup_dir, "reweights_{}.pkl".format(checkpoint_num))
+        results_path = os.path.join(work_dir, "results_{}".format(checkpoint_num))
         if not (os.path.isfile(weight_path)
                 and os.path.isfile(meta_weight_path)) \
                 and "server" in cur_cfg:
-            exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{weight_path} .")
-            exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{meta_weight_path} .")
+            exec_cmd("rsync --checksum -RP {}/./{} .".format(cur_cfg['server'], weight_path))
+            exec_cmd("rsync --checksum -RP {}/./{} .".format(cur_cfg['server'], meta_weight_path))
     else:
         weight_path = None
         meta_weight_path = None

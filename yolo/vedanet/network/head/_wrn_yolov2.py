@@ -92,7 +92,7 @@ class UniWrnYolov2(nn.Module):
         self.pred_input_size = 512
         preout_layer = \
             OrderedDict([
-                (f'4_convbatch',    vn_layer.Conv2dBatchLeaky(1024, num_anchors*self.pred_input_size, 1, 1)),
+                ('4_convbatch',    vn_layer.Conv2dBatchLeaky(1024, num_anchors*self.pred_input_size, 1, 1)),
             ])
         layer_list.append(preout_layer)
         # uni_predictor = \
@@ -143,4 +143,3 @@ class UniWrnYolov2(nn.Module):
         stacked_detections = torch.stack(cls_detections, dim=1)
         result = stacked_detections.view(batch_size*self.num_classes, 6, *pre_ultimate_layer.shape[-2:])
         return result
-

@@ -75,7 +75,7 @@ def draw_boxes(img, boxes, color=None, show_labels=False, faded=None, method=1):
     elif cv2 is not None and isinstance(img, np.ndarray):
         method = draw_boxes.METHOD_CV
     else:
-        raise TypeError(f'Unkown image type [{type(img)}]')
+        raise TypeError('Unkown image type [{}]'.format(type(img)))
 
     # Draw boxes
     faded = faded if faded is not None else lambda box: False
@@ -97,7 +97,7 @@ def draw_boxes(img, boxes, color=None, show_labels=False, faded=None, method=1):
             if faded(box):
                 special = True
             if show_labels:
-                text = f'{box.class_label} {100*box.confidence:.2f}%'
+                text = '{} {}%'.format(box.class_label, 100*box.confidence)
         else:
             continue
 

@@ -28,7 +28,7 @@ class UniYolov2(nn.Module):
         self.pred_input_size = 512
         preout_layer = \
             OrderedDict([
-                (f'4_convbatch',    vn_layer.Conv2dBatchLeaky(1024, num_anchors*self.pred_input_size, 1, 1)),
+                ('4_convbatch',    vn_layer.Conv2dBatchLeaky(1024, num_anchors*self.pred_input_size, 1, 1)),
             ])
         layer_list.append(preout_layer)
         uni_predictor = \

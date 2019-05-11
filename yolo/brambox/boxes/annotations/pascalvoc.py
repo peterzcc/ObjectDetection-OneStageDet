@@ -19,15 +19,15 @@ class PascalVocAnnotation(Annotation):
     def serialize(self):
         """ generate a Pascal Voc object xml string """
         string = '<object>\n'
-        string += f'\t<name>{self.class_label}</name>\n'
+        string += '\t<name>{}</name>\n'.format(self.class_label)
         string += '\t<pose>Unspecified</pose>\n'
-        string += f'\t<truncated>{int(self.occluded)}</truncated>\n'
-        string += f'\t<difficult>{int(self.difficult)}</difficult>\n'
+        string += '\t<truncated>{}</truncated>\n'.format(int(self.occluded))
+        string += '\t<difficult>{}</difficult>\n'.format(int(self.difficult))
         string += '\t<bndbox>\n'
-        string += f'\t\t<xmin>{self.x_top_left}</xmin>\n'
-        string += f'\t\t<ymin>{self.y_top_left}</ymin>\n'
-        string += f'\t\t<xmax>{self.x_top_left + self.width - 1}</xmax>\n'
-        string += f'\t\t<ymax>{self.y_top_left + self.height - 1}</ymax>\n'
+        string += '\t\t<xmin>{}</xmin>\n'.format(self.x_top_left)
+        string += '\t\t<ymin>{}</ymin>\n'.format(self.y_top_left)
+        string += '\t\t<xmax>{}</xmax>\n'.format(self.x_top_left + self.width - 1)
+        string += '\t\t<ymax>{}</ymax>\n'.format(self.y_top_left + self.height - 1)
         string += '\t</bndbox>\n'
         string += '</object>\n'
 

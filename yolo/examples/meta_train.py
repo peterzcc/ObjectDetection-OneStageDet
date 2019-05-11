@@ -47,4 +47,4 @@ if __name__ == '__main__':
     t2 = time.time()
     b2 = eng.batch
 
-    log.info(f'\nDuration of {b2-b1} batches: {t2-t1} seconds [{round((t2-t1)/(b2-b1), 3)} sec/batch]')
+    log.info('\nDuration of {} batches: {} seconds [{} sec/batch]'.format(b2-b1, t2-t1, round((t2-t1)/(b2-b1), 3)))

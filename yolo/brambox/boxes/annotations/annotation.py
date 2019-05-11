@@ -104,29 +104,29 @@ class Annotation(b.Box):
 
     def __repr__(self):
         """ Unambiguous representation """
-        string = f'{self.__class__.__name__} ' + '{'
-        string += f'class_label = \'{self.class_label}\', '
-        string += f'object_id = {self.object_id}, '
-        string += f'x = {self.x_top_left}, '
-        string += f'y = {self.y_top_left}, '
-        string += f'w = {self.width}, '
-        string += f'h = {self.height}, '
-        string += f'ignore = {self.ignore}, '
-        string += f'lost = {self.lost}, '
-        string += f'difficult = {self.difficult}, '
-        string += f'truncated_fraction = {self.truncated_fraction}, '
-        string += f'occluded_fraction = {self.occluded_fraction}, '
-        string += f'visible_x = {self.visible_x_top_left}, '
-        string += f'visible_y = {self.visible_y_top_left}, '
-        string += f'visible_w = {self.visible_width}, '
-        string += f'visible_h = {self.visible_height}'
+        string = '{} '.format(self.__class__.__name__) + '{'
+        string += 'class_label = \'{}\', '.format(self.class_label)
+        string += 'object_id = {}, '.format(self.object_id)
+        string += 'x = {}, '.format(self.x_top_left)
+        string += 'y = {}, '.format(self.y_top_left)
+        string += 'w = {}, '.format(self.width)
+        string += 'h = {}, '.format(self.height)
+        string += 'ignore = {}, '.format(self.ignore)
+        string += 'lost = {}, '.format(self.lost)
+        string += 'difficult = {}, '.format(self.difficult)
+        string += 'truncated_fraction = {}, '.format(self.truncated_fraction)
+        string += 'occluded_fraction = {}, '.format(self.occluded_fraction)
+        string += 'visible_x = {}, '.format(self.visible_x_top_left)
+        string += 'visible_y = {}, '.format(self.visible_y_top_left)
+        string += 'visible_w = {}, '.format(self.visible_width)
+        string += 'visible_h = {}'.format(self.visible_height)
         return string + '}'
 
     def __str__(self):
         """ Pretty print """
         string = 'Annotation {'
-        string += f'\'{self.class_label}\' {self.object_id}, '
-        string += f'[{int(self.x_top_left)}, {int(self.y_top_left)}, {int(self.width)}, {int(self.height)}]'
+        string += '\'{}\' {}, '.format(self.class_label, self.object_id)
+        string += '[{}, {}, {}, {}]'.format(int(self.x_top_left), int(self.y_top_left), int(self.width), int(self.height))
         if self.difficult:
             string += ', difficult'
         if self.lost:
@@ -134,12 +134,12 @@ class Annotation(b.Box):
         if self.ignore:
             string += ', ignore'
         if self.truncated:
-            string += f', truncated {self.truncated_fraction*100}%'
+            string += ', truncated {}%'.format(self.truncated_fraction*100)
         if self.occluded:
             if self.occluded_fraction == 1.0:
-                string += f', occluded [{int(self.visible_x_top_left)}, {int(self.visible_y_top_left)}, {int(self.visible_width)}, {int(self.visible_height)}]'
+                string += ', occluded [{}, {}, {}, {}]'.format(int(self.visible_x_top_left), int(self.visible_y_top_left), int(self.visible_width), int(self.visible_height))
             else:
-                string += f', occluded {self.occluded_fraction*100}%'
+                string += ', occluded {}%'.format(self.occluded_fraction*100)
         return string + '}'
 
 

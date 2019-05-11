@@ -205,10 +205,10 @@ class BatchSampler(torchBatchSampler):
     def __set_input_dim(self):
         """ This function randomly changes the the input dimension of the dataset. """
         if self.new_input_dim is not None:
-            log.info(f'Resizing network {self.new_input_dim[:2]}')
+            log.info('Resizing network {}'.format(self.new_input_dim[:2]))
             self.input_dim = (self.new_input_dim[0], self.new_input_dim[1])
             self.new_input_dim = None
-            log.info(f'Resizing finished')
+            log.info('Resizing finished')
 
 
 class ListBatchSampler(torchSampler):
@@ -249,10 +249,10 @@ class ListBatchSampler(torchSampler):
     def __set_input_dim(self):
         """ This function randomly changes the the input dimension of the dataset. """
         if self.new_input_dim is not None:
-            log.info(f'Resizing network {self.new_input_dim[:2]}')
+            log.info('Resizing network {}'.format(self.new_input_dim[:2]))
             self.input_dim = (self.new_input_dim[0], self.new_input_dim[1])
             self.new_input_dim = None
-            log.info(f'Resizing finished')
+            log.info('Resizing finished')
 
 def list_collate(batch):
     """ Function that collates lists or tuples together into one list (of lists/tuples).

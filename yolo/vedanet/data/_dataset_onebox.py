@@ -54,14 +54,14 @@ class OneboxDataset(Dataset):
         self.boxid_2_fileid = []
         # Add class_ids
         if class_list is None:
-            log.warn(f'No class_label_map given, annotations wont have a class_id values for eg. loss function')
+            log.warn('No class_label_map given, annotations wont have a class_id values for eg. loss function')
         for file_id, (k, anno) in enumerate(annos.items()):
             for a in anno:
                 if class_list is not None:
                     try:
                         a.class_id = self.class_label_map[a.class_label] #class_list.index(a.class_label)
                     except KeyError as err:
-                        raise ValueError(f'{a.class_label} is not found in the class_label_map') from err
+                        raise ValueError('{} is not found in the class_label_map'.format(a.class_label)) from err
                 else:
                     a.class_id = 0
                 self.file_box.append((k, [a]))
@@ -71,7 +71,7 @@ class OneboxDataset(Dataset):
                 self.cls_2_boxid[a.class_id].append(box_id)
                 self.boxid_2_fileid.append(file_id)
 
-        log.info(f'Dataset loaded: {len(self.file_box)} boxes')
+        log.info('Dataset loaded: {} boxes'.format(len(self.file_box)))
 
     def __len__(self):
         return len(self.file_box) #len(self.keys)
@@ -93,13 +93,17 @@ class OneboxDataset(Dataset):
             tuple: (transformed image, list of transformed brambox boxes)
         """
         if index >= len(self):
-            raise IndexError(f'list index out of range [{index}/{len(self)-1}]')
+            raise IndexError('list index out of range [{}/{}]'.format(index, len(self)-1))
 
         # Load
         file, box = self.file_box[index]
         img = Image.open(self.id(file))
         anno = copy.deepcopy(box)
         random.shuffle(anno)
+
+        #Huang Daoji 11/05
+        # convert gray image to RGB
+        img = img.convert("RGB")
 
         # Transform
         if self.img_tf is not None:
@@ -120,5 +124,3 @@ class OneboxDataset(Dataset):
         torch_mask = torch.Tensor(mask)
         img_rgbm = torch.cat([img, torch_mask], dim=0)
         return img_rgbm, #anno
-
-

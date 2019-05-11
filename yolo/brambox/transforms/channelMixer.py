@@ -57,7 +57,7 @@ class ChannelMixer:
         """
         m = max(self.channels, key=lambda c: c[0])[0]
         if m >= len(imgs):
-            raise ValueError(f'{m} images are needed to perform the mix')
+            raise ValueError('{} images are needed to perform the mix'.format(m))
 
         if isinstance(imgs[0], Image.Image):
             pil_image = True

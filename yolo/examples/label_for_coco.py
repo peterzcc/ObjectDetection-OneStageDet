@@ -125,7 +125,7 @@ def get_xml_for_test_set(year, dataset):
     print(len(images))
 
     # write xml files
-    dst_dirs = {x: os.path.join(f'{ROOT}/VOCtmp', x) for x in ["Annotations", "ImageSets", "JPEGImages"]}
+    dst_dirs = {x: os.path.join('{}/VOCtmp'.format(ROOT), x) for x in ["Annotations", "ImageSets", "JPEGImages"]}
     dst_dirs['ImageSets'] = os.path.join(dst_dirs['ImageSets'], "Main")
     for k, d in dst_dirs.items():
         os.makedirs(d, exist_ok=True)
@@ -176,7 +176,7 @@ def get_label_for_single_file(year, dataset):
 
     val_annos = {}
     for image in images:
-        val_annos[f'{ROOT}/{dataset}{year}/{images[image]["file_name"]}'] = []
+        val_annos['{}/{}{}/{}'.format(ROOT, dataset, year, images[image]["file_name"])] = []
         for obj in images[image]["obj"]:
             tmp_obj = bbb.annotations.PascalVocAnnotation()
             tmp_obj.class_label = obj["class_label"]
@@ -185,7 +185,7 @@ def get_label_for_single_file(year, dataset):
             # maybe out of boundry! need to check?
             tmp_obj.width = int(obj["bbox"][2])
             tmp_obj.height = int(obj["bbox"][3])
-            val_annos[f'{ROOT}/{dataset}{year}/{images[image]["file_name"]}'].append(tmp_obj)
+            val_annos['{}/{}{}/{}'.format(ROOT, dataset, year, images[image]["file_name"])].append(tmp_obj)
     # this one contains categories not in VOC
     del_keys = []
     for image in val_annos:
@@ -195,7 +195,7 @@ def get_label_for_single_file(year, dataset):
         del val_annos[key]
     if use_coco_classes:
         print(len(val_annos))
-        bbb.generate('anno_pickle', val_annos, f'{DST}/onedet_cache/MSCOCO{dataset}{year}.pkl')
+        bbb.generate('anno_pickle', val_annos, '{}/onedet_cache/MSCOCO{}{}.pkl'.format(DST, dataset, year))
 
     val_annos_fix_label = {}
     for image in val_annos:
@@ -214,7 +214,7 @@ def get_label_for_single_file(year, dataset):
         del val_annos_fix_label[key]
     if not use_coco_classes:
         print(len(val_annos_fix_label))
-        bbb.generate('anno_pickle', val_annos_fix_label, f'{DST}/onedet_cache/MSCOCO{dataset}{year}_fix_label.pkl')
+        bbb.generate('anno_pickle', val_annos_fix_label, '{}/onedet_cache/MSCOCO{}{}_fix_label.pkl'.format(DST, dataset, year))
 
     # generate test file for each label
     if use_coco_classes:
@@ -239,7 +239,7 @@ def get_label_for_single_file(year, dataset):
                 else:
                     main[label].append([img.split('/')[-1].split('.')[0], -1])
         for label in labels_here:
-            with open(f'{ROOT}/VOCtmp/ImageSets/Main/{label}_test.txt', 'w') as f:
+            with open('{}/VOCtmp/ImageSets/Main/{}_test.txt'.format(ROOT, label), 'w') as f:
                 for case in main[label]:
                     f.write(case[0] + ' ' + str(case[1]) + '\n')
                     #break;

@@ -186,7 +186,7 @@ class DualEngine(ABC):
 
     @learning_rate.setter
     def learning_rate(self, lr):
-        log.info(f'Adjusting learning rate to [{lr*self.batch_size}]')
+        log.info('Adjusting learning rate to [{}]'.format(lr*self.batch_size))
         self.__lr = lr
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
@@ -235,15 +235,15 @@ class DualEngine(ABC):
         if default is not None or not hasattr(self, name):
             setattr(self, name, default)
         if name in self.__rates:
-            log.warn(f'{name} rate was already used, overwriting...')
+            log.warn('{} rate was already used, overwriting...'.format(name))
 
         if len(steps) > len(values):
             diff = len(steps) - len(values)
             values = values + diff * [values[-1]]
-            log.warn(f'{name} has more steps than values, extending values to {values}')
+            log.warn('{} has more steps than values, extending values to {}'.format(name, values))
         elif len(steps) < len(values):
             values = values[:len(steps)]
-            log.warn(f'{name} has more values than steps, shortening values to {values}')
+            log.warn('{} has more values than steps, shortening values to {}'.format(name, values))
 
         self.__rates[name] = (steps, values)
 

@@ -26,7 +26,7 @@ class CustomDataset(vn_data.BramboxDataset):
         anno_tf = vn_data.transform.Compose([lb])
 
         def identify(img_id):
-            return f'{img_id}'
+            return '{}'.format(img_id)
 
         super(CustomDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
@@ -83,7 +83,7 @@ def VOCTest(hyper_params):
     num_det = 0
 
     for idx, (data, box) in enumerate(loader):
-        if (idx + 1) % 20 == 0: 
+        if (idx + 1) % 20 == 0:
             log.info('%d/%d' % (idx + 1, len(loader)))
         if use_cuda:
             data = data.cuda()
@@ -100,5 +100,3 @@ def VOCTest(hyper_params):
         os.mkdir(results)
     voc_wrapper.genResults(reorg_dets, results, nms_thresh)
     generate_aps(results_root=results)
-
-

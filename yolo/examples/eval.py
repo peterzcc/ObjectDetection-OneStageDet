@@ -16,13 +16,13 @@ def generate_aps(results_root="results"):
     aps = []
     tested_class = []
     for class_name in class_names:
-        imageset_path = f"../VOCdevkit/VOC2007/ImageSets/Main/{class_name}_test.txt"
+        imageset_path = "../VOCdevkit/VOC2007/ImageSets/Main/{}_test.txt".format(class_name)
         cachedir = "../VOCdevkit/onedet_cache"
         # cache_file = os.path.join(cachedir, "annots.pkl")
         # if os.path.exists(cache_file):
         #     os.remove(cache_file)
         if not os.path.exists(results_dir.format(class_name)):
-            log.warning(f"missing data: {class_name}")
+            log.warning("missing data: {}".format(class_name))
             rec, prec, ap = 0., 0., 0.
         else:
             rec, prec, ap = voc_eval(results_dir, anno_path, imageset_path, class_name, cachedir, use_07_metric=True)
@@ -33,7 +33,7 @@ def generate_aps(results_root="results"):
 
     mAP = np.array(aps).mean()
     header = ",".join([*class_names, "mean"])+'\n'
-    data = ",".join([f"{ap}"for ap in aps]+ [f"{mAP}"])+'\n'
+    data = ",".join(["{}".format(ap) for ap in aps]+ ["{}".format(mAP)])+'\n'
     with open(output_path, "w") as f:
         f.write(header)
         f.write(data)

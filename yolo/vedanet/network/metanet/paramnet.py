@@ -109,7 +109,7 @@ class Paramnet(nn.Module):
         '''
         self.load_state_dict(state['weights'])
 
-        log.info(f'Loaded weights from {weights_file}')
+        log.info('Loaded weights from {}'.format(weights_file))
 
     def save_weights(self, weights_file, seen=None):
         """ This function will save the weights to a file.
@@ -125,4 +125,4 @@ class Paramnet(nn.Module):
         }
         torch.save(state, weights_file)
 
-        log.info(f'Saved weights as {weights_file}')
+        log.info('Saved weights as {}'.format(weights_file))

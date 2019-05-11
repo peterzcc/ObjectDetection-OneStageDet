@@ -75,7 +75,7 @@ class MetaboxDataset(Dataset):
             tuple: (transformed image, list of transformed brambox boxes)
         """
         if index >= len(self):
-            raise IndexError(f'list index out of range [{index}/{len(self)-1}]')
+            raise IndexError('list index out of range [{}/{}]'.format(index, len(self)-1))
         # Load
         img = Image.open(self.id(self.keys[index]))
         anno = copy.deepcopy(self.annos[self.keys[index]])

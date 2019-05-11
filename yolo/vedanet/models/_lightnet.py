@@ -51,7 +51,7 @@ class Lightnet(nn.Module):
                 x = module(x)
             return x
         else:
-            raise NotImplementedError(f'No _forward function defined and no default behaviour for this type of layers [{type(self.layers)}]')
+            raise NotImplementedError('No _forward function defined and no default behaviour for this type of layers [{}]'.format(type(self.layers)))
 
     def forward(self, x, target=None):
         """ This default forward function will compute the output of the network as ``self._forward(x)``.
@@ -71,7 +71,7 @@ class Lightnet(nn.Module):
             t1 = time.time()
             outputs = self._forward(x)
             t2 = time.time()
-            
+
             assert len(outputs) == len(self.loss)
 
             loss = 0
@@ -175,7 +175,7 @@ class Lightnet(nn.Module):
         if hasattr(self.loss, 'seen'):
             self.loss.seen = self.seen
 
-        log.info(f'Loaded weights from {weights_file}')
+        log.info('Loaded weights from {}'.format(weights_file))
 
     def save_weights(self, weights_file, seen=None):
         """ This function will save the weights to a file.
@@ -193,4 +193,4 @@ class Lightnet(nn.Module):
         }
         torch.save(state, weights_file)
 
-        log.info(f'Saved weights as {weights_file}')
+        log.info('Saved weights as {}'.format(weights_file))

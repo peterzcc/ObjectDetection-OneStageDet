@@ -55,7 +55,7 @@ class Letterbox(BaseMultiTransform):
         elif isinstance(data, np.ndarray):
             return self._tf_cv(data)
         else:
-            log.error(f'Letterbox only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{type(data)}]')
+            log.error('Letterbox only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{}]'.format(type(data)))
             return data
 
     def _tf_pil(self, img):
@@ -168,7 +168,7 @@ class RandomCrop(BaseMultiTransform):
         elif isinstance(data, np.ndarray):
             return self._tf_cv(data)
         else:
-            log.error(f'RandomCrop only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{type(data)}]')
+            log.error('RandomCrop only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{}]'.format(type(data)))
             return data
 
     def _tf_pil(self, img):
@@ -273,7 +273,7 @@ class RandomCropLetterbox(BaseMultiTransform):
         elif isinstance(data, Image.Image):
             return self._tf_pil(data)
         else:
-            log.error(f'RandomCrop only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{type(data)}]')
+            log.error('RandomCrop only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{}]'.format(type(data)))
             return data
 
     def _tf_pil(self, img):
@@ -368,7 +368,7 @@ class RandomFlip(BaseMultiTransform):
         elif isinstance(data, np.ndarray):
             return self._tf_cv(data)
         else:
-            log.error(f'RandomFlip only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{type(data)}]')
+            log.error('RandomFlip only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{}]'.format(type(data)))
             return data
 
     def _tf_pil(self, img):
@@ -431,7 +431,7 @@ class HSVShift(BaseTransform):
         elif isinstance(data, np.ndarray):
             return cls._tf_cv(data, dh, ds, dv)
         else:
-            log.error(f'HSVShift only works with <PIL images> or <OpenCV images> [{type(data)}]')
+            log.error('HSVShift only works with <PIL images> or <OpenCV images> [{}]'.format(type(data)))
             return data
 
     @staticmethod
@@ -508,14 +508,14 @@ class BramboxToTensor(BaseTransform):
     @classmethod
     def apply(cls, data, dimension, max_anno=None, class_label_map=None):
         if not isinstance(data, collections.Sequence):
-            raise TypeError(f'BramboxToTensor only works with <brambox annotation list> [{type(data)}]')
+            raise TypeError('BramboxToTensor only works with <brambox annotation list> [{}]'.format(type(data)))
 
         anno_np = np.array([cls._tf_anno(anno, dimension, class_label_map) for anno in data], dtype=np.float32)
 
         if max_anno is not None:
             anno_len = len(data)
             if anno_len > max_anno:
-                raise ValueError(f'More annotations than maximum allowed [{anno_len}/{max_anno}]')
+                raise ValueError('More annotations than maximum allowed [{}/{}]'.format(anno_len, max_anno))
 
             z_np = np.zeros((max_anno-anno_len, 5), dtype=np.float32)
             z_np[:, 0] = -1

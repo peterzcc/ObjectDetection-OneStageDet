@@ -284,7 +284,7 @@ class PaddedMaxPool2d(nn.Module):
         self.dilation = dilation
 
     def __repr__(self):
-        return f'{self.__class__.__name__} (kernel_size={self.kernel_size}, stride={self.stride}, padding={self.padding}, dilation={self.dilation})'
+        return '{} (kernel_size={}, stride={}, padding={}, dilation={})'.format(self.__class__.__name__, self.kernel_size, self.stride, self.padding, self.dilation)
 
     def forward(self, x):
         x = F.max_pool2d(F.pad(x, self.padding, mode='replicate'), self.kernel_size, self.stride, 0, self.dilation)
@@ -301,12 +301,12 @@ class Reorg(nn.Module):
     def __init__(self, stride=2):
         super(Reorg, self).__init__()
         if not isinstance(stride, int):
-            raise TypeError(f'stride is not an int [{type(stride)}]')
+            raise TypeError('stride is not an int [{}]'.format(type(stride)))
         self.stride = stride
         self.darknet = True
 
     def __repr__(self):
-        return f'{self.__class__.__name__} (stride={self.stride}, darknet_compatible_mode={self.darknet})'
+        return '{} (stride={}, darknet_compatible_mode={})'.format(self.__class__.__name__, self.stride, self.darknet)
 
     def forward(self, x):
         assert(x.data.dim() == 4)
@@ -316,9 +316,9 @@ class Reorg(nn.Module):
         W = x.data.size(3)
 
         if H % self.stride != 0:
-            raise ValueError(f'Dimension mismatch: {H} is not divisible by {self.stride}')
+            raise ValueError('Dimension mismatch: {} is not divisible by {}'.format(H, self.stride))
         if W % self.stride != 0:
-            raise ValueError(f'Dimension mismatch: {W} is not divisible by {self.stride}')
+            raise ValueError('Dimension mismatch: {} is not divisible by {}'.format(W, self.stride))
 
         # darknet compatible version from: https://github.com/thtrieu/darkflow/issues/173#issuecomment-296048648
         if self.darknet:
@@ -401,7 +401,7 @@ class Scale(nn.Module):
 class ScaleReLU(nn.Module):
     def __init__(self, nchannels):
         super().__init__()
-        self.scale = Scale(nchannels) 
+        self.scale = Scale(nchannels)
         self.relu = nn.ReLU(inplace=True)
         self.nchannels = nchannels
 
@@ -418,8 +418,8 @@ class ScaleReLU(nn.Module):
 class PPReLU(nn.Module):
     def __init__(self, nchannels):
         super().__init__()
-        self.scale1 = Scale(nchannels, bias=False, init_scale=1.0) 
-        self.scale2 = Scale(nchannels, bias=False, init_scale=0.1) 
+        self.scale1 = Scale(nchannels, bias=False, init_scale=1.0)
+        self.scale2 = Scale(nchannels, bias=False, init_scale=0.1)
         self.nchannels = nchannels
 
     def forward(self, x):
@@ -458,7 +458,7 @@ class PLU(nn.Module):
 class CReLU(nn.Module):
     def __init__(self, nchannels):
         super().__init__()
-        self.scale = Scale(2*nchannels) 
+        self.scale = Scale(2*nchannels)
         self.relu = nn.ReLU(inplace=True)
         self.in_channels = nchannels
         self.out_channels = 2*nchannels
@@ -477,7 +477,7 @@ class CReLU(nn.Module):
 class L2Norm(nn.Module):
     def __init__(self, nchannels, bias=True):
         super().__init__()
-        self.scale = Scale(nchannels, bias=bias) 
+        self.scale = Scale(nchannels, bias=bias)
         self.nchannels = nchannels
         self.eps = 1e-6
 
@@ -593,5 +593,3 @@ class Conv2dBatchReLU(nn.Module):
     def forward(self, x):
         x = self.layers(x)
         return x
-
-
