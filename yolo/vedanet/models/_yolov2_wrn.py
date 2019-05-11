@@ -13,7 +13,7 @@ from ..network import head
 from ..network import metanet
 
 __all__ = ['Yolov2Wrn', 'Yolov2UniWrn']
-
+DEBUG = True
 
 class Yolov2Wrn(YoloABC):
     def __init__(self, num_classes=20, weights_file=None, input_channels=3,
@@ -192,7 +192,7 @@ class Yolov2Wrn(YoloABC):
                                       final_prediction_5],
                                      dim=2)
         reshaped_final_prediction = final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
-        assert not torch.isnan(reshaped_final_prediction).any()
+        if DEBUG: assert not torch.isnan(reshaped_final_prediction).any()
         return reshaped_final_prediction
 
 

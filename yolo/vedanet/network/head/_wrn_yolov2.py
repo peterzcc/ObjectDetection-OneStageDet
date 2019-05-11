@@ -119,6 +119,7 @@ class UniWrnYolov2(nn.Module):
         stage6 = middle_feats[0]
         # Route : layers=-1, -4
         feature_layer = self.layers[1](torch.cat((stage6_reorg, stage6), 1))
+        if DEBUG: assert not torch.isnan(feature_layer).any()
         anchor_aggregated = self.layers[2](feature_layer)
         if DEBUG: assert not torch.isnan(anchor_aggregated).any()
         b, _, h, w = anchor_aggregated.shape
