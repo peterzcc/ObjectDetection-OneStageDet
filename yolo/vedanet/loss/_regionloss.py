@@ -135,6 +135,14 @@ class RegionLoss(nn.modules.loss._Loss):
 
         # Get target values
         coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls = self.build_targets(pred_boxes, target, nH, nW)
+        if DEBUG:
+            assert not torch.isnan(coord_mask).any()
+            assert not torch.isnan(conf_pos_mask).any()
+            assert not torch.isnan(conf_neg_mask).any()
+            assert not torch.isnan(cls_mask).any()
+            assert not torch.isnan(tcoord).any()
+            assert not torch.isnan(tconf).any()
+            assert not torch.isnan(tcls).any()
         # coord
         coord_mask = coord_mask.expand_as(tcoord)[:,:,:2] # 0 = 1 = 2 = 3, only need first two element
         coord_center, tcoord_center = coord[:,:,:2], tcoord[:,:,:2]
@@ -160,10 +168,16 @@ class RegionLoss(nn.modules.loss._Loss):
         loss_coord_center = 2.0 * 1.0 * self.coord_scale * (coord_mask*bce(coord_center, tcoord_center)).sum()
         loss_coord_wh = 2.0 * 1.5 * self.coord_scale * (coord_mask*smooth_l1(coord_wh, tcoord_wh)).sum()
         self.loss_coord = loss_coord_center + loss_coord_wh
+        if DEBUG:
+            assert not torch.isnan(loss_coord_center).any()
+            assert not torch.isnan(loss_coord_wh).any()
 
         loss_conf_pos = 1.0 * self.object_scale * (conf_pos_mask * bce(conf, tconf)).sum()
         loss_conf_neg = 1.0 * self.noobject_scale * (conf_neg_mask * bce(conf, tconf)).sum() 
-        self.loss_conf = loss_conf_pos +  loss_conf_neg 
+        self.loss_conf = loss_conf_pos +  loss_conf_neg
+        if DEBUG:
+            assert not torch.isnan(loss_conf_pos).any()
+            assert not torch.isnan(loss_conf_neg).any()
 
         if nC > 1 and cls.numel() > 0:
             self.loss_cls = self.class_scale * 1.0 * ce(cls, tcls)
@@ -183,6 +197,9 @@ class RegionLoss(nn.modules.loss._Loss):
         self.printInfo()
 
         self.loss_tot = self.loss_coord + self.loss_conf + self.loss_cls
+        if DEBUG:
+            assert not torch.isnan(self.loss_cls).any()
+            assert not torch.isnan(self.loss_tot).any()
         return self.loss_tot
 
     def build_targets(self, pred_boxes, ground_truth, nH, nW):
