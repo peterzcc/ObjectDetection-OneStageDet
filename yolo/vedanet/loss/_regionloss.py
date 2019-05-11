@@ -132,6 +132,8 @@ class RegionLoss(nn.modules.loss._Loss):
         pred_boxes[:, 1] = (coord[:, :, 1].detach() + lin_y).view(-1)
         pred_boxes[:, 2] = (coord[:, :, 2].detach().exp() * anchor_w).view(-1)
         pred_boxes[:, 3] = (coord[:, :, 3].detach().exp() * anchor_h).view(-1)
+        w_overflow_loss = torch.max(pred_boxes[:, 2] - 2*nW*self.reduction, torch.Tensor(0.))
+        h_overflow_loss = torch.max(pred_boxes[:, 3] - 2*nH*self.reduction, torch.Tensor(0.))
 
         # Get target values
         coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls = self.build_targets(pred_boxes, target, nH, nW)
@@ -196,7 +198,7 @@ class RegionLoss(nn.modules.loss._Loss):
         self.info['coord_wh'] = (coord_mask* mse(coord_wh, tcoord_wh)).sum().item() / obj_cur
         self.printInfo()
 
-        self.loss_tot = self.loss_coord + self.loss_conf + self.loss_cls
+        self.loss_tot = self.loss_coord + self.loss_conf + self.loss_cls + w_overflow_loss + h_overflow_loss
         if DEBUG:
             assert not torch.isnan(self.loss_cls).any()
             assert not torch.isnan(self.loss_tot).any()
