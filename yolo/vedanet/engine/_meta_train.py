@@ -67,7 +67,9 @@ class VOCMetaDataset(data.MetaboxDataset):
                 # get image
                 randidx = random.randint(0, len(self.classid_anno[i]) - 1)
                 class_img_name = self.classid_anno[i][randidx][0]
-                class_img = Image.open(class_img_name)
+                #Huang Daoji 11/05
+                # convert possible gray images, not tested
+                class_img = Image.open(class_img_name).convert("RGB")
                 class_img_tf = self.meta_tf(class_img)          # [3, w, h]
 
                 # get annotation

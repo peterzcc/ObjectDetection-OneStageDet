@@ -47,19 +47,19 @@ class MetaboxDataset(Dataset):
 
         # Add class_ids
         if class_label_map is None:
-            log.warn(f'No class_label_map given, annotations wont have a class_id values for eg. loss function')
+            log.warn('No class_label_map given, annotations wont have a class_id values for eg. loss function')
         for k, annos in self.annos.items():
             for a in annos:
                 if class_label_map is not None:
                     try:
                         a.class_id = class_label_map.index(a.class_label)
                     except ValueError as err:
-                        raise ValueError(f'{a.class_label} is not found in the class_label_map') from err
+                        raise ValueError('{} is not found in the class_label_map'.format(a.class_label)) from err
                 else:
                     a.class_id = 0
                 self.classid_anno[a.class_id].append((k, a))
 
-        log.info(f'Dataset loaded: {len(self.keys)} images')
+        log.info('Dataset loaded: {} images'.format(len(self.keys)))
 
     def __len__(self):
         return len(self.keys)
@@ -80,6 +80,10 @@ class MetaboxDataset(Dataset):
         img = Image.open(self.id(self.keys[index]))
         anno = copy.deepcopy(self.annos[self.keys[index]])
         random.shuffle(anno)
+
+        #Huang Daoji 11/05
+        # convert gray image to RGB
+        img = img.convert("RGB")
 
         # Transform
         if self.img_tf is not None:
