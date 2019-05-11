@@ -251,6 +251,7 @@ class RegionLoss(nn.modules.loss._Loss):
 
             # Set confidence mask of matching detections to 0
             iou_gt_pred = bbox_ious(gt, cur_pred_boxes)
+            if DEBUG: assert not torch.isnan(iou_gt_pred).any()
             mask = (iou_gt_pred > self.thresh).sum(0) >= 1
             conf_neg_mask[b][mask.view_as(conf_neg_mask[b])] = 0
             
@@ -277,7 +278,7 @@ class RegionLoss(nn.modules.loss._Loss):
                 recall50 += (iou > 0.5).item()
                 recall75 += (iou > 0.75).item()
                 iou_sum += iou.item()
-                if DEBUG: assert not torch.isnan(iou).any()
+
 
                 if anno.ignore:
                     conf_pos_mask[b][best_n][gj*nW+gi] = 0

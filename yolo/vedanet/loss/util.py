@@ -1,5 +1,5 @@
 import torch
-
+DEBUG = True
 def bbox_ious(boxes1, boxes2):
     """ Compute IOU between all boxes from ``boxes1`` with all boxes from ``boxes2``.
 
@@ -20,11 +20,17 @@ def bbox_ious(boxes1, boxes2):
 
     dx = (b1x2.min(b2x2.t()) - b1x1.max(b2x1.t())).clamp(min=0)
     dy = (b1y2.min(b2y2.t()) - b1y1.max(b2y1.t())).clamp(min=0)
+    if DEBUG: assert not torch.isnan(dx).any()
+    if DEBUG: assert not torch.isnan(dy).any()
     intersections = dx * dy
 
     areas1 = (b1x2 - b1x1) * (b1y2 - b1y1)
     areas2 = (b2x2 - b2x1) * (b2y2 - b2y1)
     unions = (areas1 + areas2.t()) - intersections
+    if DEBUG: assert not torch.isnan(areas1).any()
+    if DEBUG: assert not torch.isnan(areas2).any()
+    if DEBUG: assert not torch.isnan(unions).any()
+
 
     return intersections / unions#torch.max(unions, torch.tensor(1e-8))
 
