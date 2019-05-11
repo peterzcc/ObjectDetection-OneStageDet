@@ -132,9 +132,11 @@ class RegionLoss(nn.modules.loss._Loss):
         pred_boxes[:, 1] = (coord[:, :, 1].detach() + lin_y).view(-1)
         pred_boxes[:, 2] = (coord[:, :, 2].detach().exp() * anchor_w).view(-1)
         pred_boxes[:, 3] = (coord[:, :, 3].detach().exp() * anchor_h).view(-1)
-        w_overflow_loss = torch.max(pred_boxes[:, 2] - 2*nW*self.reduction, torch.tensor(0.)).sum()
-        h_overflow_loss = torch.max(pred_boxes[:, 3] - 2*nH*self.reduction, torch.tensor(0.)).sum()
-        size_overflow_loss = w_overflow_loss + h_overflow_loss
+        assert not torch.isinf(pred_boxes[:, 2:4]).any()
+        # zero_value = torch.tensor(0.).to(pred_boxes.device)
+        # w_overflow_loss = torch.max(torch.log(pred_boxes[:, 2]/(2*nW*self.reduction)), zero_value).sum()
+        # h_overflow_loss = torch.max(torch.log(pred_boxes[:, 3]/(2*nH*self.reduction)), zero_value).sum()
+        size_overflow_loss = 0 # w_overflow_loss + h_overflow_loss
 
         # Get target values
         coord_mask, conf_pos_mask, conf_neg_mask, cls_mask, tcoord, tconf, tcls = self.build_targets(pred_boxes, target, nH, nW)

@@ -138,7 +138,7 @@ class UniWrnYolov2(nn.Module):
         t_device = pre_ultimate_layer.device
         cls_grouped_params = self.meta_state.view(self.num_classes, 6, self.pred_input_size+1)
 
-        cls_weights = cls_grouped_params[:, :, 0:-1].view(self.num_classes, 6, self.pred_input_size, 1, 1)
+        cls_weights = 0.1*cls_grouped_params[:, :, 0:-1].view(self.num_classes, 6, self.pred_input_size, 1, 1)
         cls_biases = cls_grouped_params[:, :, -1]
         if DEBUG: assert not torch.isnan(pre_ultimate_layer).any()
         cls_detections = [F.conv2d(pre_ultimate_layer, cls_weights[cls], cls_biases[cls], 1, 0, 1, 1)
