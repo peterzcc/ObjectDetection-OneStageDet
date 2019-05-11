@@ -107,8 +107,8 @@ class UniWrnYolov2(nn.Module):
 
     def set_meta_state(self, meta_state):
         t_device = self.meta_state.device
-        self.meta_state = meta_state.detach().to(t_device)
-        self.meta_state.requires_grad_(True)
+        self.meta_state = meta_state.to(t_device) #.detach()
+        # self.meta_state.requires_grad_(True)
 
     def forward(self, middle_feats):
         outputs = []
