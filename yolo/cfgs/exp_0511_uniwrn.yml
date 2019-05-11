@@ -39,7 +39,7 @@ train:
     mini_batch_size: 64
     weights: "weights/darknet19_448.conv.23"
     meta_weights: ~
-    use_yolo_loss: False
+    use_yolo_loss: True
 
 test:
     dataset: 'test' #'k_shot_base_test' # "test
