@@ -26,6 +26,6 @@ def bbox_ious(boxes1, boxes2):
     areas2 = (b2x2 - b2x1) * (b2y2 - b2y1)
     unions = (areas1 + areas2.t()) - intersections
 
-    return intersections / unions
+    return intersections / unions#torch.max(unions, torch.tensor(1e-8))
 
 

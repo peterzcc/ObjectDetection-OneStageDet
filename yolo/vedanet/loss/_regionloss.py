@@ -16,7 +16,7 @@ from .util import bbox_ious
 
 __all__ = ['RegionLoss']
 
-
+DEBUG = True
 class RegionLoss(nn.modules.loss._Loss):
     """ Computes region loss from darknet network output and target annotation.
 
@@ -260,6 +260,7 @@ class RegionLoss(nn.modules.loss._Loss):
                 recall50 += (iou > 0.5).item()
                 recall75 += (iou > 0.75).item()
                 iou_sum += iou.item()
+                if DEBUG: assert not torch.isnan(iou).any()
 
                 if anno.ignore:
                     conf_pos_mask[b][best_n][gj*nW+gi] = 0
@@ -280,6 +281,7 @@ class RegionLoss(nn.modules.loss._Loss):
         self.info['obj_all'] = obj_all
         if obj_cur == 0: 
             obj_cur = 1
+
         self.info['avg_iou'] = iou_sum / obj_cur 
         self.info['recall50'] = recall50 / obj_cur
         self.info['recall75'] = recall75 / obj_cur
