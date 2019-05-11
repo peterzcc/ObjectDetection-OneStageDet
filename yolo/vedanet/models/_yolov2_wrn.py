@@ -88,6 +88,7 @@ class Yolov2Wrn(YoloABC):
 
     def init_head(self):
         self.head = head.WrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes)
+        return self.head
 
     def _forward(self, x):
         data, meta_state = x
