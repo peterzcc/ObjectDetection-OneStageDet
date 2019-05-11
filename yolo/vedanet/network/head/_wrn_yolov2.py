@@ -138,9 +138,11 @@ class UniWrnYolov2(nn.Module):
 
         cls_weights = cls_grouped_params[:, :, 0:-1].view(self.num_classes, 6, self.pred_input_size, 1, 1)
         cls_biases = cls_grouped_params[:, :, -1]
+        assert not torch.isnan(pre_ultimate_layer).any()
         cls_detections = [F.conv2d(pre_ultimate_layer, cls_weights[cls], cls_biases[cls], 1, 0, 1, 1)
                           for cls in range(self.num_classes)]
         stacked_detections = torch.stack(cls_detections, dim=1)
         result = stacked_detections.view(batch_size*self.num_classes, 6, *pre_ultimate_layer.shape[-2:])
+        assert not torch.isnan(result).any()
         return result
 
