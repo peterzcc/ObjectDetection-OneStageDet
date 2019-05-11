@@ -35,10 +35,20 @@ class BramboxDataset(Dataset):
         if callable(identify):
             self.id = identify
         else:
-            self.id = lambda name: os.path.splitext(name)[0] + '.png'
+            #Huang Daoji 11/05
+            # compatible for older version of python
+            def tmp_func(name):
+                return os.path.splitext(name)[0] + '.png'
+            self.id = tmp_func(name)
+            #self.id = lambda name: os.path.splitext(name)[0] + '.png'
 
         # Get annotations
-        self.annos = bbb.parse(anno_format, anno_filename, identify=lambda f: f, class_label_map=class_label_map, **kwargs)
+
+        #Huang Daoji 11/05
+        # compatible for older version of python
+        def tmpp_func(f):
+            return f
+        self.annos = bbb.parse(anno_format, anno_filename, identify=tmpp_func, class_label_map=class_label_map, **kwargs)
         self.keys = list(self.annos)
 
         # Add class_ids
@@ -75,6 +85,10 @@ class BramboxDataset(Dataset):
         img = Image.open(self.id(self.keys[index]))
         anno = copy.deepcopy(self.annos[self.keys[index]])
         random.shuffle(anno)
+
+        #Huang Daoji 11/05
+        # convert gray images(if any) to RGB format
+        img = img.convert("RGB")
 
         # Transform
         if self.img_tf is not None:

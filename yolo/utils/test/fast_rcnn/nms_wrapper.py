@@ -8,7 +8,13 @@ try:
     from ..nms.gpu_nms import gpu_nms
 except ModuleNotFoundError:
     pass
-from ..nms.cpu_nms import cpu_nms, cpu_soft_nms
+
+#Huang Daoji 11/05
+# just in case cpu_nms is not found 
+try:
+    from ..nms.cpu_nms import cpu_nms, cpu_soft_nms
+except ModuleNotFoundError:
+    from ..nms.py_cpu_nms import py_cpu_nms
 import numpy as np
 
 def soft_nms(dets, sigma=0.5, Nt=0.3, threshold=0.001, method=1):
