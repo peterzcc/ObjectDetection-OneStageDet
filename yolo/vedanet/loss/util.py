@@ -1,5 +1,5 @@
 import torch
-DEBUG = True
+DEBUG = False
 def bbox_ious(boxes1, boxes2):
     """ Compute IOU between all boxes from ``boxes1`` with all boxes from ``boxes2``.
 

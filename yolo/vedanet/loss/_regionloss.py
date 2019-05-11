@@ -16,7 +16,7 @@ from .util import bbox_ious
 
 __all__ = ['RegionLoss']
 
-DEBUG = True
+DEBUG = False
 class RegionLoss(nn.modules.loss._Loss):
     """ Computes region loss from darknet network output and target annotation.
 
@@ -132,7 +132,7 @@ class RegionLoss(nn.modules.loss._Loss):
         pred_boxes[:, 1] = (coord[:, :, 1].detach() + lin_y).view(-1)
         pred_boxes[:, 2] = (coord[:, :, 2].detach().exp() * anchor_w).view(-1)
         pred_boxes[:, 3] = (coord[:, :, 3].detach().exp() * anchor_h).view(-1)
-        assert not torch.isinf(pred_boxes[:, 2:4]).any()
+        if DEBUG: assert not torch.isinf(pred_boxes[:, 2:4]).any()
         # zero_value = torch.tensor(0.).to(pred_boxes.device)
         # w_overflow_loss = torch.max(torch.log(pred_boxes[:, 2]/(2*nW*self.reduction)), zero_value).sum()
         # h_overflow_loss = torch.max(torch.log(pred_boxes[:, 3]/(2*nH*self.reduction)), zero_value).sum()

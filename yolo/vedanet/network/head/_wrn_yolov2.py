@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from .. import layer as vn_layer
 
 __all__ = ['WrnYolov2', 'UniWrnYolov2']
-DEBUG = True
+DEBUG = False
 
 class WrnYolov2(nn.Module):
     def  __init__(self, num_anchors, num_classes, input_channels=48):

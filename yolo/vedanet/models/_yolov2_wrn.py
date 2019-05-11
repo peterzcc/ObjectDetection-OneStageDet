@@ -13,7 +13,7 @@ from ..network import head
 from ..network import metanet
 
 __all__ = ['Yolov2Wrn', 'Yolov2UniWrn']
-DEBUG = True
+DEBUG = False
 
 class Yolov2Wrn(YoloABC):
     def __init__(self, num_classes=20, weights_file=None, input_channels=3,
