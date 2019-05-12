@@ -34,4 +34,7 @@ def nms(dets, thresh, force_cpu=False, gpu_id=None):
     if gpu_id is not None and not force_cpu:
         return gpu_nms(dets, thresh, device_id=gpu_id)
     else:
-        return cpu_nms(dets, thresh)
+        #Huang Daoji 05/12
+        # umm..I did not compile this...
+        # use python instead
+        return py_cpu_nms(dets, thresh)

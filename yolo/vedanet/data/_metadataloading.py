@@ -80,6 +80,11 @@ class WeightDataset(Dataset):
         img = Image.open(self.id(self.keys[index]))
         anno = copy.deepcopy(self.annos[self.keys[index]])
         random.shuffle(anno)
+
+        #Huang Daoji 11/05
+        # convert gray images(if any) to RGB format
+        img = img.convert("RGB")
+
         # Transform
         if self.img_tf is not None:
             img = self.img_tf(img)

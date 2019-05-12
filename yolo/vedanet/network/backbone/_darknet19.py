@@ -79,8 +79,17 @@ class Darknet19(nn.Module):
 
     def forward(self, x):
         stem = self.layers[0](x)
+        #Huang Daoji 12/05
+        # try to minimize memory usage
+        # may sarcifice some running speed
+        from torch.utils.checkpoint import checkpoint_sequential
+        '''
         stage4 = self.layers[1](stem)
         stage5 = self.layers[2](stage4)
         stage6 = self.layers[3](stage5)
+        '''
+        stage4 = checkpoint_sequential(self.layers[1], 2, stem)
+        stage5 = checkpoint_sequential(self.layers[2], 2, stage4)
+        stage6 = checkpoint_sequential(self.layers[3], 2, stage5)
         features = [stage6, stage5, stage4]
         return features

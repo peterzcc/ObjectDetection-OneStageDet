@@ -77,7 +77,7 @@ class GetBoundingBoxes(BaseTransform):
                 cls_scores = torch.nn.functional.softmax(Variable(network_output[:, :, 5:, :], volatile=True), 2).data
             else:
                 with torch.no_grad():
-                    cls_scores = torch.nn.functional.softmax(network_output[:, :, 5:, :], 2) 
+                    cls_scores = torch.nn.functional.softmax(network_output[:, :, 5:, :], 2)
                     cls_scores = (cls_scores * conf_scores.unsqueeze(2).expand_as(cls_scores)).transpose(2,3)
                     cls_scores = cls_scores.contiguous().view(cls_scores.size(0), cls_scores.size(1), -1)
         else:
@@ -96,11 +96,16 @@ class GetBoundingBoxes(BaseTransform):
 
         # Mask select boxes > conf_thresh
         coords = network_output.transpose(2, 3)[..., 0:4]
-        coords = coords.unsqueeze(3).expand(coords.size(0),coords.size(1),coords.size(2), 
+        coords = coords.unsqueeze(3).expand(coords.size(0),coords.size(1),coords.size(2),
                 num_classes,coords.size(3)).contiguous().view(coords.size(0),coords.size(1),-1,coords.size(3))
         coords = coords[score_thresh[..., None].expand_as(coords)].view(-1, 4)
         scores = cls_scores[score_thresh].view(-1, 1)
-        idx = (torch.arange(num_classes)).repeat(batch, num_anchors, w*h).cuda().float()
+        #Huang Daoji 05/12
+        # just in case you do not have cuda enabled
+        if torch.cuda.is_available():
+            idx = (torch.arange(num_classes)).repeat(batch, num_anchors, w*h).cuda().float()
+        else:
+            idx = (torch.arange(num_classes)).repeat(batch, num_anchors, w*h).float()
         idx = idx[score_thresh].view(-1, 1)
         detections = torch.cat([coords, scores, idx], dim=1)
 

@@ -85,7 +85,14 @@ class Metanet(nn.Module):
         if self.use_dummy_reweight:
             return self.get_dummy_reweight(x.device)
         data = x
+        #Huang Daoji 12/05
+        # try to minimize memory usage
+        # may sarcifice some running speed
+        from torch.utils.checkpoint import checkpoint_sequential
+        '''
         feature = self.layers[0](data)
+        '''
+        feature = checkpoint_sequential(self.layers[0], 3, data)
         weights = self.layers[1](feature)
         return weights
 
@@ -100,12 +107,25 @@ class Metanet(nn.Module):
         state = torch.load(weights_file, lambda storage, loc: storage)
         self.seen = 0
 
-        '''
+        #Huang Daoji 05/12
+        # something's wrong in 13_convbatch: try to map bias to 'layers.1.bias'
+        # and do nothing to weight, which is [1024 * 1024 * 1 * 1] in .pt file
+        # but [1024 * 1024 * 3 * 3] required in 'layers.0' and [1024] in 'layers.1'
+
+
         for key in list(state['weights'].keys()):
-            if '.layer.' in key:
-                log.info('Deprecated weights file found. Consider resaving your weights file before this manual intervention gets removed')
-                new_key = key.replace('.layer.', '.layers.')
+            if '13_convbatch.bias' in key:
+                new_key = key.replace('13_convbatch.bias', '13_convbatch.layers.1.bias')
                 state['weights'][new_key] = state['weights'].pop(key)
+            '''
+            if '13_convbatch.weight' in key:
+                tmp_state = state['weights'].pop(key)
+                new_key = key.replace('13_convbatch.weight', '13_convbatch.layers.1.weight')
+                state['weights'][new_key] = tmp_state
+                new_key = key.replace('13_convbatch.weight', '13_convbatch.layers.0.weight')
+                state['weights'][new_key] = tmp_state
+            '''
+
 
         new_state = state['weights']
         if new_state.keys() != old_state.keys():
@@ -113,10 +133,11 @@ class Metanet(nn.Module):
             new_state = {k: v for k, v in new_state.items() if k in old_state}
             old_state.update(new_state)
             new_state = old_state
+        '''
         self.load_state_dict(new_state)
         '''
         self.load_state_dict(state['weights'])
-
+        #'''
         log.info('Loaded weights from {}'.format(weights_file))
 
     def save_weights(self, weights_file, seen=None):

@@ -341,6 +341,10 @@ class FewshotTrainingEngine(SyncDualEngine):
             log.info('{} # All : Loss:{} (Coord:{} Conf:{})'.format(self.batch, round(all_tot, 5), round(all_coord, 2), round(all_conf, 2)))
         self.train_loss = [{'tot': [], 'coord': [], 'conf': [], 'cls': []} for _ in range(self.nloss)]
         if self.batch % self.backup_rate == 0:
+            #Huang Daoji 05/12
+            # could save some memory?
+            torch.cuda.empty_cache()
+
             self.network.save_weights(os.path.join(self.backup_dir, 'weights_{}.pt'.format(self.batch)))
             self.meta_network.save_weights(os.path.join(self.backup_dir, 'meta_weights_{}.pt'.format(self.batch)))
 

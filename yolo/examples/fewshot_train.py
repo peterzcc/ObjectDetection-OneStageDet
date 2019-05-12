@@ -24,6 +24,10 @@ from utils.envs import initEnv, randomSeeding
 
 if __name__ == '__main__':
 
+    #Huang Daoji 05/12
+    # could be faster?
+    torch.backends.cudnn.benchmark = True
+
     parser = argparse.ArgumentParser(description='OneDet: an one stage framework based on PyTorch')
     parser.add_argument('model_name', help='model name', default=None)
     args = parser.parse_args()
