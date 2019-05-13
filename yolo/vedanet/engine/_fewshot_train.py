@@ -13,7 +13,7 @@ from .. import data
 from .. import models
 from . import SyncDualEngine
 from .. import network
-
+import time
 __all__ = ['FewshotTrainingEngine']
 
 
@@ -72,6 +72,7 @@ class FewshotSampleManager(object):
         self.rng = np.random.RandomState(self.seed)
 
     def prepare_batches(self):
+        t_start = time.time()
         query_img_ids = deque(self.rng.permutation(np.arange(len(self.box_dataset.fileid_2_boxid), dtype=int)))
         support_box_ids = [deque(self.rng.permutation(self.box_dataset.cls_2_boxid[ci]))
                            for ci, boxids in enumerate(self.box_dataset.cls_2_boxid)]
@@ -113,6 +114,7 @@ class FewshotSampleManager(object):
                     # is_file_seen[self.box_dataset.boxid_2_fileid[this_box_id]] = True
             self.query_batches.append(this_query_batch)
             self.support_batches.append(this_support_batch)
+        log.info(f"new epoch with {len(self.query_batches)} batches, sample time: {time.time()-t_start}")
         return
 
     def get_query_batches(self):
