@@ -308,7 +308,7 @@ class FewshotTrainingEngine(SyncDualEngine):
             meta_imgs = meta_imgs[0]
         meta_state = self.dist_meta_network(meta_imgs)
         loss = self.network((data, meta_state), target)
-        loss.backward(retain_graph=True)
+        loss.backward()
         # meta_state.backward(self.network.get_meta_state_grad().to(meta_state.device))
 
         for ii in range(self.nloss):
