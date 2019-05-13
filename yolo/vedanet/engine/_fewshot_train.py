@@ -97,21 +97,21 @@ class FewshotSampleManager(object):
                     is_box_seen[self.box_dataset.fileid_2_boxid[this_img_id]] = True
             this_support_batch = []
             for shot_i in range(self.k_shot):
-                for ci, boxids in enumerate(self.box_dataset.cls_2_boxid):
+                for class_i, boxids_for_class in enumerate(self.box_dataset.cls_2_boxid):
                     finished_ci = False
                     this_box_id = -1
                     while not finished_ci:
-                        if len(support_box_ids[ci]) == 0:
-                            unseen_boxes = np.logical_not(is_box_seen[boxids])
+                        if len(support_box_ids[class_i]) == 0:
+                            unseen_boxes = np.logical_not(is_box_seen[boxids_for_class])
                             if np.any(unseen_boxes):
-                                boxids_ci = (np.array(boxids))
-                                support_box_ids[ci] = \
+                                boxids_array = (np.array(boxids_for_class))
+                                support_box_ids[class_i] = \
                                     deque(self.rng.permutation(
-                                        boxids_ci[unseen_boxes]))
+                                        boxids_array[unseen_boxes]))
                             else:
                                 self.post_sampling()
                                 return
-                        this_box_id = support_box_ids[ci].popleft()
+                        this_box_id = support_box_ids[class_i].popleft()
                         if not is_box_seen[this_box_id]:
                             finished_ci = True
                     this_support_batch.append(this_box_id)
