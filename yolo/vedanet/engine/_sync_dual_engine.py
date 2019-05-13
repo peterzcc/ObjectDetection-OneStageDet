@@ -100,7 +100,7 @@ class SyncDualEngine(ABC):
                     # Automatically update registered rates
                     self._update_rates()
                 t4 = time.time()
-                log.info(f"#{self.batch}: load {t1-pre_time} \t process {t4-t1}")
+                log.info(f"#{self.batch}: load {t1-pre_time:.4f} \t process {t4-t1:.4f}")
                 if (idx + 1) % self.batch_subdivisions == 0:
                     # Not enough mini-batches left to have an entire batch
                     if (len(loader) - idx) <= self.batch_subdivisions:

@@ -72,7 +72,7 @@ class FewshotSampleManager(object):
         self.rng = np.random.RandomState(self.seed)
 
     def post_sampling(self):
-        #`log.info(f"new epoch with {len(self.query_batches)} batches, sample time: {time.time()-self.t_start}")
+        log.info(f"new epoch with {len(self.query_batches)} batches, sample time: {time.time()-self.t_start}")
         pass
 
     def prepare_batches(self):
@@ -115,7 +115,7 @@ class FewshotSampleManager(object):
                         if not is_box_seen[this_box_id]:
                             finished_ci = True
                     this_support_batch.append(this_box_id)
-                    # is_box_seen[this_box_id] = True
+                    is_box_seen[this_box_id] = True
                     # is_file_seen[self.box_dataset.boxid_2_fileid[this_box_id]] = True
             self.query_batches.append(this_query_batch)
             self.support_batches.append(this_support_batch)
@@ -218,10 +218,7 @@ class FewshotTrainingEngine(SyncDualEngine):
                                               input_batchsize=self.mini_batch_size, k_shot=k_shot)
         dataloader = data.DataLoader(
             dataset,
-            # batch_size=self.mini_batch_size,
-            # shuffle=False,
-            # drop_last=True,
-            num_workers=hyper_params.nworkers if self.cuda else 0,
+            num_workers=hyper_params.nworkers,
             pin_memory=hyper_params.pin_mem if self.cuda else False,
             collate_fn=data.list_collate,
             resize_range=(10, self.max_input_shape[0]//32),
@@ -230,10 +227,7 @@ class FewshotTrainingEngine(SyncDualEngine):
         )
         meta_dataloader = data.DataLoader(
             meta_dataset,
-            # batch_size=k_shot,
-            # shuffle=False,
-            # drop_last=True,
-            num_workers=hyper_params.nworkers if self.cuda else 0,
+            num_workers=hyper_params.nworkers,
             pin_memory=hyper_params.pin_mem if self.cuda else False,
             collate_fn=default_collate,
             batch_sampler=data.ListBatchSampler(f_get_batches=sample_manager.get_support_batches,
