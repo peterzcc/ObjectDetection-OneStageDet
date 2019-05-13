@@ -233,7 +233,7 @@ class FewshotTrainingEngine(SyncDualEngine):
             # batch_size=k_shot,
             # shuffle=False,
             # drop_last=True,
-            num_workers=0,
+            num_workers=hyper_params.nworkers if self.cuda else 0,
             pin_memory=hyper_params.pin_mem if self.cuda else False,
             collate_fn=default_collate,
             batch_sampler=data.ListBatchSampler(f_get_batches=sample_manager.get_support_batches,
