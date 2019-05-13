@@ -11,9 +11,9 @@ from abc import ABC, abstractmethod
 import torch
 from ..network import metanet
 import vedanet as vn
-
+import time
 __all__ = ['SyncDualEngine']
-
+SHOULD_PROFILE =True
 
 class SyncDualEngine(ABC):
     """ This class removes the boilerplate code needed for writing your training cycle. |br|
@@ -83,8 +83,9 @@ class SyncDualEngine(ABC):
         log.info('Start training')
         while True:
             loader = self.dataloader
-
+            pre_time = time.time()
             for idx, (data, meta_imgs) in enumerate(zip(self.dataloader, self.meta_dataloader)):
+                t1 = time.time()
                 # init meta images first
                 # if isinstance(meta_imgs,list):
                 #     meta_imgs = meta_imgs[0]
@@ -92,29 +93,23 @@ class SyncDualEngine(ABC):
                 # data = data + [meta_state, ]
                 # Forward and backward on (mini-)batches
                 self.process_batch(data, meta_imgs)
-                if (idx + 1) % self.batch_subdivisions != 0:
-                    continue
 
-                # Optimizer step
-                self.train_batch()
-
+                if (idx + 1) % self.batch_subdivisions == 0:
+                    # Optimizer step
+                    self.train_batch()
+                    # Automatically update registered rates
+                    self._update_rates()
+                t4 = time.time()
+                log.info(f"#{self.batch}: load {t1-pre_time} \t process {t4-t1}")
+                if (idx + 1) % self.batch_subdivisions == 0:
+                    # Not enough mini-batches left to have an entire batch
+                    if (len(loader) - idx) <= self.batch_subdivisions:
+                        break
+                pre_time = time.time()
                 # Check if we need to stop training
                 if self.quit() or self.sigint:
                     log.info('Reached quitting criteria')
                     return
-
-
-                # Check if we need to stop training
-                if self.quit() or self.sigint:
-                    log.info('Reached quitting criteria')
-                    return
-
-                # Automatically update registered rates
-                self._update_rates()
-
-                # Not enough mini-batches left to have an entire batch
-                if (len(loader) - idx) <= self.batch_subdivisions:
-                    break
     @property
     def batch(self):
         """ Get current batch number.

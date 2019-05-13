@@ -71,20 +71,24 @@ class FewshotSampleManager(object):
         self.seed = 1
         self.rng = np.random.RandomState(self.seed)
 
+    def post_sampling(self):
+        #`log.info(f"new epoch with {len(self.query_batches)} batches, sample time: {time.time()-self.t_start}")
+        pass
+
     def prepare_batches(self):
-        t_start = time.time()
+        self.t_start = time.time()
         query_img_ids = deque(self.rng.permutation(np.arange(len(self.box_dataset.fileid_2_boxid), dtype=int)))
         support_box_ids = [deque(self.rng.permutation(self.box_dataset.cls_2_boxid[ci]))
                            for ci, boxids in enumerate(self.box_dataset.cls_2_boxid)]
 
         self.query_batches, self.support_batches = [], []
-        finished_sampling = False
         is_file_seen = np.zeros(len(self.box_dataset.fileid_2_boxid), dtype=bool)
-        while not finished_sampling:
+        while True:
             is_box_seen = np.zeros(len(self.box_dataset.file_box), dtype=bool)
             this_query_batch = []
             while len(this_query_batch) < self.batchsize:
                 if len(query_img_ids) == 0:
+                    self.post_sampling()
                     return
                 this_img_id = query_img_ids.popleft()
                 if not is_file_seen[this_img_id]:
@@ -105,6 +109,7 @@ class FewshotSampleManager(object):
                                     deque(self.rng.permutation(
                                         boxids_ci[unseen_boxes]))
                             else:
+                                self.post_sampling()
                                 return
                         this_box_id = support_box_ids[ci].popleft()
                         if not is_box_seen[this_box_id]:
@@ -114,7 +119,7 @@ class FewshotSampleManager(object):
                     # is_file_seen[self.box_dataset.boxid_2_fileid[this_box_id]] = True
             self.query_batches.append(this_query_batch)
             self.support_batches.append(this_support_batch)
-        log.info(f"new epoch with {len(self.query_batches)} batches, sample time: {time.time()-t_start}")
+
         return
 
     def get_query_batches(self):
@@ -332,11 +337,11 @@ class FewshotTrainingEngine(SyncDualEngine):
                 cls = mean(self.train_loss[ii]['cls'])
                 all_cls += cls
 
-            if self.classes > 1:
-                log.info(
-                    f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)} Cls:{round(cls, 2)})')
-            else:
-                log.info(f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)})')
+            # if self.classes > 1:
+            #     log.info(
+            #         f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)} Cls:{round(cls, 2)})')
+            # else:
+            #     log.info(f'{self.batch} # {ii}: Loss:{round(tot, 5)} (Coord:{round(coord, 2)} Conf:{round(conf, 2)})')
 
         if self.classes > 1:
             log.info(

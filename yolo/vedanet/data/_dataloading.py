@@ -208,7 +208,7 @@ class BatchSampler(torchBatchSampler):
             log.info(f'Resizing network {self.new_input_dim[:2]}')
             self.input_dim = (self.new_input_dim[0], self.new_input_dim[1])
             self.new_input_dim = None
-            log.info(f'Resizing finished')
+            # log.info(f'Resizing finished')
 
 
 class ListBatchSampler(torchSampler):
@@ -252,7 +252,7 @@ class ListBatchSampler(torchSampler):
             log.info(f'Resizing network {self.new_input_dim[:2]}')
             self.input_dim = (self.new_input_dim[0], self.new_input_dim[1])
             self.new_input_dim = None
-            log.info(f'Resizing finished')
+            # log.info(f'Resizing finished')
 
 def list_collate(batch):
     """ Function that collates lists or tuples together into one list (of lists/tuples).
