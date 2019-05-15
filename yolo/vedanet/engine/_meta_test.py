@@ -43,7 +43,7 @@ def MetaTest(hyper_params):
     # meta_param_size = net.meta_param_size
     print(model_name)
     test_args = {'conf_thresh': conf_thresh, 'network_size': network_size, 'labels': labels}
-    net = model_cls[model_name](hyper_params.classes, weights, train_flag=2, test_args=test_args, reweights_file=hyper_params.reweights)
+    net = model_cls(hyper_params.classes, weights, train_flag=2, test_args=test_args, reweights_file=hyper_params.reweights)
     net.eval()
     log.info('Net structure\n%s' % net)
     #import pdb
