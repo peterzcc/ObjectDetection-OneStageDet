@@ -102,7 +102,7 @@ class UniWrnYolov2(nn.Module):
         # layer_list.append(uni_predictor)
         self.layers = nn.ModuleList([nn.Sequential(layer_dict) for layer_dict in layer_list])
         self.meta_param_size = 6*(self.pred_input_size+1)
-        self.register_buffer("meta_state", torch.zeros(self.num_classes, self.meta_param_size))
+        self.register_buffer("meta_state", torch.zeros(self.num_classes, self.meta_param_size,1,1))
         # self.meta_state.requires_grad_(True)
 
     def set_meta_state(self, meta_state):
