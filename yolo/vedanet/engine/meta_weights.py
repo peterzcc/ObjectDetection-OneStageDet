@@ -6,7 +6,7 @@ import pickle
 from torchvision import transforms as tf
 from .. import data as vn_data
 import numpy as np
-from yolo.vedanet import network
+from vedanet import network
 
 
 __all__ = ['MetaWeights']
