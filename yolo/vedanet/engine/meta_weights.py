@@ -7,7 +7,7 @@ from torchvision import transforms as tf
 from .. import data as vn_data
 import numpy as np
 from vedanet import network
-
+from vedanet import models
 
 __all__ = ['MetaWeights']
 class CustomDataset(vn_data.WeightDataset):
@@ -38,11 +38,12 @@ class CustomDataset(vn_data.WeightDataset):
 def MetaWeights(hyper_params):
     log.debug('Creating network')
 
-    # model_name = hyper_params.model_name
+    model_name = hyper_params.model_name
     meta_model_name = hyper_params.meta_model_name
     batch = hyper_params.batch
     use_cuda = hyper_params.cuda
-    weights = hyper_params.weights
+    # weights = hyper_params.weights
+    meta_weights = hyper_params.meta_weights
     nworkers = hyper_params.nworkers
     pin_mem = hyper_params.pin_mem
     classes = hyper_params.classes
@@ -53,17 +54,30 @@ def MetaWeights(hyper_params):
     rng = np.random.RandomState(sample_seed)
 
     print(meta_model_name)
+    model_name = hyper_params.model_name
+    model_cls = models.Yolov2Wrn
+    if model_name:
+        model_cls = models.__dict__[model_name]
+
+    net = model_cls(hyper_params.classes, hyper_params.weights, train_flag=1,
+                    clear=hyper_params.clear,
+                    loss_allobj=hyper_params.loss_allobj,
+                    use_yolo_loss=hyper_params.use_yolo_loss)
+    meta_param_size = net.meta_param_size
+
     metanet_cls = network.metanet.Paramnet
     meta_model_name = hyper_params.meta_model_name
     if meta_model_name:
         metanet_cls = network.metanet.__dict__[meta_model_name]
-    net = metanet_cls(num_classes=classes, weights_file=weights,
-                      use_dummy_reweight=hyper_params.use_dummy_reweight)
-    net.eval()
-    log.info('Net structure\n%s' % net)
+    metanet = metanet_cls(hyper_params.classes, weights_file=hyper_params.meta_weights,
+                              use_dummy_reweight=hyper_params.use_dummy_reweight,
+                              num_anchors=net.num_anchors,
+                              meta_param_size=meta_param_size)
+    metanet.eval()
+    log.info('Net structure\n%s' % metanet)
 
     if use_cuda:
-        net.cuda()
+        metanet.cuda()
 
     log.debug('Creating dataset')
     loader = torch.utils.data.DataLoader(
@@ -89,7 +103,7 @@ def MetaWeights(hyper_params):
         data = data[0]
 
         with torch.no_grad():
-            reweights = net(data)
+            reweights = metanet(data)
             cur_idx = 0
             for anno in annos:      # batch
                 for a in anno:

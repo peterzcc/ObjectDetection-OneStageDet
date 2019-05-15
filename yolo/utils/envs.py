@@ -123,7 +123,8 @@ def initEnv(train_flag, model_name: str, checkpoint=False):
         gpus = cur_cfg['weights']['gpus']
         os.environ['CUDA_VISIBLE_DEVICES'] = gpus
         if weight_path is not None and meta_weight_path is not None:
-            cur_cfg['weights']['weights'] = meta_weight_path
+            cur_cfg['weights']['weights'] = weight_path
+            cur_cfg['weights']['meta_weights'] = meta_weight_path
             cur_cfg['weights']['results'] = reweight_path
     else:
         gpus = cur_cfg['speed']['gpus']

@@ -108,6 +108,11 @@ class HyperParams(object):
             self.network_size = cur_cfg['input_shape']
             self.batch = cur_cfg['batch_size']
             self.weights = cur_cfg['weights']
+            try:
+                self.meta_weights = cur_cfg['meta_weights']
+            except KeyError:
+                log.info("no meta weights")
+                self.meta_weights = None
             self.results = cur_cfg['results']
             try:
                 self.sample = cur_cfg["sample"]
