@@ -6,7 +6,7 @@ import pickle
 from torchvision import transforms as tf
 from .. import data as vn_data
 import numpy as np
-from ..network import metanet
+from yolo.vedanet import network
 
 
 __all__ = ['MetaWeights']
@@ -39,6 +39,7 @@ def MetaWeights(hyper_params):
     log.debug('Creating network')
 
     model_name = hyper_params.model_name
+    meta_model_name = hyper_params.meta_model_name
     batch = hyper_params.batch
     use_cuda = hyper_params.cuda
     weights = hyper_params.weights
@@ -51,9 +52,13 @@ def MetaWeights(hyper_params):
     sample_seed = hyper_params.sampleseed
     rng = np.random.RandomState(sample_seed)
 
-    print(model_name)
-    net = metanet.Metanet(num_classes=classes, weights_file=weights,
-                          use_dummy_reweight=hyper_params.use_dummy_reweight)
+    # print(model_name)
+    metanet_cls = network.metanet.Paramnet
+    meta_model_name = hyper_params.meta_model_name
+    if meta_model_name:
+        metanet_cls = network.metanet.__dict__[meta_model_name]
+    net = metanet_cls(num_classes=classes, weights_file=weights,
+                      use_dummy_reweight=hyper_params.use_dummy_reweight)
     net.eval()
     log.info('Net structure\n%s' % net)
 
