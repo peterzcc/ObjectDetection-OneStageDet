@@ -38,11 +38,11 @@ class CustomDataset(vn_data.WeightDataset):
 def MetaWeights(hyper_params):
     log.debug('Creating network')
 
-    model_name = hyper_params.model_name
+    # model_name = hyper_params.model_name
     meta_model_name = hyper_params.meta_model_name
     batch = hyper_params.batch
     use_cuda = hyper_params.cuda
-    weights = hyper_params.weights
+    weights = hyper_params.meta_weight_path
     nworkers = hyper_params.nworkers
     pin_mem = hyper_params.pin_mem
     classes = hyper_params.classes
@@ -52,7 +52,7 @@ def MetaWeights(hyper_params):
     sample_seed = hyper_params.sampleseed
     rng = np.random.RandomState(sample_seed)
 
-    # print(model_name)
+    print(meta_model_name)
     metanet_cls = network.metanet.Paramnet
     meta_model_name = hyper_params.meta_model_name
     if meta_model_name:
