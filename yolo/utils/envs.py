@@ -31,7 +31,7 @@ def setLogging(log_dir, stdout_flag):
 def combineConfig(cur_cfg, train_flag):
     ret_cfg = {}
     for k, v in cur_cfg.items():
-        if k == 'train' or k == 'test' or k == 'speed':
+        if k == 'train' or k == 'test' or k == 'speed' or k == "weights":
             continue
         ret_cfg[k] = v
     if train_flag == 1:

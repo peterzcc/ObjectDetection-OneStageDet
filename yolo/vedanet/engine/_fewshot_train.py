@@ -39,26 +39,37 @@ class VOCDataset(data.MetaboxDataset):
             # return f'{root}/VOCdevkit/{img_id}.jpg'
             return f'{img_id}'
 
-        super(VOCDataset, self).__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
+        super().__init__('anno_pickle', anno, network_size, labels, identify, img_tf, anno_tf)
 
 
 class VOCMetaDataset(data.OneboxDataset):
     def __init__(self, hyper_params, annos):
         network_size = hyper_params.network_size
         labels = hyper_params.labels
+        if hyper_params.meta_aug:
+            flip = hyper_params.flip
+            jitter = hyper_params.jitter
+            hue, sat, val = hyper_params.hue, hyper_params.sat, hyper_params.val
+            rf = data.transform.RandomFlip(flip)
+            rc = data.transform.RandomCropLetterbox(self, jitter)
+            hsv = data.transform.HSVShift(hue, sat, val)
+            it = tf.ToTensor()
+            img_tf = data.transform.Compose([rc, rf, hsv, it])
+            meta_anno_tf = data.transform.Compose([rc, rf])
+        else:
+            it = tf.ToTensor()
+            lb = data.transform.Letterbox(hyper_params.meta_input_shape)
+            img_tf = data.transform.Compose([lb, it])
+            meta_anno_tf = data.transform.Compose([lb])
 
-        it = tf.ToTensor()
-
-        lb = data.transform.Letterbox(hyper_params.meta_input_shape)
-
-        self.meta_tf = data.transform.Compose([lb, it])
-        self.meta_anno_tf = data.transform.Compose([lb])
+        meta_img_tf = img_tf
+        meta_anno_tf = meta_anno_tf
 
         def identify(img_id):
             # return f'{root}/VOCdevkit/{img_id}.jpg'
             return f'{img_id}'
 
-        super(VOCMetaDataset, self).__init__(annos, network_size, labels, identify, self.meta_tf, self.meta_anno_tf)
+        super().__init__(annos, network_size, labels, identify, meta_img_tf, meta_anno_tf)
 
 
 class FewshotSampleManager(object):
@@ -201,7 +212,6 @@ class FewshotTrainingEngine(SyncDualEngine):
         self.max_input_shape = hyper_params.network_size
         log.info(f'Adjusting learning rate to [{learning_rate}]')
 
-
         full_parameters = [
             {'params': metanet.parameters(), },
             {'params': net.backbone.parameters()},
@@ -230,6 +240,7 @@ class FewshotTrainingEngine(SyncDualEngine):
             num_workers=hyper_params.nworkers,
             pin_memory=hyper_params.pin_mem if self.cuda else False,
             collate_fn=default_collate,
+            resize_range=(10, self.max_input_shape[0] // 32),
             batch_sampler=data.ListBatchSampler(f_get_batches=sample_manager.get_support_batches,
                                                 input_dimension=dataset.input_dim)
         )
@@ -275,6 +286,7 @@ class FewshotTrainingEngine(SyncDualEngine):
         self.add_rate('resize_rate', rs_steps, rs_rates, resize)
 
         self.dataloader.change_input_dim()
+        self.meta_dataloader.change_input_dim()
         self.network.train()
         self.meta_network.train()
 
@@ -358,6 +370,7 @@ class FewshotTrainingEngine(SyncDualEngine):
             else:
                 finish_flag = False
             self.dataloader.change_input_dim(finish=finish_flag)
+            self.meta_dataloader.change_input_dim(finish=finish_flag)
 
     def quit(self):
         if self.sigint:

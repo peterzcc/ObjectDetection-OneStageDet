@@ -129,4 +129,7 @@ class HyperParams(object):
             self.network_size = cur_cfg['input_shape']
             self.batch = cur_cfg['batch_size']
             self.max_iters = cur_cfg['max_iters']
+        for k, v in cur_cfg.items():
+            if k not in self.__dict__:
+                self.__dict__[k] = v
 

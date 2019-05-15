@@ -32,11 +32,11 @@ if __name__ == '__main__':
     config = initEnv(train_flag=train_flag, model_name=args.model_name)
     #randomSeeding(0)
 
-    log.info('Config\n\n%s\n' % pformat(config))
+    # log.info('Config\n\n%s\n' % pformat(config))
 
     # init env
     hyper_params = vn.hyperparams.HyperParams(config, train_flag=train_flag)
-
+    log.info(f"hyperparams:\n {hyper_params.__dict__}")
     # int eng
     eng = vn.engine.FewshotTrainingEngine(hyper_params)
 
