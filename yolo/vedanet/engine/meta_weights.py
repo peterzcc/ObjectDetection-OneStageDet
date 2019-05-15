@@ -42,7 +42,7 @@ def MetaWeights(hyper_params):
     meta_model_name = hyper_params.meta_model_name
     batch = hyper_params.batch
     use_cuda = hyper_params.cuda
-    weights = hyper_params.meta_weight_path
+    weights = hyper_params.weights
     nworkers = hyper_params.nworkers
     pin_mem = hyper_params.pin_mem
     classes = hyper_params.classes
