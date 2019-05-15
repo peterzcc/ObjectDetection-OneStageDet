@@ -30,10 +30,20 @@ def MetaTest(hyper_params):
     nms_thresh = hyper_params.nms_thresh
     #prefix = hyper_params.prefix
     results = hyper_params.results
+    model_name = hyper_params.model_name
 
+    model_cls = models.Yolov2Wrn
+    if model_name:
+        model_cls = models.__dict__[model_name]
+
+    # net = model_cls(hyper_params.classes, hyper_params.weights, train_flag=1,
+    #                 clear=hyper_params.clear,
+    #                 loss_allobj=hyper_params.loss_allobj,
+    #                 use_yolo_loss=hyper_params.use_yolo_loss)
+    # meta_param_size = net.meta_param_size
     print(model_name)
     test_args = {'conf_thresh': conf_thresh, 'network_size': network_size, 'labels': labels}
-    net = models.__dict__[model_name](hyper_params.classes, weights, train_flag=2, test_args=test_args, reweights_file=hyper_params.reweights)
+    net = model_cls[model_name](hyper_params.classes, weights, train_flag=2, test_args=test_args, reweights_file=hyper_params.reweights)
     net.eval()
     log.info('Net structure\n%s' % net)
     #import pdb

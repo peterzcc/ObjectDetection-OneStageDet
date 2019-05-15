@@ -132,8 +132,8 @@ class Yolov2Wrn(YoloABC):
             return loss
         else:
             t1 = time.time()
-            x, meta_state = data
-            outputs = self._forward_test((x, meta_state))
+            x = data
+            outputs = self._forward_test((x, self.reweights))
             if self.postprocess is None:
                 return
             t2 = time.time()
