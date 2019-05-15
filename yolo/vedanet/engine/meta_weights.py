@@ -59,10 +59,8 @@ def MetaWeights(hyper_params):
     if model_name:
         model_cls = models.__dict__[model_name]
 
-    net = model_cls(hyper_params.classes, hyper_params.weights, train_flag=1,
-                    clear=hyper_params.clear,
-                    loss_allobj=hyper_params.loss_allobj,
-                    use_yolo_loss=hyper_params.use_yolo_loss)
+    net = model_cls(hyper_params.classes, train_flag=1,
+                    use_yolo_loss=True)
     meta_param_size = net.meta_param_size
 
     metanet_cls = network.metanet.Paramnet
