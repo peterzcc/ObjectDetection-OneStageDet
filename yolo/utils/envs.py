@@ -61,7 +61,8 @@ def exec_cmd(cmd):
 
 def initEnv(train_flag, model_name: str, checkpoint=False):
     cfgs_root = 'cfgs'
-    if model_name.endswith(".yml") and os.path.exists(model_name):
+    if model_name.endswith(".yml"):
+        assert os.path.exists(model_name)
         cfg_file = model_name
         cur_cfg = getConfig(cfgs_root, model_name, cfg_file)
         model_name = cur_cfg['model_name']
