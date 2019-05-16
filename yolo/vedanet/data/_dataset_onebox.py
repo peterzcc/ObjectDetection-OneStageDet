@@ -76,11 +76,17 @@ class OneboxDataset(Dataset):
     def __len__(self):
         return len(self.file_box) #len(self.keys)
 
-    def get_anno(self, index):
-        anno = copy.deepcopy(self.boxes[index])
-        if self.anno_tf is not None:
-            anno = self.anno_tf(anno)
-        return anno
+    # def get_anno(self, index):
+    #     anno = copy.deepcopy(self.boxes[index])
+    #     if self.anno_tf is not None:
+    #         anno = self.anno_tf(anno)
+    #     return anno
+
+    def display_img_mask(self, img_rgbm):
+        import matplotlib.pyplot as plt
+        img_mask = img_rgbm.permute(1, 2, 0)
+        plt.imshow(img_mask[:, :, 0:3] * (img_mask[:, :, 3:4] + 1.) / 2.)
+        plt.show()
 
     @Dataset.resize_getitem
     def __getitem__(self, index):
@@ -102,23 +108,29 @@ class OneboxDataset(Dataset):
         random.shuffle(anno)
 
         # Transform
-        if self.img_tf is not None:
-            img = self.img_tf(img)
-        if self.anno_tf is not None:
-            anno = self.anno_tf(anno)
-        mask = np.zeros((1, *img.shape[1:3]), dtype=np.float32)
-        for a in anno:
-            x,y,w,h = a.x_top_left, a.y_top_left, a.width, a.height
-            x0 = np.clip(round(x),0,self.input_dim[1])
-            x1 = np.clip(round(x+w),0, self.input_dim[1])
-            y0 = np.clip(round(y),0,self.input_dim[0])
-            y1 = np.clip(round(y+h),0,self.input_dim[0])
-            try:
-                mask[0, y0:y1, x0:x1] = 1.
-            except TypeError:
-                print("x, y, w, h not int error")
-        torch_mask = torch.Tensor(mask)
+        if self.anno_tf == -1:
+            img, anno = self.img_tf((img, anno))
+        else:
+            if self.img_tf is not None:
+                img = self.img_tf(img)
+            if self.anno_tf is not None:
+                anno = self.anno_tf(anno)
+        mask = torch.zeros(1, *img.shape[1:3])
+        _, H, W = img.shape
+        data_h, data_w = self.input_dim
+        assert data_h == H and data_w == W
+        assert len(anno) == 1
+        a = anno[0]
+        # for a in anno:
+        x, y, box_w, box_h = a.x_top_left, a.y_top_left, a.width, a.height
+        x0 = int(np.clip(round(x), 0, W-1))
+        x1 = int(np.clip(round(x+box_w), 0, W-1))
+        y0 = int(np.clip(round(y), 0, H-1))
+        y1 = int(np.clip(round(y+box_h), 0, H-1))
+        mask[0, y0:y1, x0:x1] = 1.
+        torch_mask = mask
         img_rgbm = torch.cat([img, torch_mask], dim=0)
+        # self.display_img_mask(img_rgbm)
         return img_rgbm, #anno
 
 

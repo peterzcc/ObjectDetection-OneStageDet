@@ -15,6 +15,8 @@ import numpy as np
 from PIL import Image, ImageOps
 import brambox.boxes as bbb
 from .util import BaseTransform, BaseMultiTransform
+from torchvision import transforms as torchvision_tf
+import copy
 
 try:
     import cv2
@@ -22,7 +24,7 @@ except ImportError:
     log.warn('OpenCV is not installed and cannot be used')
     cv2 = None
 
-__all__ = ['Letterbox', 'RandomCrop', 'RandomCropLetterbox', 'RandomFlip', 'HSVShift', 'BramboxToTensor']
+__all__ = ['Letterbox', 'RandomCrop', 'RandomCropLetterbox', 'RandomFlip', 'HSVShift', 'BramboxToTensor','ConvImgTensor']
 
 
 class Letterbox(BaseMultiTransform):
@@ -49,7 +51,10 @@ class Letterbox(BaseMultiTransform):
         if data is None:
             return None
         elif isinstance(data, collections.Sequence):
-            return self._tf_anno(data)
+            if isinstance(data[0], Image.Image) and isinstance(data[1], collections.Sequence):
+                return self._tf_pil_anno(data[0], data[1])
+            else:
+                return self._tf_anno(data)
         elif isinstance(data, Image.Image):
             return self._tf_pil(data)
         elif isinstance(data, np.ndarray):
@@ -141,6 +146,8 @@ class Letterbox(BaseMultiTransform):
                 anno.y_top_left += self.pad[1]
         return annos
 
+    def _tf_pil_anno(self, img, annos):
+        return self._tf_pil(img), self._tf_anno(annos)
 
 class RandomCrop(BaseMultiTransform):
     """ Take random crop from the image.
@@ -259,8 +266,9 @@ class RandomCropLetterbox(BaseMultiTransform):
         Create 1 RandomCrop object and use it for both image and annotation transforms.
         This object will save data from the image transform and use that on the annotation transform.
     """
-    def __init__(self, dataset, jitter, fill_color=127):
-        super().__init__(dataset=dataset, jitter=jitter, fill_color=fill_color)
+    def __init__(self, dataset, jitter, fill_color=127, max_scale=2., min_scale=0.25):
+        super().__init__(dataset=dataset, jitter=jitter, fill_color=fill_color,
+                         max_scale=max_scale, min_scale=min_scale)
         self.crop_info = None
         self.output_w = None
         self.output_h = None
@@ -269,24 +277,23 @@ class RandomCropLetterbox(BaseMultiTransform):
         if data is None:
             return None
         elif isinstance(data, collections.Sequence):
-            return self._tf_anno(data)
+            if isinstance(data[0], Image.Image) and isinstance(data[1], collections.Sequence):
+                return self._tf_pil_anno(data[0], data[1])
+            else:
+                return self._tf_anno(data)
         elif isinstance(data, Image.Image):
             return self._tf_pil(data)
         else:
             log.error(f'RandomCrop only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{type(data)}]')
             return data
 
-    def _tf_pil(self, img):
-        """ Take random crop from image """
-        self.output_w, self.output_h = self.dataset.input_dim
-        #print('output shape: %d, %d' % (self.output_w, self.output_h))
+    def generate_crop_info(self,img):
+        # print('output shape: %d, %d' % (self.output_w, self.output_h))
         orig_w, orig_h = img.size
-        img_np = np.array(img)
-        channels = img_np.shape[2] if len(img_np.shape) > 2 else 1
         dw = int(self.jitter * orig_w)
         dh = int(self.jitter * orig_h)
         new_ar = float(orig_w + random.randint(-dw, dw)) / (orig_h + random.randint(-dh, dh))
-        scale = random.random()*(2-0.25) + 0.25
+        scale = random.random() * (self.max_scale - self.min_scale) + self.min_scale
         if new_ar < 1:
             nh = int(scale * orig_h)
             nw = int(nh * new_ar)
@@ -308,16 +315,28 @@ class RandomCropLetterbox(BaseMultiTransform):
         nymin = max(0, -dy)
         nxmax = min(nw, -dx + self.output_w - 1)
         nymax = min(nh, -dy + self.output_h - 1)
-        sx, sy = float(orig_w)/nw, float(orig_h)/nh
+        sx, sy = float(orig_w) / nw, float(orig_h) / nh
+
+        crop_info =  [sx, sy, nxmin, nymin, nxmax, nymax]
+        return crop_info
+
+    def _tf_pil(self, img):
+        """ Take random crop from image """
+        self.output_w, self.output_h = self.dataset.input_dim
+        crop_info = self.generate_crop_info(img)
+        sx, sy, nxmin, nymin, nxmax, nymax = crop_info
+        self.crop_info = crop_info
         orig_xmin = int(nxmin * sx)
         orig_ymin = int(nymin * sy)
         orig_xmax = int(nxmax * sx)
         orig_ymax = int(nymax * sy)
         orig_crop = img.crop((orig_xmin, orig_ymin, orig_xmax, orig_ymax))
         orig_crop_resize = orig_crop.resize((nxmax - nxmin, nymax - nymin))
+        img_np = np.array(img)
+        channels = img_np.shape[2] if len(img_np.shape) > 2 else 1
         output_img = Image.new(img.mode, (self.output_w, self.output_h), color=(self.fill_color,)*channels)
         output_img.paste(orig_crop_resize, (0, 0))
-        self.crop_info = [sx, sy, nxmin, nymin, nxmax, nymax]
+
         return output_img
 
     def _tf_anno(self, annos):
@@ -342,6 +361,50 @@ class RandomCropLetterbox(BaseMultiTransform):
             annos[i].height = h
         return annos
 
+    def _test_tf_anno(self, annos, crop_info):
+        """ Change coordinates of an annotation, according to the previous crop """
+        sx, sy, crop_xmin, crop_ymin, crop_xmax, crop_ymax = crop_info
+        result_annos = copy.deepcopy(annos)
+        for i in range(len(annos) - 1, -1, -1):
+            anno = annos[i]
+            x1 = max(crop_xmin, int(anno.x_top_left / sx))
+            x2 = min(crop_xmax, int((anno.x_top_left + anno.width) / sx))
+            y1 = max(crop_ymin, int(anno.y_top_left / sy))
+            y2 = min(crop_ymax, int((anno.y_top_left + anno.height) / sy))
+            w = x2 - x1
+            h = y2 - y1
+
+            if w*h/(anno.width*anno.height/sx/sy) <= 0.5:
+                return None
+
+            result_annos[i].x_top_left = x1 - crop_xmin
+            result_annos[i].y_top_left = y1 - crop_ymin
+            result_annos[i].width = w
+            result_annos[i].height = h
+        return result_annos
+
+    def _tf_pil_anno(self, img, annos):
+        """ Take random crop from image """
+        self.output_w, self.output_h = self.dataset.input_dim
+
+        result_annos = None
+        while not result_annos:
+            crop_info = self.generate_crop_info(img)
+            result_annos = self._test_tf_anno(annos, crop_info)
+        sx, sy, nxmin, nymin, nxmax, nymax = crop_info
+        orig_xmin = int(nxmin * sx)
+        orig_ymin = int(nymin * sy)
+        orig_xmax = int(nxmax * sx)
+        orig_ymax = int(nymax * sy)
+        orig_crop = img.crop((orig_xmin, orig_ymin, orig_xmax, orig_ymax))
+        orig_crop_resize = orig_crop.resize((nxmax - nxmin, nymax - nymin))
+        img_np = np.array(img)
+        channels = img_np.shape[2] if len(img_np.shape) > 2 else 1
+        output_img = Image.new(img.mode, (self.output_w, self.output_h), color=(self.fill_color,) * channels)
+        output_img.paste(orig_crop_resize, (0, 0))
+
+        return output_img, result_annos
+
 
 class RandomFlip(BaseMultiTransform):
     """ Randomly flip image.
@@ -362,7 +425,11 @@ class RandomFlip(BaseMultiTransform):
         if data is None:
             return None
         elif isinstance(data, collections.Sequence):
-            return [self._tf_anno(anno) for anno in data]
+            if len(data) == 2 and \
+                    isinstance(data[0], Image.Image) and isinstance(data[1], collections.Sequence):
+                return self._tf_pil_anno(data[0], data[1])
+            else:
+                return [self._tf_anno(anno) for anno in data]
         elif isinstance(data, Image.Image):
             return self._tf_pil(data)
         elif isinstance(data, np.ndarray):
@@ -396,6 +463,22 @@ class RandomFlip(BaseMultiTransform):
             anno.x_top_left = self.im_w - anno.x_top_left - anno.width
         return anno
 
+    def _tf_pil_anno(self, img, annos):
+        return self._tf_pil(img), [self._tf_anno(anno) for anno in annos]
+
+
+class ConvImgTensor(BaseMultiTransform):
+    def __init__(self):
+        super().__init__()
+        self.tf = torchvision_tf.ToTensor()
+
+    def __call__(self, data):
+        if isinstance(data, collections.Sequence) and \
+                isinstance(data[0], Image.Image) and isinstance(data[1], collections.Sequence):
+            return self.tf(data[0]), data[1]
+        else:
+            raise TypeError("invalid input")
+
 
 class HSVShift(BaseTransform):
     """ Perform random HSV shift on the RGB data.
@@ -428,6 +511,11 @@ class HSVShift(BaseTransform):
             return None
         elif isinstance(data, Image.Image):
             return cls._tf_pil(data, dh, ds, dv)
+        elif isinstance(data, collections.Sequence):
+            if isinstance(data[0], Image.Image) and isinstance(data[1], collections.Sequence):
+                return cls._tf_pil(data[0], dh, ds, dv), data[1]
+            else:
+                raise TypeError("invalid input")
         elif isinstance(data, np.ndarray):
             return cls._tf_cv(data, dh, ds, dv)
         else:

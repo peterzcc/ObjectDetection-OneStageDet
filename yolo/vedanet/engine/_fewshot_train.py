@@ -48,17 +48,17 @@ class VOCMetaDataset(data.OneboxDataset):
         labels = hyper_params.labels
         if hyper_params.meta_aug:
             flip = hyper_params.flip
-            jitter = hyper_params.jitter
             hue, sat, val = hyper_params.hue, hyper_params.sat, hyper_params.val
             rf = data.transform.RandomFlip(flip)
-            rc = data.transform.RandomCropLetterbox(self, jitter)
+            rc = data.transform.RandomCropLetterbox(self, 0.2, max_scale=2.0, min_scale=0.5)
             hsv = data.transform.HSVShift(hue, sat, val)
-            it = tf.ToTensor()
+            # it = tf.ToTensor()
+            it = data.transform.ConvImgTensor()
             img_tf = data.transform.Compose([rc, rf, hsv, it])
-            meta_anno_tf = data.transform.Compose([rc, rf])
+            meta_anno_tf = -1 # data.transform.Compose([rc, rf])
         else:
             it = tf.ToTensor()
-            lb = data.transform.Letterbox(hyper_params.meta_input_shape)
+            lb = data.transform.Letterbox(hyper_params.meta_input_shape, dataset=self)
             img_tf = data.transform.Compose([lb, it])
             meta_anno_tf = data.transform.Compose([lb])
 
@@ -86,6 +86,29 @@ class FewshotSampleManager(object):
         log.info(f"new epoch with {len(self.query_batches)} batches, sample time: {time.time()-self.t_start}")
         pass
 
+    def sample_support_batches(self, support_box_ids, is_box_seen):
+        this_support_batch = []
+        for shot_i in range(self.k_shot):
+            for class_i, boxids_for_class in enumerate(self.box_dataset.cls_2_boxid):
+                finished_ci = False
+                this_box_id = -1
+                while not finished_ci:
+                    if len(support_box_ids[class_i]) == 0:
+                        unseen_boxes = np.logical_not(is_box_seen[boxids_for_class])
+                        if np.any(unseen_boxes):
+                            boxids_array = (np.array(boxids_for_class))
+                            support_box_ids[class_i] = \
+                                deque(self.rng.permutation(
+                                    boxids_array[unseen_boxes]))
+                        else:
+                            return None
+                    this_box_id = support_box_ids[class_i].popleft()
+                    if not is_box_seen[this_box_id]:
+                        finished_ci = True
+                this_support_batch.append(this_box_id)
+                is_box_seen[this_box_id] = True
+        return this_support_batch
+
     def prepare_batches(self):
         self.t_start = time.time()
         query_img_ids = deque(self.rng.permutation(np.arange(len(self.box_dataset.fileid_2_boxid), dtype=int)))
@@ -106,32 +129,11 @@ class FewshotSampleManager(object):
                     this_query_batch.append(this_img_id)
                     is_file_seen[this_img_id] = True
                     is_box_seen[self.box_dataset.fileid_2_boxid[this_img_id]] = True
-            this_support_batch = []
-            for shot_i in range(self.k_shot):
-                for class_i, boxids_for_class in enumerate(self.box_dataset.cls_2_boxid):
-                    finished_ci = False
-                    this_box_id = -1
-                    while not finished_ci:
-                        if len(support_box_ids[class_i]) == 0:
-                            unseen_boxes = np.logical_not(is_box_seen[boxids_for_class])
-                            if np.any(unseen_boxes):
-                                boxids_array = (np.array(boxids_for_class))
-                                support_box_ids[class_i] = \
-                                    deque(self.rng.permutation(
-                                        boxids_array[unseen_boxes]))
-                            else:
-                                self.post_sampling()
-                                return
-                        this_box_id = support_box_ids[class_i].popleft()
-                        if not is_box_seen[this_box_id]:
-                            finished_ci = True
-                    this_support_batch.append(this_box_id)
-                    is_box_seen[this_box_id] = True
-                    # is_file_seen[self.box_dataset.boxid_2_fileid[this_box_id]] = True
-            self.query_batches.append(this_query_batch)
-            self.support_batches.append(this_support_batch)
 
-        return
+            this_support_batch = self.sample_support_batches(support_box_ids, is_box_seen)
+            if this_support_batch:
+                self.query_batches.append(this_query_batch)
+                self.support_batches.append(this_support_batch)
 
     def get_query_batches(self):
         if self.query_batches is None and self.support_batches is not None:
