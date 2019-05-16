@@ -79,10 +79,10 @@ class Paramnet(nn.Module):
         data = x
         feature = self.layers[0](data)
         weights = self.layers[1](feature)
-        k_shot = int(weights.shape[0]/self.num_classes)
-        weights_batch = weights.view(k_shot, self.num_classes, *weights.shape[1:])
-        weights_aggregated = torch.mean(weights_batch, dim=0)
-        return weights_aggregated
+        # k_shot = int(weights.shape[0]/self.num_classes)
+        # weights_batch = weights.view(k_shot, self.num_classes, *weights.shape[1:])
+        # weights_aggregated = torch.mean(weights_batch, dim=0)
+        return weights
 
     def load_weights(self, weights_file, clear=False):
         """ This function will load the weights from a file.

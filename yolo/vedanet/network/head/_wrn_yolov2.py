@@ -39,8 +39,8 @@ class WrnYolov2(nn.Module):
 
     def set_meta_state(self, meta_state):
         t_device = self.meta_state.device
-        self.meta_state = meta_state.detach().to(t_device)
-        self.meta_state.requires_grad_(True)
+        self.meta_state = meta_state#.detach().to(t_device)
+        # self.meta_state.requires_grad_(True)
 
     def forward(self, middle_feats):
         outputs = []
@@ -106,8 +106,11 @@ class UniWrnYolov2(nn.Module):
         # self.meta_state.requires_grad_(True)
 
     def set_meta_state(self, meta_state):
+        k_shot = int(meta_state.shape[0]/self.num_classes)
+        meta_state_batch = meta_state.view(k_shot, self.num_classes, *meta_state.shape[1:])
+        meta_state_aggregated = torch.mean(meta_state_batch, dim=0)
         t_device = self.meta_state.device
-        self.meta_state = meta_state.to(t_device) #.detach()
+        self.meta_state = meta_state_aggregated.to(t_device) #.detach()
         # self.meta_state.requires_grad_(True)
 
     def forward(self, middle_feats):
