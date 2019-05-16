@@ -225,7 +225,7 @@ class FewshotTrainingEngine(SyncDualEngine):
         log.debug('Creating dataloader')
         dataset = VOCDataset(hyper_params)
         meta_dataset = VOCMetaDataset(hyper_params, annos=dataset.annos)
-        k_shot = 1
+        k_shot = hyper_params.k_shot
         sample_manager = FewshotSampleManager(meta_dataset,
                                               input_batchsize=self.mini_batch_size, k_shot=k_shot)
         dataloader = data.DataLoader(
