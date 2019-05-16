@@ -1,5 +1,5 @@
 output_root: "outputs"
-output_version: "exp_0515_aug"
+output_version: "exp_0516_aug2shot"
 backup_name: "weights"
 log_name: "logs"
 model_name: "Yolov2UniWrn"
