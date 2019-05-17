@@ -81,10 +81,11 @@ class FewshotSampleManager(object):
         self.support_batches = None
         self.seed = 1
         self.rng = np.random.RandomState(self.seed)
+        self.epoch = 0
 
     def post_sampling(self):
-        log.info(f"new epoch with {len(self.query_batches)} batches, sample time: {time.time()-self.t_start}")
-        pass
+        log.info(f"epoch {self.epoch} with {len(self.query_batches)} batches, sample time: {time.time()-self.t_start}")
+        self.epoch += 1
 
     def sample_support_batches(self, support_box_ids, is_box_seen):
         this_support_batch = []
@@ -302,6 +303,7 @@ class FewshotTrainingEngine(SyncDualEngine):
     #     return reweights
 
     def process_batch(self, data, meta_imgs=None):
+        if self.hyper_params.dry_run: return
         data, target = data
         # to(device)
         # if self.cuda:
@@ -327,6 +329,7 @@ class FewshotTrainingEngine(SyncDualEngine):
                 self.train_loss[ii]['cls'].append(self.network.loss[ii].loss_cls.item() / self.mini_batch_size)
 
     def train_batch(self):
+        if self.hyper_params.dry_run: return
         self.optimizer.step()
         self.optimizer.zero_grad()
         # print(f"batch#: {self.batch}")

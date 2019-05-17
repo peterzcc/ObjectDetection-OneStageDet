@@ -287,7 +287,7 @@ class RandomCropLetterbox(BaseMultiTransform):
             log.error(f'RandomCrop only works with <brambox annotation lists>, <PIL images> or <OpenCV images> [{type(data)}]')
             return data
 
-    def generate_crop_info(self,img):
+    def generate_crop_info(self, img):
         # print('output shape: %d, %d' % (self.output_w, self.output_h))
         orig_w, orig_h = img.size
         dw = int(self.jitter * orig_w)
@@ -310,6 +310,29 @@ class RandomCropLetterbox(BaseMultiTransform):
             dy = random.randint(0, self.output_h - nh)
         else:
             dy = random.randint(self.output_h - nh, 0)
+
+        nxmin = max(0, -dx)
+        nymin = max(0, -dy)
+        nxmax = min(nw, -dx + self.output_w - 1)
+        nymax = min(nh, -dy + self.output_h - 1)
+        sx, sy = float(orig_w) / nw, float(orig_h) / nh
+
+        crop_info =  [sx, sy, nxmin, nymin, nxmax, nymax]
+        return crop_info
+
+    def generate_default_crop_info(self, img):
+        # print('output shape: %d, %d' % (self.output_w, self.output_h))
+        orig_w, orig_h = img.size
+        new_ar = float(orig_w + 0) / (orig_h + 0)
+        scale = 1.
+        if new_ar < 1:
+            nh = int(scale * orig_h)
+            nw = int(nh * new_ar)
+        else:
+            nw = int(scale * orig_w)
+            nh = int(nw / new_ar)
+
+        dx, dy = 0, 0
 
         nxmin = max(0, -dx)
         nymin = max(0, -dy)
@@ -388,9 +411,15 @@ class RandomCropLetterbox(BaseMultiTransform):
         self.output_w, self.output_h = self.dataset.input_dim
 
         result_annos = None
+        crop_count = 0
         while not result_annos:
             crop_info = self.generate_crop_info(img)
             result_annos = self._test_tf_anno(annos, crop_info)
+            crop_count += 1
+            if crop_count > 100:
+                log.warning("sampling crop infor more than 100 times, using default crop")
+                crop_info = self.generate_default_crop_info(img)
+                break
         sx, sy, nxmin, nymin, nxmax, nymax = crop_info
         orig_xmin = int(nxmin * sx)
         orig_ymin = int(nymin * sy)

@@ -79,7 +79,8 @@ class HyperParams(object):
             except KeyError:
                 self.use_yolo_loss = False
             self.meta_aug = cur_cfg.get("meta_aug", False)
-            self.k_shot = cur_cfg.get("k_shot", None)
+            self.k_shot = cur_cfg.get("k_shot", 1)
+            self.dry_run = cur_cfg.get("dry_run", False)
 
             self.clear = cur_cfg['clear']
         elif train_flag == TEST:
