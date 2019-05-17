@@ -7,7 +7,7 @@ import logging as log
 import torch
 import torch.nn as nn
 import time
-
+import re
 __all__ = ['Lightnet']
 
 
@@ -40,6 +40,7 @@ class Lightnet(nn.Module):
         self.loss = None
         self.postprocess = None
         self.seen = 0
+        self.ignore_load = []
 
     def _forward(self, x):
         log.debug('Running default forward functions')
@@ -153,6 +154,15 @@ class Lightnet(nn.Module):
         """
         old_state = self.state_dict()
         state = torch.load(weights_file, lambda storage, loc: storage)
+        ignore_patterns = [re.compile(p) for p in self.ignore_load]
+        keys_to_del = []
+        for k in state['weights']:
+            for pattern in ignore_patterns:
+                if pattern.match(k):
+                    keys_to_del.append(k)
+                    break
+        for k in keys_to_del:
+            del state['weights'][k]
         self.seen = 0 if clear else state['seen']
 
         '''
@@ -170,7 +180,7 @@ class Lightnet(nn.Module):
             new_state = old_state
         self.load_state_dict(new_state)
         '''
-        self.load_state_dict(state['weights'])
+        self.load_state_dict(state['weights'], strict=False)
 
         if hasattr(self.loss, 'seen'):
             self.loss.seen = self.seen

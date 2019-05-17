@@ -9,7 +9,10 @@ class HyperParams(object):
     def __init__(self, config, train_flag=1):
         
         self.cuda = True
-        self.labels = config['labels']
+        if train_flag == TRAIN and config.get("base_only", False):
+            self.labels = [c for c in config['labels'] if c not in config['novel_classes']]
+        else:
+            self.labels = config['labels']
         self.classes = len(self.labels)
         self.data_root = config['data_root_dir'] 
         self.model_name = config['model_name']

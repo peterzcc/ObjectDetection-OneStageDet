@@ -36,6 +36,7 @@ class Yolov2Wrn(YoloABC):
 
         self.loss = None
         self.postprocess = None
+        self.ignore_load.append(".*head.*meta_state")
 
 
         def get_loss(num_classes, anchors, anchors_mask, reduction=32, seen=0,
