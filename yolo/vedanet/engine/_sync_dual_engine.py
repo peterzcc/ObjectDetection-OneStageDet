@@ -85,6 +85,7 @@ class SyncDualEngine(ABC):
             loader = self.dataloader
             pre_time = time.time()
             for idx, (data, meta_imgs) in enumerate(zip(self.dataloader, self.meta_dataloader)):
+                log.info(f"start batch #{self.batch}")
                 t1 = time.time()
                 # init meta images first
                 # if isinstance(meta_imgs,list):
