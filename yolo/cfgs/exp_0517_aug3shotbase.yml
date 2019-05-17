@@ -13,7 +13,7 @@ data_root_dir: "../VOCdevkit/onedet_cache"
 server: "hpc:/home/peterzeng/peter/ObjectDetection-OneStageDet/yolo"
 checkpoint: 45000
 train:
-    dataset: "k_shot_3_joint" #"k_shot_base" #"k_shot_joint"
+    dataset: "base" #"k_shot_base" #"k_shot_joint"
     stdout: False
     gpus: "0,1,2,3"
     nworkers: 16
