@@ -20,6 +20,7 @@ def setLogging(log_dir, stdout_flag):
     log_name = dt.strftime('%Y-%m-%d_time_%H_%M_%S') + '.log'
 
     log_fp = os.path.join(log_dir, log_name)
+    logging.getLogger().setLevel(logging.DEBUG)
     #print os.path.abspath(log_fp)
 
     if stdout_flag:
