@@ -9,7 +9,8 @@ __all__ = ['WrnYolov2', 'UniWrnYolov2']
 DEBUG = False
 
 class WrnYolov2(nn.Module):
-    def  __init__(self, num_anchors, num_classes, input_channels=48):
+    def  __init__(self, num_anchors, num_classes, input_channels=48,
+                  train_feature=False):
         """ Network initialisation """
         super().__init__()
         layer_list = [
@@ -31,6 +32,7 @@ class WrnYolov2(nn.Module):
             ]
 
         self.layers = nn.ModuleList([nn.Sequential(layer_dict) for layer_dict in layer_list])
+        self.train_feature = train_feature
         self.num_classes = num_classes
         self.num_anchors = num_anchors
         self.meta_param_size = num_anchors * 6*(1024+1)
@@ -50,6 +52,7 @@ class WrnYolov2(nn.Module):
         # stage 6
         stage6 = middle_feats[0]
         preout = self.layers[1](torch.cat((stage6_reorg, stage6), 1))
+        if not self.train_feature: preout = preout.detach()
         out = self.meta_predict(preout)
         features = [out]
         return features
@@ -72,7 +75,7 @@ class WrnYolov2(nn.Module):
 
 
 class UniWrnYolov2(nn.Module):
-    def __init__(self, num_anchors, num_classes, input_channels=48):
+    def __init__(self, num_anchors, num_classes, input_channels=48, train_feature=False):
         """ Network initialisation """
         super().__init__()
         self.num_anchors = num_anchors
@@ -101,8 +104,9 @@ class UniWrnYolov2(nn.Module):
         #         ])
         # layer_list.append(uni_predictor)
         self.layers = nn.ModuleList([nn.Sequential(layer_dict) for layer_dict in layer_list])
+        self.train_feature = train_feature
         self.meta_param_size = 6*(self.pred_input_size+1)
-        self.register_buffer("meta_state", torch.zeros(self.num_classes, self.meta_param_size,1,1))
+        self.register_buffer("meta_state", torch.zeros(self.num_classes, self.meta_param_size, 1, 1))
         # self.meta_state.requires_grad_(True)
 
     def set_meta_state(self, meta_state):
@@ -122,6 +126,8 @@ class UniWrnYolov2(nn.Module):
         stage6 = middle_feats[0]
         # Route : layers=-1, -4
         feature_layer = self.layers[1](torch.cat((stage6_reorg, stage6), 1))
+        if not self.train_feature:
+            feature_layer = feature_layer.detach()
         if DEBUG: assert not torch.isnan(feature_layer).any()
         anchor_aggregated = self.layers[2](feature_layer)
         if DEBUG: assert not torch.isnan(anchor_aggregated).any()
@@ -130,8 +136,7 @@ class UniWrnYolov2(nn.Module):
         anchor_in_batch = anchor_separated.view(b*self.num_anchors, self.pred_input_size, h, w).contiguous()
         out_anchor_in_batch = self.meta_predict(anchor_in_batch)
         out = out_anchor_in_batch.view(b*self.num_classes, self.num_anchors*6, h, w).contiguous()
-        features = [out]
-        return features
+        return [out]
 
     def meta_predict(self, pre_ultimate_layer: torch.Tensor):
         batch_size = pre_ultimate_layer.shape[0]

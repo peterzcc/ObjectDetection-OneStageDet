@@ -182,7 +182,8 @@ class FewshotTrainingEngine(SyncDualEngine):
         net = model_cls(hyper_params.classes, hyper_params.weights, train_flag=1,
                         clear=hyper_params.clear,
                         loss_allobj=hyper_params.loss_allobj,
-                        use_yolo_loss=hyper_params.use_yolo_loss)
+                        use_yolo_loss=hyper_params.use_yolo_loss,
+                        disable_metamodel=hyper_params.disable_metamodel, train_feature=hyper_params.train_feature)
         meta_param_size = net.meta_param_size
 
         metanet_cls = network.metanet.Paramnet
@@ -217,8 +218,7 @@ class FewshotTrainingEngine(SyncDualEngine):
 
         full_parameters = [
             {'params': metanet.parameters(), },
-            {'params': net.backbone.parameters()},
-            {'params': net.head.parameters()}
+            {'params': net.parameters()},
         ]
         optim = torch.optim.SGD(full_parameters, lr=learning_rate / batch, momentum=momentum, dampening=0,
                                 weight_decay=decay * batch)
@@ -305,18 +305,17 @@ class FewshotTrainingEngine(SyncDualEngine):
     def process_batch(self, data, meta_imgs=None):
         if self.hyper_params.dry_run: return
         data, target = data
-        # to(device)
-        # if self.cuda:
-        #     data = data.cuda()
-        # meta_imgs = torch.autograd.Variable(meta_imgs, requires_grad=True)
-        assert meta_imgs is not None
-        assert len(meta_imgs) == 1
-        meta_imgs = meta_imgs[0]
-        if self.cuda:
-            meta_imgs = meta_imgs.cuda()
-        if meta_imgs.shape[0] == 1:
+        if self.hyper_params.disable_metamodel:
+            meta_state = self.network.dummy_meta_weight
+        else:
+            assert meta_imgs is not None
+            assert len(meta_imgs) == 1
             meta_imgs = meta_imgs[0]
-        meta_state = self.dist_meta_network(meta_imgs)
+            if self.cuda:
+                meta_imgs = meta_imgs.cuda()
+            if meta_imgs.shape[0] == 1:
+                meta_imgs = meta_imgs[0]
+            meta_state = self.dist_meta_network(meta_imgs)
         loss = self.network((data, meta_state), target)
         loss.backward()
         # meta_state.backward(self.network.get_meta_state_grad().to(meta_state.device))

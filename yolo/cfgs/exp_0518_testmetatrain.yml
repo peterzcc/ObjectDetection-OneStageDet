@@ -37,9 +37,13 @@ train:
     meta_input_shape: [416, 416]
     batch_size: 2
     mini_batch_size: 2
-    weights: "weights/darknet19_448.conv.23"
+    weights: "outputs/Yolov2UniWrn/exp_0518_testpretrain/weights/weights_200.pt"
     meta_weights: ~
     use_yolo_loss: True
+    meta_aug: True
+    k_shot: 1
+    disable_metamodel: False
+    train_feature: False
 
 test:
     dataset: 'test' #'k_shot_base_test' # "test

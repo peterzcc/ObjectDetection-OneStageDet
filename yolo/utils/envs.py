@@ -72,8 +72,12 @@ def initEnv(train_flag, model_name: str, checkpoint=False):
         cur_cfg = getConfig(cfgs_root, model_name, cfg_file)
         root_dir = cur_cfg['output_root']
         cur_cfg['model_name'] = model_name
+    version = cur_cfg.get('output_version', None)
+    if cfg_file:
+        file_name = os.path.split(cfg_file)[-1].split('.')[0]
+        if not version:
+            version = file_name
 
-    version = cur_cfg['output_version']
     work_dir = os.path.join(root_dir, model_name, version)
 
     backup_name = cur_cfg['backup_name']

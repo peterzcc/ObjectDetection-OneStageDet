@@ -84,6 +84,8 @@ class HyperParams(object):
             self.meta_aug = cur_cfg.get("meta_aug", False)
             self.k_shot = cur_cfg.get("k_shot", 1)
             self.dry_run = cur_cfg.get("dry_run", False)
+            self.disable_metamodel = cur_cfg.get("disable_metamodel", False)
+            self.train_feature = cur_cfg.get("train_feature", True)
 
             self.clear = cur_cfg['clear']
         elif train_flag == TEST:

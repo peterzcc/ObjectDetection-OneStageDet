@@ -143,6 +143,9 @@ class Lightnet(nn.Module):
                 info_list.append(str(m))
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
+            else:
+                pass
+                # log.info(f"unknown initialization: {m}")
         log.info('Init weights\n\n%s\n' % '\n'.join(info_list))
 
     def load_weights(self, weights_file, clear=False):

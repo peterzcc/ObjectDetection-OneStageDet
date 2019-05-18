@@ -19,7 +19,8 @@ class Yolov2Wrn(YoloABC):
     def __init__(self, num_classes=20, weights_file=None, input_channels=3,
                  anchors=[(42.31, 55.41), (102.17, 128.30), (161.79, 259.17), (303.08, 154.90), (359.56, 320.23)],
                  anchors_mask=[(0, 1, 2, 3, 4)], train_flag=1, clear=False, test_args=None, reweights_file=None,
-                 tiny_backbone=False, loss_allobj=False, use_yolo_loss=False):
+                 tiny_backbone=False, loss_allobj=False, use_yolo_loss=False,
+                 disable_metamodel=False, train_feature=True):
         """ Network initialisation """
         super().__init__()
 
@@ -36,7 +37,9 @@ class Yolov2Wrn(YoloABC):
 
         self.loss = None
         self.postprocess = None
-        self.ignore_load.append(".*head.*meta_state")
+        self.disable_metamodel = disable_metamodel
+        self.train_feature = train_feature
+
 
 
         def get_loss(num_classes, anchors, anchors_mask, reduction=32, seen=0,
@@ -56,17 +59,32 @@ class Yolov2Wrn(YoloABC):
             self.backbone = backbone.NanoYolov2()
         else:
             self.backbone = backbone.Darknet19()
-        if torch.cuda.device_count() > 1:
-            self.dist_backbone = torch.nn.DataParallel(self.backbone)
-        else:
-            self.dist_backbone = torch.nn.DataParallel(self.backbone)
+
         self.head = self.init_head()
 
         self.meta_param_size = self.head.meta_param_size
+        self.dummy_meta_weight = nn.Parameter(
+            torch.zeros(self.num_classes, self.meta_param_size, 1, 1)
+        )
+
+        self.init_weights(slope=0.1)
+        nn.init.kaiming_normal_(self.dummy_meta_weight, a=1.)
+
+        self.ignore_load.extend(["head.meta_state", "dist_head.module.meta_state"])
+        self.ignore_load.extend(["dummy_meta_weight"])
+
+        if weights_file is not None:
+            self.load_weights(weights_file, clear)
+
+        self.dist = {}
         if torch.cuda.device_count() > 1:
-            self.dist_head = torch.nn.DataParallel(self.head, output_device=list(range(torch.cuda.device_count()))[1])
+            self.dist[self.backbone] = torch.nn.DataParallel(self.backbone)
         else:
-            self.dist_head = torch.nn.DataParallel(self.head)
+            self.dist[self.backbone] = torch.nn.DataParallel(self.backbone)
+        if torch.cuda.device_count() > 1:
+            self.dist[self.head] = torch.nn.DataParallel(self.head, output_device=list(range(torch.cuda.device_count()))[1])
+        else:
+            self.dist[self.head] = torch.nn.DataParallel(self.head)
 
         if train_flag == 2:
             if reweights_file is not None:
@@ -82,21 +100,18 @@ class Yolov2Wrn(YoloABC):
             else:
                 exit(0)
 
-        if weights_file is not None:
-            self.load_weights(weights_file, clear)
-        else:
-            self.init_weights(slope=0.1)
+
 
     def init_head(self):
-        self.head = head.WrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes)
+        self.head = head.WrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes, train_feature=self.train_feature)
         return self.head
 
     def _forward(self, x):
         data, meta_state = x
-        middle_feats = self.dist_backbone(data)
+        middle_feats = self.dist[self.backbone](data)
         self.head.set_meta_state(meta_state)
-        features = self.dist_head(middle_feats)
-        if self.use_yolo_loss:
+        features = self.dist[self.head](middle_feats)
+        if self.train_flag != 1 or self.use_yolo_loss:
             features = [self.convert_to_yolo_output(f) for f in features]
         self.compose(data, features, self.loss_fn)
         return features
@@ -104,15 +119,6 @@ class Yolov2Wrn(YoloABC):
     def get_meta_state_grad(self):
         return self.head.meta_state.grad
 
-    def _forward_test(self, x):
-        data, meta_state = x
-        middle_feats = self.dist_backbone(data)
-        self.head.set_meta_state(meta_state)
-        features = self.dist_head(middle_feats)
-        features = [self.convert_to_yolo_output(f) for f in features]
-        self.compose(data, features, self.loss_fn)
-
-        return features
 
     def forward(self, data, target=None):
         if self.train_flag == 1:
@@ -134,7 +140,7 @@ class Yolov2Wrn(YoloABC):
         else:
             t1 = time.time()
             x = data
-            outputs = self._forward_test((x, self.reweights))
+            outputs = self._forward((x, self.reweights))
             if self.postprocess is None:
                 return
             t2 = time.time()
@@ -200,5 +206,5 @@ class Yolov2Wrn(YoloABC):
 
 class Yolov2UniWrn(Yolov2Wrn):
     def init_head(self):
-        self.head = head.UniWrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes)
+        self.head = head.UniWrnYolov2(num_anchors=self.num_anchors, num_classes=self.num_classes, train_feature=self.train_feature)
         return self.head
