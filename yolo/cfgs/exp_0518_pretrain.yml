@@ -13,7 +13,7 @@ server: "hpc:/home/peterzeng/peter/ObjectDetection-OneStageDet/yolo"
 checkpoint: 200
 train:
     dataset: "base"
-    stdout: True
+    stdout: False
     gpus: "0,1"
     nworkers: 16
     pin_mem: True
