@@ -10,7 +10,7 @@ base_only: True
 # base labels
 data_root_dir: "../VOCdevkit/onedet_cache"
 server: "hpc:/home/peterzeng/peter/ObjectDetection-OneStageDet/yolo"
-checkpoint: 200
+checkpoint: 35000
 train:
     dataset: "base"
     stdout: False
@@ -62,7 +62,7 @@ test:
 weights:
     dataset: "k_shot_3_joint" #'two_class_base' # "test"
     stdout: True
-    gpus: "0"
+    gpus: "2"
     nworkers: 4
     pin_mem: True
 #    sample: 3
