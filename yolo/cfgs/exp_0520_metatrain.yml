@@ -48,7 +48,7 @@ train:
 test:
     dataset: 'test' #'k_shot_base_test' # "test
     stdout: True
-    gpus: "0"
+    gpus: "2"
     nworkers: 16
     pin_mem: True
     input_shape: [416, 416]
