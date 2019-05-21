@@ -71,7 +71,7 @@ class Yolov2Wrn(YoloABC):
         nn.init.kaiming_normal_(self.dummy_meta_weight, a=1.)
 
         self.ignore_load.extend(["head.meta_state", "dist_head.module.meta_state"])
-        if self.disable_metamodel:
+        if not self.disable_metamodel:
             self.ignore_load.extend(["dummy_meta_weight"])
 
         if weights_file is not None:
