@@ -71,7 +71,8 @@ class Yolov2Wrn(YoloABC):
         nn.init.kaiming_normal_(self.dummy_meta_weight, a=1.)
 
         self.ignore_load.extend(["head.meta_state", "dist_head.module.meta_state"])
-        self.ignore_load.extend(["dummy_meta_weight"])
+        if self.disable_metamodel:
+            self.ignore_load.extend(["dummy_meta_weight"])
 
         if weights_file is not None:
             self.load_weights(weights_file, clear)
@@ -87,7 +88,9 @@ class Yolov2Wrn(YoloABC):
             self.dist[self.head] = torch.nn.DataParallel(self.head)
 
         if train_flag == 2:
-            if reweights_file is not None:
+            if self.disable_metamodel:
+                self.reweights = self.dummy_meta_weight
+            elif reweights_file is not None:
                 with open(reweights_file, 'rb') as handle:
                     reweights = pickle.load(handle)
                     print(reweights_file)
@@ -97,8 +100,7 @@ class Yolov2Wrn(YoloABC):
                         self.reweights= self.reweights.cuda()
                     for i in range(len(reweights.keys())):
                         self.reweights[i] = reweights[i]
-            else:
-                exit(0)
+
 
 
 

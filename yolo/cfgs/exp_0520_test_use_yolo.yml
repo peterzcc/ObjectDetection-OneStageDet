@@ -7,14 +7,14 @@ meta_model_name: "Paramnet"
 labels: ["aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"]
 novel_classes: ['bird', 'bus', 'cow', 'motorbike', 'sofa']
 base_only: False
-disable_metamodel: True
 # base labels
 data_root_dir: "../VOCdevkit/onedet_cache"
 server: "hpc:/home/peterzeng/peter/ObjectDetection-OneStageDet/yolo"
-checkpoint: 90000
+checkpoint: 200
+disable_metamodel: True
 train:
-    dataset: "base"
-    stdout: False
+    dataset: "k_shot_3_joint"
+    stdout: True
     gpus: "0,1"
     nworkers: 16
     pin_mem: True
@@ -36,8 +36,8 @@ train:
 
     input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 64
-    mini_batch_size: 64
+    batch_size: 2
+    mini_batch_size: 2
     weights: "weights/darknet19_448.conv.23"
     meta_weights: ~
     use_yolo_loss: True
@@ -46,9 +46,9 @@ train:
     train_feature: True
 
 test:
-    dataset: 'test'
+    dataset: 'test' #'k_shot_base_test' # "test
     stdout: True
-    gpus: "2"
+    gpus: "0"
     nworkers: 16
     pin_mem: True
     input_shape: [416, 416]

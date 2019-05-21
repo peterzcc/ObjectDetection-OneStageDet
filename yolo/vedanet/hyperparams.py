@@ -17,6 +17,7 @@ class HyperParams(object):
         self.data_root = config['data_root_dir'] 
         self.model_name = config['model_name']
         self.meta_model_name = config.get("meta_model_name", None)
+        self.disable_metamodel = config.get("disable_metamodel", False)
 
         # cuda check
         if self.cuda:
@@ -84,7 +85,7 @@ class HyperParams(object):
             self.meta_aug = cur_cfg.get("meta_aug", False)
             self.k_shot = cur_cfg.get("k_shot", 1)
             self.dry_run = cur_cfg.get("dry_run", False)
-            self.disable_metamodel = cur_cfg.get("disable_metamodel", False)
+
             self.train_feature = cur_cfg.get("train_feature", True)
 
             self.clear = cur_cfg['clear']
