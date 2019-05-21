@@ -20,9 +20,11 @@ def setLogging(log_dir, stdout_flag):
     log_name = dt.strftime('%Y-%m-%d_time_%H_%M_%S') + '.log'
 
     log_fp = os.path.join(log_dir, log_name)
-    logging.getLogger().setLevel(logging.DEBUG)
+    # root_logger = logging.getLogger()
+    # root_logger.setLevel(logging.DEBUG)
     #print os.path.abspath(log_fp)
-
+    from importlib import reload
+    reload(logging)
     if stdout_flag:
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=logging.DEBUG)
     else:
