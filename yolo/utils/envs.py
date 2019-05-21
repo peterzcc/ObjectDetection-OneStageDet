@@ -95,11 +95,11 @@ def initEnv(train_flag, model_name: str, checkpoint=False):
         meta_weight_path = os.path.join(backup_dir, f"meta_weights_{checkpoint_num}.pt")
         reweight_path = os.path.join(backup_dir, f"reweights_{checkpoint_num}.pkl")
         results_path = os.path.join(work_dir, f"results_{checkpoint_num}")
-        if not (os.path.isfile(weight_path)
-                and os.path.isfile(meta_weight_path)) \
-                and "server" in cur_cfg:
-            exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{weight_path} .")
-            exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{meta_weight_path} .")
+        # if not (os.path.isfile(weight_path)
+        #         and os.path.isfile(meta_weight_path)) \
+        #         and "server" in cur_cfg:
+        #     exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{weight_path} .")
+        #     exec_cmd(f"rsync --checksum -RP {cur_cfg['server']}/./{meta_weight_path} .")
     else:
         weight_path = None
         meta_weight_path = None
