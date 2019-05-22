@@ -36,6 +36,7 @@ class Yolov2Wrn(YoloABC):
 
         self.loss = None
         self.postprocess = None
+        self.x = None
 
 
         def get_loss(num_classes, anchors, anchors_mask, reduction=32, seen=0,
@@ -91,6 +92,7 @@ class Yolov2Wrn(YoloABC):
 
     def _forward(self, x):
         data, meta_state = x
+        self.x = x
         middle_feats = self.dist_backbone(data)
         self.head.set_meta_state(meta_state)
         features = self.dist_head(middle_feats)
@@ -104,6 +106,7 @@ class Yolov2Wrn(YoloABC):
 
     def _forward_test(self, x):
         data, meta_state = x
+        self.x = x
         middle_feats = self.dist_backbone(data)
         self.head.set_meta_state(meta_state)
         features = self.dist_head(middle_feats)
@@ -113,6 +116,7 @@ class Yolov2Wrn(YoloABC):
         return features
 
     def forward(self, data, target=None):
+        self.x = data
         if self.train_flag == 1:
             x, meta_state = data
             self.seen += x.size(0)
@@ -192,7 +196,11 @@ class Yolov2Wrn(YoloABC):
                                       final_prediction_5],
                                      dim=2)
         reshaped_final_prediction = final_prediction.view(batch_size, -1, *final_prediction.shape[-2:] )
-        assert not torch.isnan(reshaped_final_prediction).any()
+        if torch.isnan(reshaped_final_prediction).any():
+            self.save_weights("error.pt")
+            with open("input.pkl", "wb") as fp:
+                pickle.dump(self.x, fp)
+            print("error found! continue training")
         return reshaped_final_prediction
 
 

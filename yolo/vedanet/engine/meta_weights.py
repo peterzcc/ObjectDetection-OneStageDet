@@ -52,8 +52,15 @@ def MetaWeights(hyper_params):
     rng = np.random.RandomState(sample_seed)
 
     print(model_name)
+    #Huang Daoji 05/13
+    # must be wrong, just a try
+    net = metanet.Paramnet(num_classes=classes, weights_file=weights,
+                          use_dummy_reweight=hyper_params.use_dummy_reweight,
+                          meta_param_size=1024)
+    '''
     net = metanet.Metanet(num_classes=classes, weights_file=weights,
                           use_dummy_reweight=hyper_params.use_dummy_reweight)
+    '''
     net.eval()
     log.info('Net structure\n%s' % net)
 

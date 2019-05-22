@@ -34,35 +34,35 @@ train:
 
     input_shape: [416, 416]
     meta_input_shape: [416, 416]
-    batch_size: 64
-    mini_batch_size: 64
+    batch_size: 1
+    mini_batch_size: 1
     weights: "weights/darknet19_448.conv.23"
 
 test:
-    dataset: 'k_shot_3_joint' #'k_shot_base_test' # "test
+    dataset: 'k_shot_base' #'k_shot_base_test' # "test
     stdout: True
-    gpus: "0"
+    gpus: "-1"
     nworkers: 16
     pin_mem: True
     input_shape: [416, 416]
     batch_size: 32
-    weights: "weights/tmp.pt"
+    weights: "weights/weights_60000.pt"
     conf_thresh: 0.005
     nms_thresh: 0.45
-    reweights: "weights/tmp.pkl"
-    results: "re_190321_hpc"
+    reweights: "weights/tmp_60000.pkl"
+    results: "reweight_60k_bs32_0512"
 
 weights:
-    dataset: "k_shot_3_joint" #'two_class_base' # "test"
+    dataset: "k_shot_base" #'two_class_base' # "test"
     stdout: True
-    gpus: "0"
-    nworkers: 4
+    gpus: "-1"
+    nworkers: 1
     pin_mem: True
 
     input_shape: [416, 416]
     batch_size: 1
-    weights: "weights/tmp.pt"
-    results: "weights/tmp.pkl"
+    weights: "weights/meta_weights_60000.pt"
+    results: "weights/tmp_60000.pkl"
 speed:
     gpus: "7"
     batch_size: 1
